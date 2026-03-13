@@ -10,20 +10,16 @@ interface InputProps {
 
 const Input: React.FC<InputProps> = ({ type, label, value, onChange, id }) => {
   return (
-    <label htmlFor={id} className='block relative w-full'>
+    <div className='relative w-full'>
       <input
         type={type}
-        id={id}
+        placeholder={label}
         value={value}
         onChange={onChange}
-        placeholder=' '
-        className='peer bg-white px-3 pt-5 pb-2 border border-gray-300 focus:border-primary rounded-lg focus:outline-none focus:ring-1 focus:ring-primary w-full text-sm transition'
+        id={id}
+        className='peer px-4 py-2 border border-gray-300 focus:border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-full'
       />
-
-      <span className='top-2 peer-focus:top-2 peer-placeholder-shown:top-3.5 left-3 absolute bg-white px-1 text-gray-500 peer-focus:text-primary peer-placeholder-shown:text-gray-400 text-sm peer-focus:text-sm peer-placeholder-shown:text-base transition-all'>
-        {label}
-      </span>
-    </label>
+    </div>
   );
 };
 

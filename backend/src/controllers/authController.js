@@ -10,6 +10,13 @@ export const register = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ error: 'User already registered with this email' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
