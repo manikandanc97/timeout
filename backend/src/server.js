@@ -1,44 +1,58 @@
-import 'dotenv/config';
-import express from 'express';
-import prisma from './prismaClient.js';
-import cors from 'cors';
+import "dotenv/config";
+import express from "express";
+import prisma from "./prismaClient.js";
+import cors from "cors";
 
-import authRoutes from './routes/authRoutes.js';
-import { authMiddleware } from './middleware/authMiddleware.js';
+import authRoutes from "./routes/authRoutes.js";
+import { authMiddleware } from "./middleware/authMiddleware.js";
 
-import leaveRoutes from './routes/leaveRoutes.js';
+import leaveRoutes from "./routes/leaveRoutes.js";
 
-import cookieParser from 'cookie-parser';
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: "http://localhost:3000",
     credentials: true,
   }),
 );
 app.use(express.json());
 app.use(cookieParser());
 
-app.get('/users', async (req, res) => {
+app.get("/users", async (req, res) => {
   try {
     const users = await prisma.user.findMany();
     res.json(users);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Server Error' });
+    res.status(500).json({ error: "Server Error" });
   }
 });
 
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
 
-app.get('/api/profile', authMiddleware, async (req, res) => {
-  res.json({ message: 'This is a protected route', user: req.user.userId });
+app.get("/api/profile", authMiddleware, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
-app.use('/api/leaves', leaveRoutes);
+app.use("/api/leaves", leaveRoutes);
 
 app.listen(5000, () => {
-  console.log('Server running on port 5000');
+  console.log("Server running on port 5000");
 });
