@@ -61,7 +61,7 @@ const Register = () => {
         <div className='space-y-2 text-center'>
           <h2 className='font-bold text-primary text-3xl'>Create Account</h2>
           <p className='text-gray-500 text-sm'>
-            Register for your TimeOut account
+            Register for your Timeout account
           </p>
         </div>
 

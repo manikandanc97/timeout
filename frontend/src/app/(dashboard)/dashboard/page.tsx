@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import WelcomeCard from "@/components/dashboard/WelcomeCard";
-import Card from "@/components/ui/Card";
-import LoaderSpinner from "@/components/ui/Loader";
-import api from "@/services/api";
+import { useEffect, useState } from 'react';
+import WelcomeCard from '@/components/dashboard/WelcomeCard';
+import Card from '@/components/ui/Card';
+import LoaderSpinner from '@/components/ui/Loader';
+import api from '@/services/api';
 
 type DashboardStats = {
   totalLeaves: number;
@@ -15,18 +15,18 @@ type DashboardStats = {
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return "Good Morning";
-  if (hour >= 12 && hour < 17) return "Good Afternoon";
-  if (hour >= 17 && hour < 21) return "Good Evening";
-  return "Good Night";
+  if (hour >= 5 && hour < 12) return 'Good Morning';
+  if (hour >= 12 && hour < 17) return 'Good Afternoon';
+  if (hour >= 17 && hour < 21) return 'Good Evening';
+  return 'Good Night';
 };
 
 const getTodayDate = (): string => {
   const today = new Date();
-  const dd = String(today.getDate()).padStart(2, "0");
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
   const yyyy = today.getFullYear();
-  const weekday = today.toLocaleDateString("en-IN", { weekday: "long" });
+  const weekday = today.toLocaleDateString('en-IN', { weekday: 'long' });
   return `Today is ${weekday} (${dd}-${mm}-${yyyy})`;
 };
 
@@ -41,8 +41,8 @@ const Dashboard = () => {
   const fetchData = async () => {
     try {
       const [statsRes, userRes] = await Promise.all([
-        api.get("/leaves/dashboard"),
-        api.get("/profile"),
+        api.get('/leaves/dashboard'),
+        api.get('/profile'),
       ]);
       setStats(statsRes.data);
       setCurrentUser(userRes.data);
@@ -55,10 +55,10 @@ const Dashboard = () => {
   if (!stats) return <LoaderSpinner />;
 
   return (
-    <div className="space-y-6 bg-gray-100 p-6 min-h-screen">
-      <div className="gap-6 grid grid-cols-1 md:grid-cols-3">
-        <div className="md:col-span-2">
-          <WelcomeCard name={currentUser?.name ?? "User"} />
+    <div className='space-y-6 bg-gray-100 p-6 min-h-screen'>
+      <div className='gap-6 grid grid-cols-1 md:grid-cols-3'>
+        <div className='md:col-span-2'>
+          <WelcomeCard name={currentUser?.name ?? 'User'} />
         </div>
       </div>
     </div>

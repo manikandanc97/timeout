@@ -21,7 +21,7 @@ const Button = (props: ButtonProps) => {
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`bg-primary hover:bg-primary-dark disabled:opacity-50 py-2 rounded-lg w-full text-white transition-colors duration-300 cursor-pointer ${className}`}
+      className={`bg-primary hover:bg-primary-dark disabled:opacity-50 py-2 rounded-lg text-white transition-colors duration-300 cursor-pointer ${className}`}
     >
       {children}
     </button>

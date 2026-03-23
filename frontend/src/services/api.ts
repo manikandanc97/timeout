@@ -19,6 +19,10 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (originalRequest?.url?.includes('/auth/refresh')) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -32,7 +36,10 @@ api.interceptors.response.use(
         const newToken = res.data.accessToken;
         setAccessToken(newToken);
 
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        originalRequest.headers = {
+          ...originalRequest.headers,
+          Authorization: `Bearer ${newToken}`,
+        };
 
         return api(originalRequest);
       } catch (error) {
