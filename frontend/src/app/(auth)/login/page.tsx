@@ -84,7 +84,9 @@ const Login = () => {
             </Button>
           }
         />
-        <Button type='submit'>Login</Button>
+        <Button type='submit' className='w-full'>
+          Login
+        </Button>
         <p className='text-gray-500 text-sm text-center'>
           Don’t have an account?{' '}
           <span

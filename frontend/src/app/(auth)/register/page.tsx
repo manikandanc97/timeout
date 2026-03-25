@@ -2,8 +2,9 @@
 
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import api from '@/services/api';
-import { Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
@@ -15,6 +16,7 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [gender, setGender] = useState('');
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -42,6 +44,7 @@ const Register = () => {
         name,
         email,
         password,
+        gender,
       });
 
       toast.success('Account created successfully');
@@ -126,7 +129,19 @@ const Register = () => {
           }
         />
 
-        <Button type='submit'>Register</Button>
+        <Select
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+          options={[
+            { label: 'Male', value: 'MALE' },
+            { label: 'Female', value: 'FEMALE' },
+          ]}
+          rightElement={<ChevronDown size={18} />}
+        />
+
+        <Button type='submit' className='w-full'>
+          Register
+        </Button>
 
         <p className='text-gray-500 text-sm text-center'>
           Already have an account?{' '}
