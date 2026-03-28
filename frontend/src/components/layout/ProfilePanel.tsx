@@ -23,7 +23,10 @@ const ProfilePanel = () => {
 
   return (
     <>
-      <Button onClick={handleLogout} className='bg-red-500 hover:bg-red-700'>
+      <Button
+        onClick={handleLogout}
+        className='bg-red-500 hover:bg-red-700 w-full'
+      >
         Logout
       </Button>
     </>

@@ -19,14 +19,15 @@ enum Gender {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(EMPLOYEE)
-  gender    Gender
-  createdAt DateTime @default(now())
-  leaves    Leave[]
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role          @default(EMPLOYEE)
+  gender       Gender
+  createdAt    DateTime      @default(now())
+  leaves       Leave[]
+  leaveBalance LeaveBalance?
 }
 
 enum LeaveStatus {
@@ -52,4 +53,14 @@ model Leave {
   status    LeaveStatus @default(PENDING)
   user      User        @relation(fields: [userId], references: [id])
   createdAt DateTime    @default(now())
+}
+
+model LeaveBalance {
+  id        Int  @id @default(autoincrement())
+  userId    Int  @unique
+  sick      Int  @default(0)
+  casual    Int  @default(12)
+  maternity Int  @default(0)
+  paternity Int  @default(0)
+  user      User @relation(fields: [userId], references: [id])
 }
