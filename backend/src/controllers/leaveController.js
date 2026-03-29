@@ -13,18 +13,61 @@ export const applyLeave = async (req, res) => {
         .json({ message: "From date cannot be after To date" });
     }
 
+    const userId = req.user.id;
+
+    let balance = await prisma.leaveBalance.findUnique({
+      where: { userId },
+    });
+
+    if (!balance) {
+      balance = await prisma.leaveBalance.create({
+        data: {
+          userId,
+          sick: 0,
+          casual: 12,
+          maternity: 0,
+          paternity: 0,
+        },
+      });
+    }
+
+    const leaveType = type.toUpperCase();
+
+    if (leaveType === "SICK" && balance.sick <= 0) {
+      return res.status(400).json({ message: "No sick leave left" });
+    }
+
+    if (leaveType === "CASUAL" && balance.casual <= 0) {
+      return res.status(400).json({ message: "No casual leave left" });
+    }
+
     const leave = await prisma.leave.create({
       data: {
         type,
         fromDate: new Date(fromDate),
         toDate: new Date(toDate),
         reason,
-        userId: req.user.userId,
+        userId: userId,
       },
     });
 
+    if (leaveType === "SICK") {
+      await prisma.leaveBalance.update({
+        where: { userId },
+        data: { sick: { decrement: 1 } },
+      });
+    }
+
+    if (leaveType === "CASUAL") {
+      await prisma.leaveBalance.update({
+        where: { userId },
+        data: { casual: { decrement: 1 } },
+      });
+    }
+
     res.status(201).json({ message: "Leave applied successfully", leave });
   } catch (error) {
+    console.error("ERROR:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
@@ -52,6 +95,7 @@ export const getLeaves = async (req, res) => {
 
     res.json(leaves);
   } catch (error) {
+    console.error("ERROR:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
@@ -86,7 +130,7 @@ export const getDashboardStats = async (req, res) => {
     let whereCondition = {};
 
     if (user.role === "EMPLOYEE") {
-      whereCondition.userId = user.userId;
+      whereCondition.userId = user.id;
     }
 
     const totalLeaves = await prisma.leave.count({ where: whereCondition });
@@ -100,7 +144,41 @@ export const getDashboardStats = async (req, res) => {
       where: { ...whereCondition, status: "REJECTED" },
     });
 
-    res.json({ totalLeaves, pending, approved, rejected });
+    const balance = await prisma.leaveBalance.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!balance) {
+      balance = await prisma.leaveBalance.create({
+        data: {
+          userId: user.id,
+          sick: 0,
+          casual: 12,
+          maternity: 0,
+          paternity: 0,
+        },
+      });
+    }
+
+    let filteredBalance = {
+      sick: balance.sick,
+      casual: balance.casual,
+    };
+
+    if (user.gender === "FEMALE") {
+      filteredBalance.maternity = balance.maternity;
+    }
+    if (user.gender === "MALE") {
+      filteredBalance.paternity = balance.paternity;
+    }
+
+    res.json({
+      totalLeaves,
+      pending,
+      approved,
+      rejected,
+      balance: filteredBalance,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });

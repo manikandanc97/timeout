@@ -11,11 +11,9 @@ export const authMiddleware = (req, res, next) => {
     const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
+    console.log("DECODED TOKEN:", decoded);
 
-    req.user = {
-      userId: decoded.userId,
-      role: decoded.role,
-    };
+    req.user = decoded;
 
     next();
   } catch (error) {
