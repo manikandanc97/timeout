@@ -91,11 +91,13 @@ export const refreshTokenHandler = (req, res) => {
 
   if (!token) return res.status(401).json({ message: "No token provided" });
 
-  jwt.verify(token, process.env.REFRESH_SECRET, (err, user) => {
+  jwt.verify(token, process.env.REFRESH_SECRET, async (err, decoded) => {
     if (err) return res.status(403).json({ message: "Invalid token" });
 
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+
     const newAccessToken = jwt.sign(
-      { userId: user.userId, role: user.role, gender: user.gender },
+      { id: user.id, role: user.role, gender: user.gender },
       process.env.ACCESS_SECRET,
       {
         expiresIn: "15m",

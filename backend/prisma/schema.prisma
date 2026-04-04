@@ -64,3 +64,9 @@ model LeaveBalance {
   paternity Int  @default(0)
   user      User @relation(fields: [userId], references: [id])
 }
+
+model Holiday {
+  id   Int      @id @default(autoincrement())
+  date DateTime @unique
+  name String
+}
