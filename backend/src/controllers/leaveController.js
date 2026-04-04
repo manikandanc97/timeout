@@ -1,16 +1,16 @@
-import prisma from "../prismaClient.js";
+import prisma from '../prismaClient.js';
 
 export const applyLeave = async (req, res) => {
   try {
     const { type, fromDate, toDate, reason } = req.body;
     if (!type || !fromDate || !toDate || !reason) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: 'All fields are required' });
     }
 
     if (new Date(fromDate) > new Date(toDate)) {
       return res
         .status(400)
-        .json({ message: "From date cannot be after To date" });
+        .json({ message: 'From date cannot be after To date' });
     }
 
     const userId = req.user.id;
@@ -32,13 +32,16 @@ export const applyLeave = async (req, res) => {
     }
 
     const leaveType = type.toUpperCase();
+    const totalDays = Math.ceil(
+      (new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24) + 1,
+    );
 
-    if (leaveType === "SICK" && balance.sick <= 0) {
-      return res.status(400).json({ message: "No sick leave left" });
+    if (leaveType === 'SICK' && balance.sick < totalDays) {
+      return res.status(400).json({ message: 'No sick leave left' });
     }
 
-    if (leaveType === "CASUAL" && balance.casual <= 0) {
-      return res.status(400).json({ message: "No casual leave left" });
+    if (leaveType === 'CASUAL' && balance.casual < totalDays) {
+      return res.status(400).json({ message: 'No casual leave left' });
     }
 
     const leave = await prisma.leave.create({
@@ -51,24 +54,26 @@ export const applyLeave = async (req, res) => {
       },
     });
 
-    if (leaveType === "SICK") {
+    if (leaveType === 'SICK') {
       await prisma.leaveBalance.update({
         where: { userId },
-        data: { sick: { decrement: 1 } },
+        data: { sick: { decrement: totalDays } },
       });
     }
 
-    if (leaveType === "CASUAL") {
+    if (leaveType === 'CASUAL') {
       await prisma.leaveBalance.update({
         where: { userId },
-        data: { casual: { decrement: 1 } },
+        data: { casual: { decrement: totalDays } },
       });
     }
 
-    res.status(201).json({ message: "Leave applied successfully", leave });
+    console.log('Leave applied:', totalDays, leave);
+
+    res.status(201).json({ message: 'Leave applied successfully', leave });
   } catch (error) {
-    console.error("ERROR:", error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('ERROR:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -77,10 +82,10 @@ export const getLeaves = async (req, res) => {
     const user = req.user;
     let leaves;
 
-    if (user.role === "EMPLOYEE") {
+    if (user.role === 'EMPLOYEE') {
       leaves = await prisma.leave.findMany({
         where: { userId: user.userId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
     } else {
       leaves = await prisma.leave.findMany({
@@ -89,27 +94,27 @@ export const getLeaves = async (req, res) => {
             select: { name: true, email: true },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
     }
 
     res.json(leaves);
   } catch (error) {
-    console.error("ERROR:", error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('ERROR:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
 export const updateLeaveStatus = async (req, res) => {
   try {
     if (!req.body) {
-      return res.status(400).json({ message: "Body is required" });
+      return res.status(400).json({ message: 'Body is required' });
     }
 
     const { status } = req.body;
 
-    if (!status || !["APPROVED", "REJECTED"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
+    if (!status || !['APPROVED', 'REJECTED'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
     }
 
     const updated = await prisma.leave.update({
@@ -117,10 +122,10 @@ export const updateLeaveStatus = async (req, res) => {
       data: { status },
     });
 
-    res.json({ message: "Leave status updated", leave: updated });
+    res.json({ message: 'Leave status updated', leave: updated });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -129,19 +134,19 @@ export const getDashboardStats = async (req, res) => {
     const user = req.user;
     let whereCondition = {};
 
-    if (user.role === "EMPLOYEE") {
+    if (user.role === 'EMPLOYEE') {
       whereCondition.userId = user.id;
     }
 
     const totalLeaves = await prisma.leave.count({ where: whereCondition });
     const pending = await prisma.leave.count({
-      where: { ...whereCondition, status: "PENDING" },
+      where: { ...whereCondition, status: 'PENDING' },
     });
     const approved = await prisma.leave.count({
-      where: { ...whereCondition, status: "APPROVED" },
+      where: { ...whereCondition, status: 'APPROVED' },
     });
     const rejected = await prisma.leave.count({
-      where: { ...whereCondition, status: "REJECTED" },
+      where: { ...whereCondition, status: 'REJECTED' },
     });
 
     const balance = await prisma.leaveBalance.findUnique({
@@ -165,10 +170,10 @@ export const getDashboardStats = async (req, res) => {
       casual: balance.casual,
     };
 
-    if (user.gender === "FEMALE") {
+    if (user.gender === 'FEMALE') {
       filteredBalance.maternity = balance.maternity;
     }
-    if (user.gender === "MALE") {
+    if (user.gender === 'MALE') {
       filteredBalance.paternity = balance.paternity;
     }
 
@@ -181,6 +186,6 @@ export const getDashboardStats = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: 'Server Error' });
   }
 };
