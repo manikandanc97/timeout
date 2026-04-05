@@ -210,3 +210,36 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+export const getLeaveHistory = async (req, res) => {
+  try {
+    const leaves = await prisma.leave.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+    res.json(leaves);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const getUpcomingHolidays = async (req, res) => {
+  try {
+    const today = new Date();
+    const holidays = await prisma.holiday.findMany({
+      where: {
+        date: {
+          gte: today,
+        },
+      },
+      orderBy: { date: "asc" },
+      take: 10,
+    });
+    res.json(holidays);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};

@@ -6,6 +6,8 @@ import LoaderSpinner from "@/components/ui/Loader";
 import api from "@/services/api";
 import LeaveBalance from "@/components/dashboard/LeaveBalance";
 import LeaveSummaryCards from "@/components/dashboard/LeaveSummaryCards";
+import LeaveHistory from "@/components/dashboard/LeaveHistory";
+import UpcomingHolidays from "@/components/dashboard/UpcomingHolidays";
 
 type DashboardStats = {
   totalLeaves: number;
@@ -25,6 +27,8 @@ const Dashboard = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [monthlyUsage, setMonthlyUsage] = useState<any>(null);
   const [chartData, setChartData] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [holidays, setHolidays] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -32,34 +36,74 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [statsRes, userRes, leavesRes] = await Promise.all([
-        api.get("/leaves/dashboard"),
-        api.get("/profile"),
-        api.get("/leaves"),
-      ]);
-      setStats(statsRes.data);
-      setCurrentUser(userRes.data);
+      const [statsRes, userRes, leavesRes, holidaysRes, historyRes] =
+        await Promise.allSettled([
+          api.get("/leaves/dashboard"),
+          api.get("/profile"),
+          api.get("/leaves"),
+          api.get("/holidays"),
+          api.get("/history"),
+        ]);
 
-      const leaves = leavesRes.data || [];
+      const stats =
+        statsRes.status === "fulfilled" ? statsRes.value.data : null;
+
+      const user = userRes.status === "fulfilled" ? userRes.value.data : null;
+
+      const leaves =
+        leavesRes.status === "fulfilled" ? leavesRes.value.data : [];
+
+      const holidays =
+        holidaysRes.status === "fulfilled" ? holidaysRes.value.data : [];
+
+      const history =
+        historyRes.status === "fulfilled" ? historyRes.value.data : [];
+
+      setStats(stats);
+      setCurrentUser(user);
+      setHolidays(holidays);
+      setHistory(history);
+
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
 
       const thisMonth = (l: any) => {
         if (!l.startDate && !l.createdAt) return false;
         const date = new Date(l.startDate || l.createdAt);
-        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        return (
+          date.getMonth() === currentMonth && date.getFullYear() === currentYear
+        );
       };
 
       setMonthlyUsage({
-        casual: leaves.filter((l: any) => l.type === "CASUAL" && thisMonth(l)).length,
-        sick: leaves.filter((l: any) => l.type === "SICK" && thisMonth(l)).length,
-        maternity: leaves.filter((l: any) => l.type === "MATERNITY" && thisMonth(l)).length,
-        paternity: leaves.filter((l: any) => l.type === "PATERNITY" && thisMonth(l)).length,
+        casual: leaves.filter((l: any) => l.type === "CASUAL" && thisMonth(l))
+          .length,
+        sick: leaves.filter((l: any) => l.type === "SICK" && thisMonth(l))
+          .length,
+        maternity: leaves.filter(
+          (l: any) => l.type === "MATERNITY" && thisMonth(l),
+        ).length,
+        paternity: leaves.filter(
+          (l: any) => l.type === "PATERNITY" && thisMonth(l),
+        ).length,
       });
 
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const cData = months.map(m => ({ month: m, value: 0 }));
-      const sData = months.map(m => ({ month: m, value: 0 }));
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const cData = months.map((m) => ({ month: m, value: 0 }));
+      const sData = months.map((m) => ({ month: m, value: 0 }));
 
       leaves.forEach((l: any) => {
         if (!l.startDate && !l.createdAt) return;
@@ -72,7 +116,6 @@ const Dashboard = () => {
       });
 
       setChartData({ casual: cData, sick: sData });
-
     } catch (err) {
       console.error(err);
     }
@@ -96,6 +139,12 @@ const Dashboard = () => {
           monthlyUsage={monthlyUsage}
           chartData={chartData}
         />
+      </div>
+      <div>
+        <div className="gap-6 grid grid-cols-1 lg:grid-cols-2">
+          <LeaveHistory leaves={history} />
+          <UpcomingHolidays holidays={holidays} />
+        </div>
       </div>
     </div>
   );

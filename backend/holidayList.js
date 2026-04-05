@@ -23,6 +23,10 @@ async function holidayList() {
           date: new Date("2026-04-03"),
         },
         {
+          name: "Labour Day",
+          date: new Date("2026-05-01"),
+        },
+        {
           name: "Independence Day",
           date: new Date("2026-08-15"),
         },

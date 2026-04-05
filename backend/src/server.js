@@ -9,6 +9,10 @@ import { authMiddleware } from "./middleware/authMiddleware.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 
 import cookieParser from "cookie-parser";
+import {
+  getLeaveHistory,
+  getUpcomingHolidays,
+} from "./controllers/leaveController.js";
 
 const app = express();
 
@@ -52,6 +56,10 @@ app.get("/api/profile", authMiddleware, async (req, res) => {
 });
 
 app.use("/api/leaves", leaveRoutes);
+
+app.get("/api/history", authMiddleware, getLeaveHistory);
+
+app.get("/api/holidays", authMiddleware, getUpcomingHolidays);
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");

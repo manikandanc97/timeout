@@ -25,10 +25,14 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="z-50 px-2.5 py-1.5 rounded-lg bg-gray-800 text-white shadow-xl text-xs font-medium whitespace-nowrap flex items-center gap-1.5">
-        <span style={{ color: payload[0].color || payload[0].fill }}>{data.month}</span>
+      <div className="z-50 flex items-center gap-1.5 bg-gray-800 shadow-xl px-2.5 py-1.5 rounded-lg font-medium text-white text-xs whitespace-nowrap">
+        <span style={{ color: payload[0].color || payload[0].fill }}>
+          {data.month}
+        </span>
         <span>•</span>
-        <span>{data.value} {data.value === 1 ? "leave" : "leaves"}</span>
+        <span>
+          {data.value} {data.value === 1 ? "leave" : "leaves"}
+        </span>
       </div>
     );
   }
@@ -40,8 +44,12 @@ const MiniChart = ({ color, data }: { color: string; data: any[] }) => {
 
   return (
     <div className="w-24 h-16">
-      <ResponsiveContainer width="100%" height="100%" className="overflow-visible">
-        <BarChart 
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        className="overflow-visible"
+      >
+        <BarChart
           data={data}
           onMouseMove={(state: any) => {
             if (state?.isTooltipActive && state?.activeTooltipIndex != null) {
@@ -59,16 +67,14 @@ const MiniChart = ({ color, data }: { color: string; data: any[] }) => {
             position={{ y: -35 }}
             allowEscapeViewBox={{ x: true, y: true }}
           />
-          <Bar
-            dataKey="value"
-            radius={[2, 2, 0, 0]}
-            minPointSize={1}
-          >
+          <Bar dataKey="value" radius={[2, 2, 0, 0]} minPointSize={1}>
             {data.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
-                fill={color} 
-                opacity={activeIndex == null || Number(activeIndex) === index ? 1 : 0.3} 
+              <Cell
+                key={`cell-${index}`}
+                fill={color}
+                opacity={
+                  activeIndex == null || Number(activeIndex) === index ? 1 : 0.3
+                }
                 className="transition-all duration-300"
               />
             ))}
