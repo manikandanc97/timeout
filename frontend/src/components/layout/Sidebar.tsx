@@ -23,12 +23,12 @@ const menuList: { name: string; href: string; icon: React.ElementType }[] = [
 const Sidebar = () => {
   const pathname = usePathname();
   return (
-    <aside className='bg-primary-dark w-40 text-white'>
-      <div className='flex items-center gap-2 p-5'>
+    <aside className='bg-primary-dark w-40 text-white h-full flex flex-col'>
+      <div className='flex items-center gap-2 p-5 shrink-0'>
         <Hourglass fill='white' />
         <h2 className='font-bold text-white text-2xl'>Timeout</h2>
       </div>
-      <nav className='flex flex-col space-y-4 font-medium text-sm'>
+      <nav className='flex flex-col space-y-4 font-medium text-sm flex-1 overflow-y-auto pb-4'>
         {menuList.map((menu) => {
           const Icon = menu.icon;
           const isActive = pathname === menu.href;

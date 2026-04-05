@@ -60,8 +60,8 @@ model LeaveBalance {
   userId    Int  @unique
   sick      Int  @default(0)
   casual    Int  @default(12)
-  maternity Int  @default(0)
-  paternity Int  @default(0)
+  maternity Int  @default(180)
+  paternity Int  @default(15)
   user      User @relation(fields: [userId], references: [id])
 }
 

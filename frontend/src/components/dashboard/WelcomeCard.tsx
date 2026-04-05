@@ -21,7 +21,7 @@ const getTodayDate = () => {
 
 const WelcomeCard = ({ name }: { name: string }) => {
   return (
-    <div className='relative flex md:flex-row flex-col justify-between items-center bg-linear-to-r from-[#00a76f]/10 to-[#00a76f]/5 shadow-sm p-8 md:p-10 border border-[#00a76f]/20 rounded-2xl overflow-hidden'>
+    <div className='h-full relative flex md:flex-row flex-col justify-between items-center bg-linear-to-r from-[#00a76f]/10 to-[#00a76f]/5 shadow-sm p-8 md:p-10 border border-[#00a76f]/20 rounded-2xl overflow-hidden'>
       <div className='z-10 relative flex flex-col items-start gap-4 max-w-md'>
         <div>
           <h1 className='font-semibold text-primary text-lg'>

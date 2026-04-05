@@ -33,8 +33,8 @@ export const register = async (req, res) => {
         userId: user.id,
         sick: 0,
         casual: 12,
-        maternity: gender === "FEMALE" ? 1 : 0,
-        paternity: gender === "MALE" ? 1 : 0,
+        maternity: gender === "FEMALE" ? 180 : 0,
+        paternity: gender === "MALE" ? 15 : 0,
       },
     });
 

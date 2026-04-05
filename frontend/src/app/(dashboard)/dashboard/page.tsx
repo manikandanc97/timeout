@@ -5,29 +5,21 @@ import WelcomeCard from "@/components/dashboard/WelcomeCard";
 import Card from "@/components/ui/Card";
 import LoaderSpinner from "@/components/ui/Loader";
 import api from "@/services/api";
+import LeaveBalance from "@/components/dashboard/LeaveBalance";
+import LeaveCountChart from "@/components/dashboard/LeaveSummaryCards";
+import LeaveSummaryCards from "@/components/dashboard/LeaveSummaryCards";
 
 type DashboardStats = {
   totalLeaves: number;
   pending: number;
   approved: number;
   rejected: number;
-};
-
-const getGreeting = (): string => {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return "Good Morning";
-  if (hour >= 12 && hour < 17) return "Good Afternoon";
-  if (hour >= 17 && hour < 21) return "Good Evening";
-  return "Good Night";
-};
-
-const getTodayDate = (): string => {
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2, "0");
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const yyyy = today.getFullYear();
-  const weekday = today.toLocaleDateString("en-IN", { weekday: "long" });
-  return `Today is ${weekday} (${dd}-${mm}-${yyyy})`;
+  balance: {
+    casual: number;
+    sick: number;
+    maternity?: number;
+    paternity?: number;
+  };
 };
 
 const Dashboard = () => {
@@ -40,22 +32,12 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      // const [statsRes, userRes] = await Promise.all([
-      //   api.get('/leaves/dashboard'),
-      //   api.get('/profile'),
-      // ]);
-      // setStats(statsRes.data);
-      // setCurrentUser(userRes.data);
-
-      const statsRes = await api.get("/leaves/dashboard");
-      console.log("dashboard success", statsRes.data);
+      const [statsRes, userRes] = await Promise.all([
+        api.get("/leaves/dashboard"),
+        api.get("/profile"),
+      ]);
       setStats(statsRes.data);
-
-      const userRes = await api.get("/profile");
-      console.log("profile success", userRes.data);
       setCurrentUser(userRes.data);
-
-      console.log(currentUser);
     } catch (err) {
       console.error(err);
     }
@@ -64,11 +46,17 @@ const Dashboard = () => {
   if (!stats) return <LoaderSpinner />;
 
   return (
-    <div className="space-y-6 bg-gray-100 p-6 min-h-screen">
+    <div className="space-y-6">
       <div className="gap-6 grid grid-cols-1 md:grid-cols-3">
         <div className="md:col-span-2">
           <WelcomeCard name={currentUser?.name ?? "User"} />
         </div>
+        <div className="md:col-span-1">
+          <LeaveBalance balance={stats.balance} />
+        </div>
+      </div>
+      <div>
+        <LeaveSummaryCards balance={stats.balance} />
       </div>
     </div>
   );
