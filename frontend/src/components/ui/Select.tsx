@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface Option {
   label: string;
@@ -20,12 +20,12 @@ interface SelectProps {
 const Select: React.FC<SelectProps> = ({
   id,
   label,
-  placeholder = "Select",
+  placeholder = 'Select',
   value,
   options,
   onChange,
-  containerClassName = "",
-  selectClassName = "",
+  containerClassName = '',
+  selectClassName = '',
   rightElement,
 }) => {
   return (
@@ -36,7 +36,7 @@ const Select: React.FC<SelectProps> = ({
         onChange={onChange}
         className={`peer block w-full appearance-none rounded-md border border-gray-300 bg-transparent px-3 pt-2 pb-2 text-sm text-gray-500 outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-primary ${selectClassName}`}
       >
-        <option value="" disabled hidden>
+        <option value='' disabled hidden>
           {placeholder}
         </option>
 
@@ -48,7 +48,7 @@ const Select: React.FC<SelectProps> = ({
       </select>
 
       {rightElement ? (
-        <div className="top-1/2 right-3 absolute -translate-y-1/2">
+        <div className='top-1/2 right-3 absolute -translate-y-1/2'>
           {rightElement}
         </div>
       ) : null}
