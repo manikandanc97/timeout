@@ -1,6 +1,6 @@
-import React from "react";
-import { ResponsiveContainer, BarChart, Bar, Tooltip } from "recharts";
-import { Baby } from "lucide-react";
+import React, { useState } from "react";
+import { ResponsiveContainer, BarChart, Bar, Tooltip, Cell } from "recharts";
+import { Baby, TrendingDown, TrendingUp } from "lucide-react";
 
 type Props = {
   balance: {
@@ -9,92 +9,183 @@ type Props = {
     maternity?: number;
     paternity?: number;
   };
+  monthlyUsage?: {
+    sick: number;
+    casual: number;
+    maternity?: number;
+    paternity?: number;
+  };
+  chartData?: {
+    casual: { month: string; value: number }[];
+    sick: { month: string; value: number }[];
+  };
 };
-
-const miniChartData = [
-  { month: "Jan", value: 15 },
-  { month: "Feb", value: 18 },
-  { month: "Mar", value: 12 },
-  { month: "Apr", value: 45 },
-  { month: "May", value: 68 },
-  { month: "Jun", value: 10 },
-  { month: "Jul", value: 40 },
-  { month: "Aug", value: 38 },
-];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="z-50 bg-white shadow-lg border border-gray-100 rounded-xl min-w-[70px] overflow-hidden">
-        <div className="bg-slate-50 px-2 py-1.5 border-b border-gray-100 text-center">
-          <p className="font-semibold text-slate-500 text-xs">{data.month}</p>
-        </div>
-        <div className="flex justify-center items-center gap-2 px-3 py-2">
-          <span
-            className="shrink-0 rounded-full w-2.5 h-2.5"
-            style={{ backgroundColor: payload[0].color || payload[0].fill }}
-          />
-          <p className="font-bold text-gray-800 text-sm">{data.value}</p>
-        </div>
+      <div className="z-50 px-2.5 py-1.5 rounded-lg bg-gray-800 text-white shadow-xl text-xs font-medium whitespace-nowrap flex items-center gap-1.5">
+        <span style={{ color: payload[0].color || payload[0].fill }}>{data.month}</span>
+        <span>•</span>
+        <span>{data.value} {data.value === 1 ? "leave" : "leaves"}</span>
       </div>
     );
   }
   return null;
 };
 
-const MiniChart = ({ color }: { color: string }) => {
+const MiniChart = ({ color, data }: { color: string; data: any[] }) => {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
   return (
     <div className="w-24 h-16">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={miniChartData}>
-          <Tooltip 
-            content={<CustomTooltip />} 
-            cursor={{ fill: "transparent" }} 
+      <ResponsiveContainer width="100%" height="100%" className="overflow-visible">
+        <BarChart 
+          data={data}
+          onMouseMove={(state: any) => {
+            if (state?.isTooltipActive && state?.activeTooltipIndex != null) {
+              setActiveIndex(state.activeTooltipIndex);
+            } else {
+              setActiveIndex(null);
+            }
+          }}
+          onMouseLeave={() => setActiveIndex(null)}
+        >
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: "transparent" }}
             isAnimationActive={false}
+            position={{ y: -35 }}
+            allowEscapeViewBox={{ x: true, y: true }}
           />
-          <Bar dataKey="value" radius={[2, 2, 0, 0]} fill={color} />
+          <Bar
+            dataKey="value"
+            radius={[2, 2, 0, 0]}
+            minPointSize={1}
+          >
+            {data.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={color} 
+                opacity={activeIndex == null || Number(activeIndex) === index ? 1 : 0.3} 
+                className="transition-all duration-300"
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
 };
 
-const LeaveSummaryCards = ({ balance }: Props) => {
+const TrendBadge = ({
+  used,
+  isOneTime,
+}: {
+  used: number;
+  isOneTime?: boolean;
+}) => {
+  const hasUsed = used > 0;
+  return (
+    <div
+      className={`flex items-center gap-1.5 mt-3 w-fit px-2 py-1 rounded-lg text-xs font-medium ${
+        hasUsed ? "bg-red-50 text-red-500" : "bg-green-50 text-green-600"
+      }`}
+    >
+      {hasUsed ? (
+        <>
+          <TrendingDown size={13} strokeWidth={2.5} />
+          <span>
+            {isOneTime
+              ? "Used (Cannot be applied again)"
+              : `${used} ${used === 1 ? "leave" : "leaves"} used this month`}
+          </span>
+        </>
+      ) : (
+        <>
+          <TrendingUp size={13} strokeWidth={2.5} />
+          <span>
+            {isOneTime ? "Not yet used" : "No leaves used this month"}
+          </span>
+        </>
+      )}
+    </div>
+  );
+};
+
+const LeaveCard = ({
+  label,
+  count,
+  used,
+  right,
+  isOneTime,
+}: {
+  label: string;
+  count: number;
+  used: number;
+  right: React.ReactNode;
+  isOneTime?: boolean;
+}) => (
+  <div className="flex justify-between items-start bg-white shadow-md p-5 rounded-2xl">
+    <div className="flex flex-col">
+      <p className="text-gray-500 text-sm">{label}</p>
+
+      <div className="flex items-baseline gap-2 mt-4">
+        <h2 className="font-bold text-4xl leading-none">{count}</h2>
+        <span className="text-gray-400 text-sm">days remaining</span>
+      </div>
+
+      <TrendBadge used={used} isOneTime={isOneTime} />
+    </div>
+
+    <div className="mt-1 shrink-0">{right}</div>
+  </div>
+);
+
+const LeaveSummaryCards = ({ balance, monthlyUsage, chartData }: Props) => {
+  const usage = monthlyUsage ?? {
+    sick: 0,
+    casual: 0,
+    maternity: 0,
+    paternity: 0,
+  };
+
   const thirdLeave = balance.maternity ?? balance.paternity ?? 0;
   const thirdLeaveLabel =
     balance.maternity !== undefined ? "Maternity Leave" : "Paternity Leave";
+  const thirdUsed =
+    balance.maternity !== undefined
+      ? (usage.maternity ?? 0)
+      : (usage.paternity ?? 0);
+
   return (
     <div className="gap-5 grid grid-cols-1 md:grid-cols-3">
-      <div className="flex justify-between items-center bg-white shadow-md p-5 rounded-2xl">
-        <div>
-          <p className="text-gray-500 text-sm">Casual Leave</p>
-          <h2 className="mt-4 font-bold text-4xl">{balance.casual}</h2>
-          <p className="mt-3 text-gray-500 text-sm">days remaining</p>
-        </div>
-        <MiniChart color="#0E7490" />
-      </div>
+      <LeaveCard
+        label="Casual Leave"
+        count={balance.casual}
+        used={usage.casual}
+        right={<MiniChart color="#0E7490" data={chartData?.casual || []} />}
+      />
 
-      <div className="flex justify-between items-center bg-white shadow-md p-5 rounded-2xl">
-        <div>
-          <p className="text-gray-500 text-sm">Sick Leave</p>
-          <h2 className="mt-4 font-bold text-4xl">{balance.sick}</h2>
-          <p className="mt-3 text-gray-500 text-sm">days remaining</p>
-        </div>
+      <LeaveCard
+        label="Sick Leave"
+        count={balance.sick}
+        used={usage.sick}
+        right={<MiniChart color="#14B8A6" data={chartData?.sick || []} />}
+      />
 
-        <MiniChart color="#14B8A6" />
-      </div>
-
-      <div className="flex justify-between items-center bg-white shadow-md p-5 rounded-2xl">
-        <div>
-          <p className="text-gray-500 text-sm">{thirdLeaveLabel}</p>
-          <h2 className="mt-4 font-bold text-4xl">{thirdLeave}</h2>
-          <p className="mt-3 text-gray-500 text-sm">days remaining</p>
-        </div>
-        <div className="flex justify-center items-center bg-[#22C55E]/10 rounded-full w-14 h-14">
-          <Baby size={30} className="text-[#22C55E]" strokeWidth={1.5} />
-        </div>
-      </div>
+      <LeaveCard
+        label={thirdLeaveLabel}
+        count={thirdLeave}
+        used={thirdUsed}
+        isOneTime={true}
+        right={
+          <div className="flex justify-center items-center bg-[#22C55E]/10 rounded-full w-14 h-14">
+            <Baby size={30} className="text-[#22C55E]" strokeWidth={1.5} />
+          </div>
+        }
+      />
     </div>
   );
 };

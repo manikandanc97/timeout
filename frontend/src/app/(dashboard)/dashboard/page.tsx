@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import WelcomeCard from "@/components/dashboard/WelcomeCard";
-import Card from "@/components/ui/Card";
 import LoaderSpinner from "@/components/ui/Loader";
 import api from "@/services/api";
 import LeaveBalance from "@/components/dashboard/LeaveBalance";
-import LeaveCountChart from "@/components/dashboard/LeaveSummaryCards";
 import LeaveSummaryCards from "@/components/dashboard/LeaveSummaryCards";
 
 type DashboardStats = {
@@ -25,6 +23,8 @@ type DashboardStats = {
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [monthlyUsage, setMonthlyUsage] = useState<any>(null);
+  const [chartData, setChartData] = useState<any>(null);
 
   useEffect(() => {
     fetchData();
@@ -32,18 +32,53 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [statsRes, userRes] = await Promise.all([
+      const [statsRes, userRes, leavesRes] = await Promise.all([
         api.get("/leaves/dashboard"),
         api.get("/profile"),
+        api.get("/leaves"),
       ]);
       setStats(statsRes.data);
       setCurrentUser(userRes.data);
+
+      const leaves = leavesRes.data || [];
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+
+      const thisMonth = (l: any) => {
+        if (!l.startDate && !l.createdAt) return false;
+        const date = new Date(l.startDate || l.createdAt);
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      };
+
+      setMonthlyUsage({
+        casual: leaves.filter((l: any) => l.type === "CASUAL" && thisMonth(l)).length,
+        sick: leaves.filter((l: any) => l.type === "SICK" && thisMonth(l)).length,
+        maternity: leaves.filter((l: any) => l.type === "MATERNITY" && thisMonth(l)).length,
+        paternity: leaves.filter((l: any) => l.type === "PATERNITY" && thisMonth(l)).length,
+      });
+
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const cData = months.map(m => ({ month: m, value: 0 }));
+      const sData = months.map(m => ({ month: m, value: 0 }));
+
+      leaves.forEach((l: any) => {
+        if (!l.startDate && !l.createdAt) return;
+        const date = new Date(l.startDate || l.createdAt);
+        if (date.getFullYear() === currentYear) {
+          const idx = date.getMonth();
+          if (l.type === "CASUAL") cData[idx].value += 1;
+          if (l.type === "SICK") sData[idx].value += 1;
+        }
+      });
+
+      setChartData({ casual: cData, sick: sData });
+
     } catch (err) {
       console.error(err);
     }
   };
 
-  if (!stats) return <LoaderSpinner />;
+  if (!stats || !monthlyUsage || !chartData) return <LoaderSpinner />;
 
   return (
     <div className="space-y-6">
@@ -56,7 +91,11 @@ const Dashboard = () => {
         </div>
       </div>
       <div>
-        <LeaveSummaryCards balance={stats.balance} />
+        <LeaveSummaryCards
+          balance={stats.balance}
+          monthlyUsage={monthlyUsage}
+          chartData={chartData}
+        />
       </div>
     </div>
   );
