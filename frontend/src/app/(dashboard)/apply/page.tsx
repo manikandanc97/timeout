@@ -104,7 +104,6 @@ const ApplyLeave = () => {
     selectedBalance !== null && selectedBalance <= 3 && selectedBalance > 0;
   const isNoBalance = selectedBalance !== null && selectedBalance <= 0;
 
-  // How many days will be deducted (working days from selected range)
   const daysToDeduct = dateStats.workingDays;
   const balanceAfter =
     selectedBalance !== null && daysToDeduct > 0
@@ -144,7 +143,7 @@ const ApplyLeave = () => {
                 }`}
             >
               {/* Balance row */}
-              <div className='flex items-center justify-between px-4 py-3'>
+              <div className='flex justify-between items-center px-4 py-3'>
                 <div className='flex items-center gap-2'>
                   <CalendarDays size={15} />
                   <span className='font-medium'>
@@ -155,7 +154,7 @@ const ApplyLeave = () => {
                   {selectedBalance !== null ? (
                     <>
                       {selectedBalance}{' '}
-                      <span className='font-normal text-xs opacity-70'>
+                      <span className='opacity-70 font-normal text-xs'>
                         days left
                       </span>
                     </>
@@ -165,7 +164,6 @@ const ApplyLeave = () => {
                 </span>
               </div>
 
-              {/* Deduction preview — only when dates are picked */}
               {daysToDeduct > 0 && selectedBalance !== null && (
                 <div
                   className={`flex items-center justify-between border-t px-4 py-2.5 text-xs
@@ -179,7 +177,9 @@ const ApplyLeave = () => {
                 >
                   <div className='flex items-center gap-3'>
                     <span className='opacity-70'>Will deduct</span>
-                    <span className='font-semibold text-sm'>−{daysToDeduct} days</span>
+                    <span className='font-semibold text-sm'>
+                      −{daysToDeduct} days
+                    </span>
                   </div>
                   <div className='flex items-center gap-1.5'>
                     <span className='opacity-70'>Balance after:</span>
@@ -214,21 +214,21 @@ const ApplyLeave = () => {
           </div>
 
           {startDate && endDate && dateStats.totalCalendar > 0 && (
-            <div className='grid grid-cols-3 gap-2 text-center text-xs'>
-              <div className='rounded-lg bg-background border border-accent/30 py-2 px-1'>
-                <p className='text-gray-400 mb-0.5'>Calendar days</p>
+            <div className='gap-2 grid grid-cols-3 text-xs text-center'>
+              <div className='bg-background px-1 py-2 border border-accent/30 rounded-lg'>
+                <p className='mb-0.5 text-gray-400'>Calendar days</p>
                 <p className='font-semibold text-gray-700 text-sm'>
                   {dateStats.totalCalendar}
                 </p>
               </div>
-              <div className='rounded-lg bg-orange-50 border border-orange-100 py-2 px-1'>
-                <p className='text-orange-400 mb-0.5'>Weekends</p>
+              <div className='bg-orange-50 px-1 py-2 border border-orange-100 rounded-lg'>
+                <p className='mb-0.5 text-orange-400'>Weekends</p>
                 <p className='font-semibold text-orange-600 text-sm'>
                   {dateStats.weekends}
                 </p>
               </div>
-              <div className='rounded-lg bg-green-50 border border-green-100 py-2 px-1'>
-                <p className='text-green-500 mb-0.5'>Working days</p>
+              <div className='bg-green-50 px-1 py-2 border border-green-100 rounded-lg'>
+                <p className='mb-0.5 text-green-500'>Working days</p>
                 <p className='font-semibold text-green-700 text-sm'>
                   {dateStats.workingDays}
                 </p>
@@ -248,16 +248,16 @@ const ApplyLeave = () => {
           </div>
 
           {type && LEAVE_POLICY[type] && (
-            <div className='flex gap-2 rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-xs text-blue-700'>
-              <Info size={14} className='mt-0.5 shrink-0 text-blue-500' />
+            <div className='flex gap-2 bg-blue-50 px-4 py-3 border border-blue-100 rounded-lg text-blue-700 text-xs'>
+              <Info size={14} className='mt-0.5 text-blue-500 shrink-0' />
               <p>{LEAVE_POLICY[type]}</p>
             </div>
           )}
 
-          <div className='flex gap-2 rounded-lg bg-amber-50 border border-amber-100 px-4 py-3 text-xs text-amber-700'>
+          <div className='flex gap-2 bg-amber-50 px-4 py-3 border border-amber-100 rounded-lg text-amber-700 text-xs'>
             <AlertTriangle
               size={14}
-              className='mt-0.5 shrink-0 text-amber-500'
+              className='mt-0.5 text-amber-500 shrink-0'
             />
             <p>
               Your leave request will be sent to your{' '}
@@ -266,12 +266,16 @@ const ApplyLeave = () => {
             </p>
           </div>
 
-          <div className='flex items-center justify-between pt-1'>
-            <div className='flex items-center gap-1.5 text-xs text-gray-400'>
+          <div className='flex justify-between items-center pt-1'>
+            <div className='flex items-center gap-1.5 text-gray-400 text-xs'>
               <ShieldCheck size={13} className='text-primary' />
               <span>Requests are reviewed within 1–2 business days</span>
             </div>
-            <Button onClick={() => {}} className='px-6' disabled={isNoBalance || isOverdrawn}>
+            <Button
+              onClick={() => {}}
+              className='px-6'
+              disabled={isNoBalance || isOverdrawn}
+            >
               Submit Leave Request
             </Button>
           </div>

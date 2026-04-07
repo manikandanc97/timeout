@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { setAccessToken } from '@/lib/token';
 import api from '@/services/api';
-import LoaderSpinner from '../ui/Loader';
+import DashboardLayoutSkeleton from '../layout/DashboardLayoutSkeleton';
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -23,7 +23,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }, [router]);
 
   if (loading) {
-    return <LoaderSpinner />;
+    return <DashboardLayoutSkeleton />;
   }
 
   return <div>{children}</div>;

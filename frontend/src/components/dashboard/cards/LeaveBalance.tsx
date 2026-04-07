@@ -16,8 +16,6 @@ const COLORS = ["#0E7490", "#14B8A6", "#22C55E", "#6366F1"];
 
 type TooltipState = {
   visible: boolean;
-  x: number;
-  y: number;
   name: string;
   value: number;
   color: string;
@@ -25,6 +23,7 @@ type TooltipState = {
 
 const LeaveBalance = ({ balance }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const data = useMemo(
     () => [
@@ -41,21 +40,28 @@ const LeaveBalance = ({ balance }: Props) => {
 
   const [tooltip, setTooltip] = useState<TooltipState>({
     visible: false,
-    x: 0,
-    y: 0,
     name: "",
     value: 0,
     color: "",
   });
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+  const updateTooltipPosition = (clientX: number, clientY: number) => {
+    if (!containerRef.current || !tooltipRef.current) return;
+
     const rect = containerRef.current.getBoundingClientRect();
-    setTooltip((prev) => ({
-      ...prev,
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    }));
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    tooltipRef.current.style.left = `${x}px`;
+    tooltipRef.current.style.top = `${y}px`;
+    tooltipRef.current.style.transform =
+      x > rect.width / 2
+        ? "translate(calc(-100% - 12px), -50%)"
+        : "translate(12px, -50%)";
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    updateTooltipPosition(e.clientX, e.clientY);
   };
 
   const handleMouseLeave = () =>
@@ -111,15 +117,9 @@ const LeaveBalance = ({ balance }: Props) => {
 
         {tooltip.visible && (
           <div
+            ref={tooltipRef}
             className="z-50 absolute flex items-center gap-2 bg-white shadow-lg px-3 py-2 border border-gray-100 rounded-xl text-sm whitespace-nowrap pointer-events-none"
-            style={{
-              left: tooltip.x,
-              top: tooltip.y,
-              transform:
-                tooltip.x > (containerRef.current?.offsetWidth ?? 0) / 2
-                  ? "translate(calc(-100% - 12px), -50%)"
-                  : "translate(12px, -50%)",
-            }}
+            style={{ left: 0, top: 0 }}
           >
             <span
               className="rounded-full w-2.5 h-2.5 shrink-0"

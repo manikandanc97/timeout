@@ -1,6 +1,6 @@
 import React from 'react';
-import Button from '../ui/Button';
-import WelcomeIcon from '../svg/WelcomeIcon';
+import Button from '../../ui/Button';
+import WelcomeIcon from '../../svg/WelcomeIcon';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -19,9 +19,14 @@ const getTodayDate = () => {
   });
 };
 
+interface WelcomeCardProps {
+  name?: string;
+  loading?: boolean;
+}
+
 const WelcomeCard = ({ name }: { name: string }) => {
   return (
-    <div className='h-full relative flex md:flex-row flex-col justify-between items-center bg-linear-to-r from-[#00a76f]/10 to-[#00a76f]/5 shadow-sm p-8 md:p-10 border border-[#00a76f]/20 rounded-2xl overflow-hidden'>
+    <div className='relative flex md:flex-row flex-col justify-between items-center bg-linear-to-r from-[#00a76f]/10 to-[#00a76f]/5 shadow-sm p-8 md:p-10 border border-[#00a76f]/20 rounded-2xl h-full overflow-hidden'>
       <div className='z-10 relative flex flex-col items-start gap-4 max-w-md'>
         <div>
           <h1 className='font-semibold text-primary text-lg'>

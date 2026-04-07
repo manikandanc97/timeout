@@ -53,6 +53,11 @@ model Leave {
   status    LeaveStatus @default(PENDING)
   user      User        @relation(fields: [userId], references: [id])
   createdAt DateTime    @default(now())
+
+  @@index([userId, status])
+  @@index([userId, fromDate])
+  @@index([status])
+  @@index([fromDate])
 }
 
 model LeaveBalance {
