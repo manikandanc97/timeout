@@ -5,7 +5,7 @@ import LeaveSummarySkeleton from '@/components/dashboard/skeletons/LeaveSummaryS
 import UpcomingHolidaysSkeleton from '@/components/dashboard/skeletons/UpcomingHolidaysSkeleton';
 import WelcomeCardSkeleton from '@/components/dashboard/skeletons/WelcomeCardSkeleton';
 
-const SidebarSkeleton = () => {
+export const SidebarSkeleton = () => {
   return (
     <aside className='flex flex-col bg-primary-dark w-40 h-full text-white'>
       <div className='flex items-center gap-2 p-5 shrink-0'>
@@ -28,7 +28,7 @@ const SidebarSkeleton = () => {
   );
 };
 
-const TopbarSkeleton = () => {
+export const TopbarSkeleton = () => {
   return (
     <div className='flex justify-between items-center bg-white shadow-md p-4'>
       <div className='bg-gray-200 rounded w-40 h-8 animate-pulse' />
@@ -45,7 +45,7 @@ const TopbarSkeleton = () => {
   );
 };
 
-const DashboardContentSkeleton = () => {
+export const DashboardContentSkeleton = () => {
   return (
     <div className='space-y-6'>
       <div className='gap-6 grid grid-cols-1 md:grid-cols-3'>

@@ -5,7 +5,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 type Props = {
   balance: {
-    casual: number;
+    annual: number;
     sick: number;
     maternity?: number;
     paternity?: number;
@@ -27,10 +27,10 @@ const LeaveBalance = ({ balance }: Props) => {
 
   const data = useMemo(
     () => [
-      { name: "Casual", value: balance.casual },
+      { name: "annual", value: balance.annual },
       { name: "Sick", value: balance.sick },
     ],
-    [balance.casual, balance.sick],
+    [balance.annual, balance.sick],
   );
 
   const total = useMemo(

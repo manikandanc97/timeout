@@ -1,8 +1,19 @@
 import axios from 'axios';
+import { clearAccessToken, getAccessToken, setAccessToken } from '@/lib/token';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const accessToken = getAccessToken();
+
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  return config;
 });
 
 api.interceptors.response.use(
@@ -14,14 +25,24 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 403 && !originalRequest._retry) {
+    if (
+      (error.response?.status === 401 || error.response?.status === 403) &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
 
       try {
-        await api.post('/auth/refresh');
+        const refreshResponse = await api.post('/auth/refresh');
+        const newAccessToken = refreshResponse.data?.accessToken;
+
+        if (newAccessToken) {
+          setAccessToken(newAccessToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
 
         return api(originalRequest);
-      } catch (error) {
+      } catch {
+        clearAccessToken();
         window.location.href = '/login';
       }
     }

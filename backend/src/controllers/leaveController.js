@@ -3,7 +3,7 @@ import prisma from '../prismaClient.js';
 const getDefaultLeaveBalance = (user) => ({
   userId: user.id,
   sick: 0,
-  casual: 12,
+  annual: 12,
   maternity: user.gender === 'FEMALE' ? 180 : 0,
   paternity: user.gender === 'MALE' ? 15 : 0,
 });
@@ -43,7 +43,17 @@ export const applyLeave = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    if (new Date(fromDate) > new Date(toDate)) {
+    const normalizedFromDate = new Date(`${fromDate}T00:00:00`);
+    const normalizedToDate = new Date(`${toDate}T00:00:00`);
+
+    if (
+      Number.isNaN(normalizedFromDate.getTime()) ||
+      Number.isNaN(normalizedToDate.getTime())
+    ) {
+      return res.status(400).json({ message: 'Invalid leave dates provided' });
+    }
+
+    if (normalizedFromDate > normalizedToDate) {
       return res
         .status(400)
         .json({ message: 'From date cannot be after To date' });
@@ -64,19 +74,40 @@ export const applyLeave = async (req, res) => {
     const leaveType = type.toUpperCase();
     const totalDays = await getWorkingDays(fromDate, toDate);
 
+    const existingLeave = await prisma.leave.findFirst({
+      where: {
+        userId,
+        status: {
+          in: ['PENDING', 'APPROVED'],
+        },
+        fromDate: {
+          lte: normalizedToDate,
+        },
+        toDate: {
+          gte: normalizedFromDate,
+        },
+      },
+    });
+
+    if (existingLeave) {
+      return res.status(400).json({
+        message: 'You already have a leave request for the selected dates',
+      });
+    }
+
     if (leaveType === 'SICK' && balance.sick < totalDays) {
       return res.status(400).json({ message: 'No sick leave left' });
     }
 
-    if (leaveType === 'CASUAL' && balance.casual < totalDays) {
-      return res.status(400).json({ message: 'No casual leave left' });
+    if (leaveType === 'ANNUAL' && balance.annual < totalDays) {
+      return res.status(400).json({ message: 'No annual leave left' });
     }
 
     const leave = await prisma.leave.create({
       data: {
         type,
-        fromDate: new Date(`${fromDate}T00:00:00`),
-        toDate: new Date(`${toDate}T00:00:00`),
+        fromDate: normalizedFromDate,
+        toDate: normalizedToDate,
         reason,
         userId: userId,
       },
@@ -89,10 +120,10 @@ export const applyLeave = async (req, res) => {
       });
     }
 
-    if (leaveType === 'CASUAL') {
+    if (leaveType === 'ANNUAL') {
       await prisma.leaveBalance.update({
         where: { userId },
-        data: { casual: { decrement: totalDays } },
+        data: { annual: { decrement: totalDays } },
       });
     }
 
@@ -227,14 +258,14 @@ export const getDashboardStats = async (req, res) => {
 
     const filteredBalance = {
       sick: balance.sick,
-      casual: balance.casual,
+      annual: balance.annual,
       ...(user.gender === 'FEMALE' && { maternity: balance.maternity }),
       ...(user.gender === 'MALE' && { paternity: balance.paternity }),
     };
 
     const usageByType = {
       SICK: new Set(),
-      CASUAL: new Set(),
+      ANNUAL: new Set(),
       MATERNITY: new Set(),
       PATERNITY: new Set(),
     };
@@ -263,7 +294,7 @@ export const getDashboardStats = async (req, res) => {
 
     const monthlyUsage = {
       sick: usageByType.SICK.size,
-      casual: usageByType.CASUAL.size,
+      annual: usageByType.ANNUAL.size,
       maternity: usageByType.MATERNITY.size,
       paternity: usageByType.PATERNITY.size,
     };
@@ -286,9 +317,9 @@ export const getDashboardStats = async (req, res) => {
     const currentMonthIndex = new Date().getMonth();
 
     const chartData = {
-      casual: months.map((month, index) => ({
+      annual: months.map((month, index) => ({
         month,
-        value: index === currentMonthIndex ? monthlyUsage.casual : 0,
+        value: index === currentMonthIndex ? monthlyUsage.annual : 0,
       })),
       sick: months.map((month, index) => ({
         month,

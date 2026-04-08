@@ -1,6 +1,6 @@
 import React from 'react';
-import Button from '../../ui/Button';
 import WelcomeIcon from '../../svg/WelcomeIcon';
+import Link from 'next/link';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -18,11 +18,6 @@ const getTodayDate = () => {
     year: 'numeric',
   });
 };
-
-interface WelcomeCardProps {
-  name?: string;
-  loading?: boolean;
-}
 
 const WelcomeCard = ({ name }: { name: string }) => {
   return (
@@ -43,9 +38,12 @@ const WelcomeCard = ({ name }: { name: string }) => {
           team’s availability, all in one place. Plan smart, work better
         </p>
 
-        <Button className='bg-[#00a76f] hover:bg-[#008f5d] shadow-[#00a76f]/20 shadow-md mt-4 px-6 py-2.5 rounded-lg font-semibold text-white transition-colors'>
+        <Link
+          href='/apply'
+          className='inline-flex justify-center items-center bg-[#00a76f] hover:bg-[#008f5d] shadow-[#00a76f]/20 shadow-md mt-4 px-6 py-2.5 rounded-lg font-semibold text-white transition-colors'
+        >
           Apply Leave
-        </Button>
+        </Link>
       </div>
 
       <div className='right-0 z-10 relative flex justify-center items-center mt-8 md:mt-0 w-48 md:w-64 h-48 md:h-64 shrink-0'>

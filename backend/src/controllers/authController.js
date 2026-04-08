@@ -32,7 +32,7 @@ export const register = async (req, res) => {
       data: {
         userId: user.id,
         sick: 0,
-        casual: 12,
+        annual: 12,
         maternity: gender === 'FEMALE' ? 180 : 0,
         paternity: gender === 'MALE' ? 15 : 0,
       },
@@ -113,6 +113,15 @@ export const refreshTokenHandler = (req, res) => {
         expiresIn: '15m',
       },
     );
+
+    res.cookie('accessToken', newAccessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    });
+
     res.json({ accessToken: newAccessToken });
   });
 };

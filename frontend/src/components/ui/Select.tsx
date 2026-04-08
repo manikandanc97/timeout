@@ -15,26 +15,32 @@ interface SelectProps {
   containerClassName?: string;
   selectClassName?: string;
   rightElement?: React.ReactNode;
+  hideLabel?: boolean;
 }
 
 const Select: React.FC<SelectProps> = ({
   id,
   label,
-  placeholder = 'Select',
+  placeholder = ' ',
   value,
   options,
   onChange,
   containerClassName = '',
   selectClassName = '',
   rightElement,
+  hideLabel = false,
 }) => {
+  const spacingClass = hideLabel ? 'px-3 py-3' : 'px-3 pb-2 pt-5';
+  const ariaLabel = label || placeholder || id;
+
   return (
     <div className={`relative w-full ${containerClassName}`}>
       <select
         id={id}
         value={value}
         onChange={onChange}
-        className={`peer block w-full appearance-none rounded-md border border-gray-300 bg-transparent px-3 pt-2 pb-2 text-sm text-gray-500 outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-primary ${selectClassName}`}
+        className={`peer block w-full appearance-none rounded-md border border-gray-300 bg-transparent ${spacingClass} text-sm text-gray-900 outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-primary ${selectClassName}`}
+        aria-label={ariaLabel}
       >
         <option value='' disabled hidden>
           {placeholder}
@@ -46,6 +52,16 @@ const Select: React.FC<SelectProps> = ({
           </option>
         ))}
       </select>
+      {label && !hideLabel && (
+        <label
+          htmlFor={id}
+          className={`absolute left-3 top-4 z-10 origin-left -translate-y-4 scale-75 transform text-sm text-gray-500 duration-300 peer-focus:top-4 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:text-primary bg-white px-1 ${
+            !value ? 'top-1/2 -translate-y-1/2 scale-100' : ''
+          }`}
+        >
+          {label}
+        </label>
+      )}
 
       {rightElement ? (
         <div className='top-1/2 right-3 absolute -translate-y-1/2'>

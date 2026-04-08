@@ -7,18 +7,18 @@ import { Baby, TrendingDown, TrendingUp } from 'lucide-react';
 type Props = {
   balance: {
     sick: number;
-    casual: number;
+    annual: number;
     maternity?: number;
     paternity?: number;
   };
   monthlyUsage?: {
     sick: number;
-    casual: number;
+    annual: number;
     maternity?: number;
     paternity?: number;
   };
   chartData?: {
-    casual: { month: string; value: number }[];
+    annual: { month: string; value: number }[];
     sick: { month: string; value: number }[];
   };
 };
@@ -147,7 +147,7 @@ const LeaveCard = ({
 const LeaveSummaryCards = ({ balance, monthlyUsage, chartData }: Props) => {
   const usage = monthlyUsage ?? {
     sick: 0,
-    casual: 0,
+    annual: 0,
     maternity: 0,
     paternity: 0,
   };
@@ -163,10 +163,10 @@ const LeaveSummaryCards = ({ balance, monthlyUsage, chartData }: Props) => {
   return (
     <div className='gap-5 grid grid-cols-1 md:grid-cols-3'>
       <LeaveCard
-        label='Casual Leave'
-        count={balance.casual}
-        used={usage.casual}
-        right={<MiniChart color='#0E7490' data={chartData?.casual || []} />}
+        label='Annual Leave'
+        count={balance.annual}
+        used={usage.annual}
+        right={<MiniChart color='#0E7490' data={chartData?.annual || []} />}
       />
 
       <LeaveCard
