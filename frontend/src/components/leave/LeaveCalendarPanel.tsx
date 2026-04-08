@@ -8,10 +8,12 @@ import {
   MapPin,
   Sun,
 } from 'lucide-react';
+import type { Holiday } from '@/types/holiday';
+import type { Leave } from '@/types/leave';
 
 type Props = {
-  holidays: any[];
-  history: any[];
+  holidays: Holiday[];
+  history: Leave[];
 };
 
 const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];

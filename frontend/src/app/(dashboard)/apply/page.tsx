@@ -1,14 +1,17 @@
 import React from 'react';
 import ApplyLeaveClient from './ApplyLeaveClient';
-import { serverFetch } from '@/services/server-api';
-import { getDashboardData } from '@/services/dashboard-data';
+import { serverFetch } from '@/services/serverApi';
+import { getDashboardData } from '@/services/dashboardService';
+import type { User } from '@/types/user';
+import type { Holiday } from '@/types/holiday';
+import type { Leave } from '@/types/leave';
 
 const page = async () => {
   const [profile, dashboard, holidays, history] = await Promise.all([
-    serverFetch('/profile'),
+    serverFetch<User>('/profile'),
     getDashboardData(),
-    serverFetch('/holidays'),
-    serverFetch('/history'),
+    serverFetch<Holiday[]>('/holidays'),
+    serverFetch<Leave[]>('/history'),
   ]);
 
   return (

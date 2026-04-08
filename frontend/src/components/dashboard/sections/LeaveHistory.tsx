@@ -1,27 +1,14 @@
 'use client';
 
-import {
-  History,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  ChevronRight,
-} from 'lucide-react';
+import { History, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-
-export type Leave = {
-  id: number;
-  type: string;
-  fromDate: string;
-  toDate: string;
-  status: string;
-};
+import type { Leave, LeaveStatus } from '@/types/leave';
 
 type Props = {
   leaves: Leave[];
 };
 
-export const getStatusBadge = (status: string) => {
+export const getStatusBadge = (status: LeaveStatus | string) => {
   switch (status?.toUpperCase()) {
     case 'APPROVED':
       return (

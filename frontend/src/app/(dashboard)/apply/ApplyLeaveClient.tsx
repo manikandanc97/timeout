@@ -2,13 +2,16 @@
 
 import ApplyLeave from '@/components/leave/ApplyLeave';
 import LeaveCalendarPanel from '@/components/leave/LeaveCalendarPanel';
+import type { Leave, LeaveDashboardData } from '@/types/leave';
+import type { Holiday } from '@/types/holiday';
+import type { User } from '@/types/user';
 import React from 'react';
 
 type Props = {
-  initialProfile: any;
-  initialDashboard: any;
-  initialHolidays: any[];
-  initialHistory: any[];
+  initialProfile: Partial<User> | null;
+  initialDashboard: LeaveDashboardData | null;
+  initialHolidays: Holiday[];
+  initialHistory: Leave[];
 };
 
 const ApplyLeaveClient = ({

@@ -1,12 +1,7 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-
-export type Holiday = {
-  id: number;
-  name: string;
-  date: string;
-};
+import type { Holiday } from "@/types/holiday";
 
 type Props = {
   holidays: Holiday[];

@@ -3,24 +3,16 @@
 import React, { useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, Tooltip, Cell } from 'recharts';
 import { Baby, TrendingDown, TrendingUp } from 'lucide-react';
+import type {
+  LeaveBalance,
+  LeaveChartData,
+  LeaveUsage,
+} from '@/types/leave';
 
 type Props = {
-  balance: {
-    sick: number;
-    annual: number;
-    maternity?: number;
-    paternity?: number;
-  };
-  monthlyUsage?: {
-    sick: number;
-    annual: number;
-    maternity?: number;
-    paternity?: number;
-  };
-  chartData?: {
-    annual: { month: string; value: number }[];
-    sick: { month: string; value: number }[];
-  };
+  balance: LeaveBalance;
+  monthlyUsage?: LeaveUsage;
+  chartData?: LeaveChartData;
 };
 
 const CustomTooltip = ({ active, payload }: any) => {

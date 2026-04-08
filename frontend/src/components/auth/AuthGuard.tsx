@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { setAccessToken } from '@/lib/token';
 import api from '@/services/api';
-import { SidebarSkeleton, TopbarSkeleton, DashboardContentSkeleton } from '../layout/DashboardLayoutSkeleton';
+import SidebarSkeleton from '@/components/dashboard/skeletons/SidebarSkeleton';
+import TopbarSkeleton from '@/components/dashboard/skeletons/TopbarSkeleton';
+import DashboardContentSkeleton from '@/components/dashboard/skeletons/DashboardContentSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
 import { usePathname } from 'next/navigation';
 

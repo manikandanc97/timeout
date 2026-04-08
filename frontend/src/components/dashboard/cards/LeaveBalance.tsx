@@ -2,14 +2,10 @@
 
 import React, { useRef, useState, useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import type { LeaveBalance as LeaveBalanceType } from "@/types/leave";
 
 type Props = {
-  balance: {
-    annual: number;
-    sick: number;
-    maternity?: number;
-    paternity?: number;
-  };
+  balance: LeaveBalanceType;
 };
 
 const COLORS = ["#0E7490", "#14B8A6", "#22C55E", "#6366F1"];

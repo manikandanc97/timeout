@@ -23,12 +23,6 @@ const RightPanel: React.FC<RightPanelProps> = ({ activePanel, onClose }) => {
       return 'Profile';
     }
   };
-
-  const renderContent = () => {
-    if (activePanel === 'profile') {
-      return <ProfilePanel />;
-    }
-  };
   return (
     <div className='top-0 right-0 z-50 fixed bg-white shadow-lg p-4 w-80 h-full'>
       <div className='flex justify-between items-center gap-2 mb-4'>

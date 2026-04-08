@@ -1,4 +1,4 @@
-import DashboardLayoutSkeleton from '@/components/layout/DashboardLayoutSkeleton';
+import DashboardLayoutSkeleton from '@/components/dashboard/skeletons/DashboardLayoutSkeleton';
 
 const Loading = () => {
   return <DashboardLayoutSkeleton />;

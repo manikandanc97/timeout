@@ -2,6 +2,10 @@
 
 import api from '@/services/api';
 import { leaveSchema, type LeaveFormData } from '@/utils/leave/leaveSchema';
+import type { Leave, LeaveBalance } from '@/types/leave';
+import type { Holiday } from '@/types/holiday';
+import type { Gender } from '@/types/user';
+import { LEAVE_BALANCE_LABELS } from '@/constants/leave';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -18,40 +22,13 @@ import {
   Info,
   Clock3,
 } from 'lucide-react';
-import {
-  LEAVE_BALANCE_LABELS,
-  LEAVE_POLICY,
-  type LeavePolicyKey,
-} from '@/utils/leave/leaveConstants';
 import Input from '../ui/Input';
 import { calculateLeaveDays } from '@/utils/leave/leaveHelpers';
 import { startDate as formatDate } from '@/utils/leave/leaveHelpers';
 
-type Balance = {
-  annual: number;
-  sick: number;
-  maternity?: number;
-  paternity?: number;
-};
-
-type Holiday = {
-  id: number;
-  date: string;
-  name: string;
-};
-
-type Leave = {
-  id: number;
-  type: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  status: string;
-};
-
 type Props = {
-  userGender: string;
-  balance: Balance | null;
+  userGender: Gender | string;
+  balance: LeaveBalance | null;
   holidays: Holiday[];
   history: Leave[];
 };
@@ -95,7 +72,9 @@ const leaveTypeConfig = {
   },
 } as const;
 
-const balanceKeyMap: Record<LeavePolicyKey, keyof Balance> = {
+type LeavePolicyKey = keyof typeof leaveTypeConfig;
+
+const balanceKeyMap: Record<LeavePolicyKey, keyof LeaveBalance> = {
   ANNUAL_LEAVE: 'annual',
   SICK_LEAVE: 'sick',
   MATERNITY_LEAVE: 'maternity',
@@ -131,8 +110,6 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
 
-  const selectedType = type as LeavePolicyKey;
-
   const dateStats = useMemo(
     () => calculateLeaveDays(startDate, endDate),
     [startDate, endDate],
@@ -141,7 +118,7 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
   const todayIso = useMemo(() => formatDate(new Date()), []);
 
   const leaveOptions = useMemo(() => {
-    const options: (keyof typeof leaveTypeConfig)[] = [
+    const options: LeavePolicyKey[] = [
       'ANNUAL_LEAVE',
       'SICK_LEAVE',
     ];
@@ -205,10 +182,10 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
 
   const onSubmit = async (data: LeaveFormData) => {
     try {
-      await api.post('/leave/apply', {
+      await api.post('/leaves', {
         type: data.type,
-        startDate: data.startDate,
-        endDate: data.endDate,
+        fromDate: data.startDate,
+        toDate: data.endDate,
         reason: data.reason,
       });
       toast.success('Leave request submitted successfully');

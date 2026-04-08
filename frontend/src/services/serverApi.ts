@@ -67,7 +67,7 @@ const refreshAccessToken = cache(async () => {
     : null;
 });
 
-export async function serverFetch(endpoint: string) {
+export async function serverFetch<T = unknown>(endpoint: string): Promise<T> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (!baseUrl) {
@@ -118,5 +118,6 @@ export async function serverFetch(endpoint: string) {
     throw new Error(`API failed: ${res.status} - ${errorText}`);
   }
 
-  return res.json();
+  const data = await res.json();
+  return data as T;
 }

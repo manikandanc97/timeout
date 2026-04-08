@@ -1,4 +1,4 @@
-import { getDashboardData } from '@/services/dashboard-data';
+import { getDashboardData } from '@/services/dashboardService';
 import LeaveSummaryCards from './LeaveSummaryCards';
 
 const LeaveSummaryServer = async () => {
