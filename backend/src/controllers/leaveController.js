@@ -188,6 +188,82 @@ export const updateLeaveStatus = async (req, res) => {
   }
 };
 
+export const cancelLeave = async (req, res) => {
+  try {
+    const leaveId = Number(req.params.id);
+
+    if (Number.isNaN(leaveId)) {
+      return res.status(400).json({ message: 'Invalid leave id' });
+    }
+
+    const leave = await prisma.leave.findUnique({ where: { id: leaveId } });
+
+    if (!leave) {
+      return res.status(404).json({ message: 'Leave not found' });
+    }
+
+    const isManager = ['MANAGER', 'ADMIN'].includes(req.user.role);
+    const isOwner = leave.userId === req.user.id;
+
+    if (!isManager && !isOwner) {
+      return res.status(403).json({ message: 'Not authorized to cancel' });
+    }
+
+    if (leave.status !== 'PENDING') {
+      return res
+        .status(400)
+        .json({ message: 'Only pending leave requests can be cancelled' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: leave.userId },
+      select: { id: true, gender: true },
+    });
+
+    let balance = await prisma.leaveBalance.findUnique({
+      where: { userId: leave.userId },
+    });
+
+    if (!balance) {
+      balance = await prisma.leaveBalance.create({
+        data: getDefaultLeaveBalance(user ?? { id: leave.userId, gender: 'MALE' }),
+      });
+    }
+
+    const totalDays = await getWorkingDays(leave.fromDate, leave.toDate);
+    const type = leave.type?.toUpperCase();
+
+    const updates = [];
+
+    if (type === 'SICK') {
+      updates.push(
+        prisma.leaveBalance.update({
+          where: { userId: leave.userId },
+          data: { sick: { increment: totalDays } },
+        }),
+      );
+    }
+
+    if (type === 'ANNUAL') {
+      updates.push(
+        prisma.leaveBalance.update({
+          where: { userId: leave.userId },
+          data: { annual: { increment: totalDays } },
+        }),
+      );
+    }
+
+    updates.push(prisma.leave.delete({ where: { id: leaveId } }));
+
+    await prisma.$transaction(updates);
+
+    res.json({ message: 'Leave cancelled successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 export const getDashboardStats = async (req, res) => {
   try {
     const user = req.user;
