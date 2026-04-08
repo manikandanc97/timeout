@@ -13,8 +13,10 @@ const LeavesPage = async () => {
 
   return (
     <div className='bg-white shadow-md p-6 rounded-2xl'>
-      <h1 className='font-semibold text-gray-900 text-2xl'>My Leaves</h1>
-      <p className='mt-2 text-gray-600'>View and manage your leave requests</p>
+      <h1 className='font-semibold text-gray-900 text-2xl'>Leave Requests</h1>
+      <p className='mt-2 text-gray-600'>
+        Track, edit, or cancel your leave requests in one place.
+      </p>
       <div>
         <MyLeavesList leaves={leaves} />
       </div>

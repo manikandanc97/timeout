@@ -80,10 +80,6 @@ const Input: React.FC<InputProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     onChange?.(e as any);
-    if (isDate) {
-      // Close the picker immediately after a selection for better UX
-      (e.target as HTMLInputElement).blur();
-    }
   };
 
   return (

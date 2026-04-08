@@ -2,7 +2,7 @@
 
 import api from '@/services/api';
 import { leaveSchema, type LeaveFormData } from '@/utils/leave/leaveSchema';
-import type { Leave, LeaveBalance } from '@/types/leave';
+import type { Leave, LeaveBalance, LeaveType } from '@/types/leave';
 import type { Holiday } from '@/types/holiday';
 import type { Gender } from '@/types/user';
 import { LEAVE_BALANCE_LABELS } from '@/constants/leave';
@@ -31,10 +31,19 @@ type Props = {
   balance: LeaveBalance | null;
   holidays: Holiday[];
   history: Leave[];
+  onSuccess?: (leave: Leave | null | undefined) => void;
 };
 
-const leaveTypeConfig = {
-  ANNUAL_LEAVE: {
+const leaveTypeConfig: Record<LeaveType, {
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  border: string;
+  ring: string;
+  label: string;
+  desc: string;
+}> = {
+  ANNUAL: {
     icon: Umbrella,
     color: 'text-cyan-600',
     bg: 'bg-cyan-50',
@@ -43,7 +52,7 @@ const leaveTypeConfig = {
     label: 'Annual Leave',
     desc: 'Planned time off',
   },
-  SICK_LEAVE: {
+  SICK: {
     icon: Stethoscope,
     color: 'text-rose-500',
     bg: 'bg-rose-50',
@@ -52,7 +61,7 @@ const leaveTypeConfig = {
     label: 'Sick Leave',
     desc: 'Medical and wellness',
   },
-  MATERNITY_LEAVE: {
+  MATERNITY: {
     icon: Baby,
     color: 'text-pink-500',
     bg: 'bg-pink-50',
@@ -61,7 +70,7 @@ const leaveTypeConfig = {
     label: 'Maternity Leave',
     desc: 'Parental care',
   },
-  PATERNITY_LEAVE: {
+  PATERNITY: {
     icon: Baby,
     color: 'text-violet-500',
     bg: 'bg-violet-50',
@@ -70,15 +79,13 @@ const leaveTypeConfig = {
     label: 'Paternity Leave',
     desc: 'Parental care',
   },
-} as const;
+};
 
-type LeavePolicyKey = keyof typeof leaveTypeConfig;
-
-const balanceKeyMap: Record<LeavePolicyKey, keyof LeaveBalance> = {
-  ANNUAL_LEAVE: 'annual',
-  SICK_LEAVE: 'sick',
-  MATERNITY_LEAVE: 'maternity',
-  PATERNITY_LEAVE: 'paternity',
+const balanceKeyMap: Record<LeaveType, keyof LeaveBalance> = {
+  ANNUAL: 'annual',
+  SICK: 'sick',
+  MATERNITY: 'maternity',
+  PATERNITY: 'paternity',
 };
 
 const formatFriendlyDate = (dateStr?: string) => {
@@ -88,7 +95,7 @@ const formatFriendlyDate = (dateStr?: string) => {
   return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
+const ApplyLeave = ({ userGender, balance, holidays, history, onSuccess }: Props) => {
   const {
     control,
     handleSubmit,
@@ -99,11 +106,11 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
   } = useForm<LeaveFormData>({
     resolver: zodResolver(leaveSchema),
     defaultValues: {
-      type: '',
+      type: undefined,
       startDate: '',
       endDate: '',
       reason: '',
-    },
+    } as Partial<LeaveFormData>,
   });
 
   const type = watch('type');
@@ -111,25 +118,22 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
   const endDate = watch('endDate');
 
   const dateStats = useMemo(
-    () => calculateLeaveDays(startDate, endDate),
-    [startDate, endDate],
+    () => calculateLeaveDays(startDate, endDate, holidays),
+    [startDate, endDate, holidays],
   );
 
   const todayIso = useMemo(() => formatDate(new Date()), []);
 
-  const leaveOptions = useMemo(() => {
-    const options: LeavePolicyKey[] = [
-      'ANNUAL_LEAVE',
-      'SICK_LEAVE',
-    ];
-    if (userGender === 'FEMALE') options.push('MATERNITY_LEAVE');
-    else if (userGender === 'MALE') options.push('PATERNITY_LEAVE');
+  const leaveOptions = useMemo<LeaveType[]>(() => {
+    const options: LeaveType[] = ['ANNUAL', 'SICK'];
+    if (userGender === 'FEMALE') options.push('MATERNITY');
+    else if (userGender === 'MALE') options.push('PATERNITY');
     return options;
   }, [userGender]);
 
   const selectedBalance = useMemo(() => {
     if (!type || !balance) return null;
-    const key = balanceKeyMap[type as LeavePolicyKey];
+    const key = balanceKeyMap[type as LeaveType];
     return key ? (balance[key] ?? null) : null;
   }, [type, balance]);
 
@@ -138,10 +142,28 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
     selectedBalance !== null ? selectedBalance - daysToDeduct : null;
   const isOverdrawn = balanceAfter !== null && balanceAfter < 0;
   const hasDateRange = Boolean(startDate && endDate);
+  const hasOverlap = useMemo(() => {
+    if (!hasDateRange || !history?.length) return false;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
+
+    return history.some((leave) => {
+      const leaveStart = new Date(leave.fromDate ?? leave.startDate ?? '');
+      const leaveEnd = new Date(leave.toDate ?? leave.endDate ?? '');
+      if (
+        Number.isNaN(leaveStart.getTime()) ||
+        Number.isNaN(leaveEnd.getTime()) ||
+        leave.status === 'REJECTED'
+      )
+        return false;
+      return leaveStart <= end && start <= leaveEnd;
+    });
+  }, [hasDateRange, history, startDate, endDate]);
 
   const activeConfig =
     type && type in leaveTypeConfig
-      ? leaveTypeConfig[type as keyof typeof leaveTypeConfig]
+      ? leaveTypeConfig[type as LeaveType]
       : null;
 
   const upcomingHoliday = useMemo(() => {
@@ -160,10 +182,11 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
 
   const lastRequest = useMemo(() => {
     if (!history || history.length === 0) return null;
-    const sorted = [...history].sort(
-      (a, b) =>
-        new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
-    );
+    const sorted = [...history].sort((a, b) => {
+      const aDate = new Date(a.fromDate ?? a.startDate ?? 0).getTime();
+      const bDate = new Date(b.fromDate ?? b.startDate ?? 0).getTime();
+      return bDate - aDate;
+    });
     return sorted[0];
   }, [history]);
 
@@ -182,7 +205,11 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
 
   const onSubmit = async (data: LeaveFormData) => {
     try {
-      await api.post('/leaves', {
+      if (hasOverlap) {
+        toast.error('You already have a leave for these dates.');
+        return;
+      }
+      const response = await api.post('/leaves', {
         type: data.type,
         fromDate: data.startDate,
         toDate: data.endDate,
@@ -190,6 +217,7 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
       });
       toast.success('Leave request submitted successfully');
       reset();
+      onSuccess?.((response as any)?.data?.leave);
     } catch {
       toast.error('Failed to submit leave request. Please try again.');
     }
@@ -232,7 +260,7 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
                   <div className='flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full font-medium text-[11px] text-gray-600'>
                     <ShieldCheck size={12} className='text-primary' />
                     <span>
-                      {LEAVE_BALANCE_LABELS[type as LeavePolicyKey] ??
+                      {LEAVE_BALANCE_LABELS[type as LeaveType] ??
                         'Balance aware'}
                     </span>
                   </div>
@@ -380,9 +408,15 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
                     )}
                   </div>
                 )}
+                {hasDateRange && hasOverlap && (
+                  <p className='flex items-center gap-1 mt-2 text-red-500 text-xs'>
+                    <AlertTriangle size={11} />
+                    You already applied for one or more of these dates.
+                  </p>
+                )}
 
                 {hasDateRange && (
-                  <div className='gap-3 grid grid-cols-3 mt-4'>
+                  <div className='gap-3 grid grid-cols-2 md:grid-cols-4 mt-4'>
                     {[
                       {
                         label: 'Calendar days',
@@ -393,6 +427,11 @@ const ApplyLeave = ({ userGender, balance, holidays, history }: Props) => {
                         label: 'Weekends skipped',
                         value: dateStats.weekends,
                         tone: 'text-amber-600',
+                      },
+                      {
+                        label: 'Holidays skipped',
+                        value: dateStats.holidayWeekdays,
+                        tone: 'text-emerald-600',
                       },
                       {
                         label: 'Working days',

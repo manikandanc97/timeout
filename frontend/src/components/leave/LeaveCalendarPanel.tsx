@@ -92,20 +92,35 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
     [holidays],
   );
 
-  const approvedDates = useMemo(() => {
-    const set: Date[] = [];
-    history
-      .filter((l) => l.status === 'APPROVED')
-      .forEach((l) => {
-        const start = new Date(l.startDate ?? l.fromDate);
-        const end = new Date(l.endDate ?? l.toDate);
-        const cur = new Date(start);
-        while (cur <= end) {
-          set.push(new Date(cur));
-          cur.setDate(cur.getDate() + 1);
-        }
-      });
-    return set;
+  const { approvedDates, pendingDates, rejectedDates } = useMemo(() => {
+    const approved: Date[] = [];
+    const pending: Date[] = [];
+    const rejected: Date[] = [];
+
+    history.forEach((l) => {
+      const start = new Date(l.startDate ?? l.fromDate);
+      const end = new Date(l.endDate ?? l.toDate);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+
+      const bucket =
+        l.status === 'APPROVED'
+          ? approved
+          : l.status === 'PENDING'
+            ? pending
+            : l.status === 'REJECTED'
+              ? rejected
+              : null;
+
+      if (!bucket) return;
+
+      const cur = new Date(start);
+      while (cur <= end) {
+        bucket.push(new Date(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+
+    return { approvedDates: approved, pendingDates: pending, rejectedDates: rejected };
   }, [history]);
 
   const upcomingHoliday = useMemo(() => {
@@ -128,9 +143,11 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
       const h = holidayDates.find((h) => isSameDay(h.date, date));
       return h?.name ?? 'Holiday';
     }
+    if (pendingDates.some((d) => isSameDay(d, date))) return 'Pending Leave';
+    if (approvedDates.some((d) => isSameDay(d, date))) return 'Approved Leave';
+    if (rejectedDates.some((d) => isSameDay(d, date))) return 'Rejected Leave';
     const dow = date.getDay();
     if (dow === 0 || dow === 6) return 'Weekend';
-    if (approvedDates.some((d) => isSameDay(d, date))) return 'Approved Leave';
     return '';
   };
 
@@ -139,6 +156,8 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
     const isToday = isSameDay(date, today);
     const isHoliday = holidayDates.some((h) => isSameDay(h.date, date));
     const isApproved = approvedDates.some((d) => isSameDay(d, date));
+    const isPending = pendingDates.some((d) => isSameDay(d, date));
+    const isRejected = rejectedDates.some((d) => isSameDay(d, date));
     const isWeekend = dow === 0 || dow === 6;
     const isHovered = hoveredDay && isSameDay(date, hoveredDay);
 
@@ -151,6 +170,16 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
       return {
         cell: `bg-amber-100 text-amber-700 font-semibold ${isHovered ? 'bg-amber-200' : ''}`,
         dot: 'bg-amber-400',
+      };
+    if (isRejected)
+      return {
+        cell: `bg-red-50 text-red-700 font-semibold ${isHovered ? 'bg-red-100' : ''}`,
+        dot: 'bg-red-400',
+      };
+    if (isPending)
+      return {
+        cell: `bg-blue-50 text-blue-700 font-semibold ${isHovered ? 'bg-blue-100' : ''}`,
+        dot: 'bg-blue-400',
       };
     if (isApproved)
       return {
@@ -328,7 +357,9 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
             {[
               { color: 'bg-primary', label: 'Today' },
               { color: 'bg-amber-400', label: 'Holiday' },
+              { color: 'bg-blue-400', label: 'Pending leave' },
               { color: 'bg-emerald-400', label: 'Approved leave' },
+              { color: 'bg-red-400', label: 'Rejected leave' },
               { color: 'bg-gray-200', label: 'Weekend' },
             ].map((item) => (
               <div key={item.label} className='flex items-center gap-2'>

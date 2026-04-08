@@ -143,7 +143,7 @@ export const getLeaves = async (req, res) => {
 
     if (user.role === 'EMPLOYEE') {
       leaves = await prisma.leave.findMany({
-        where: { userId: user.userId },
+        where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
       });
     } else {
