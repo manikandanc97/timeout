@@ -27,7 +27,7 @@ const ApplyLeaveClient = ({
           history={initialHistory ?? []}
         />
       </div>
-      <div className='xl:col-span-1'>
+      <div className='top-2 xl:sticky self-start xl:col-span-1'>
         <LeaveCalendarPanel
           holidays={initialHolidays ?? []}
           history={initialHistory ?? []}
