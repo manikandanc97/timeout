@@ -8,6 +8,7 @@ import SidebarSkeleton from '@/components/dashboard/skeletons/SidebarSkeleton';
 import TopbarSkeleton from '@/components/dashboard/skeletons/TopbarSkeleton';
 import DashboardContentSkeleton from '@/components/dashboard/skeletons/DashboardContentSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
+import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
 import { usePathname } from 'next/navigation';
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
@@ -33,6 +34,8 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       Content = <DashboardContentSkeleton />;
     } else if (pathname === '/apply') {
       Content = <ApplyLeaveSkeleton />;
+    } else if (pathname === '/leaves') {
+      Content = <MyLeavesSkeleton />;
     }
 
     return (

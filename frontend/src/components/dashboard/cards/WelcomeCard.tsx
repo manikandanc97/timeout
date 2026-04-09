@@ -21,32 +21,30 @@ const getTodayDate = () => {
 
 const WelcomeCard = ({ name }: { name: string }) => {
   return (
-    <div className='relative flex md:flex-row flex-col justify-between items-center bg-linear-to-r from-[#00a76f]/10 to-[#00a76f]/5 shadow-sm p-8 md:p-10 border border-[#00a76f]/20 rounded-2xl h-full overflow-hidden'>
-      <div className='z-10 relative flex flex-col items-start gap-4 max-w-md'>
+    <div className='relative flex h-full flex-col items-center justify-between overflow-hidden rounded-2xl border border-primary/25 bg-linear-to-r from-primary/10 via-primary/5 to-accent/10 p-8 shadow-sm md:flex-row md:p-10'>
+      <div className='relative z-10 flex max-w-md flex-col items-start gap-4'>
         <div>
-          <h1 className='font-semibold text-primary text-lg'>
-            {getGreeting()}
-          </h1>
+          <h1 className='text-lg font-semibold text-primary'>{getGreeting()}</h1>
 
-          <h2 className='font-bold text-gray-900 text-3xl'>{name}</h2>
+          <h2 className='text-3xl font-bold text-gray-900'>{name}</h2>
 
-          <p className='mt-1 text-gray-500 text-sm'>{getTodayDate()}</p>
+          <p className='mt-1 text-sm text-gray-500'>{getTodayDate()}</p>
         </div>
 
-        <p className='mt-2 text-gray-600 text-sm leading-relaxed'>
+        <p className='mt-2 text-sm leading-relaxed text-gray-600'>
           Manage your leaves, track your requests, and stay updated with your
           team’s availability, all in one place. Plan smart, work better
         </p>
 
         <Link
           href='/apply'
-          className='inline-flex justify-center items-center bg-[#00a76f] hover:bg-[#008f5d] shadow-[#00a76f]/20 shadow-md mt-4 px-6 py-2.5 rounded-lg font-semibold text-white transition-colors'
+          className='mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-colors hover:bg-primary-dark'
         >
           Apply Leave
         </Link>
       </div>
 
-      <div className='right-0 z-10 relative flex justify-center items-center mt-8 md:mt-0 w-48 md:w-64 h-48 md:h-64 shrink-0'>
+      <div className='relative z-10 mt-8 flex h-48 w-48 shrink-0 items-center justify-center md:mt-0 md:h-64 md:w-64'>
         <WelcomeIcon />
       </div>
     </div>

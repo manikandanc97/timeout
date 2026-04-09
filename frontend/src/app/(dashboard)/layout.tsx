@@ -7,7 +7,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <AuthGuard>
       <div>
-        <div className='flex h-screen overflow-hidden bg-gray-100'>
+        <div className='flex h-screen overflow-hidden bg-background'>
           <Sidebar />
 
           <div className='flex flex-col flex-1 overflow-hidden'>

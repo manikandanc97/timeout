@@ -30,7 +30,11 @@ const Select: React.FC<SelectProps> = ({
   rightElement,
   hideLabel = false,
 }) => {
-  const spacingClass = hideLabel ? 'px-3 py-3' : 'px-3 pb-2 pt-5';
+  // Compact (toolbar) selects: enough vertical padding + line-height so native
+  // <select> text isn’t clipped at h-10 (inputs tolerate py-0; selects often don’t).
+  const spacingClass = hideLabel
+    ? 'px-3 py-2 leading-5'
+    : 'px-3 pb-2 pt-5';
   const ariaLabel = label || placeholder || id;
 
   return (
@@ -39,7 +43,7 @@ const Select: React.FC<SelectProps> = ({
         id={id}
         value={value}
         onChange={onChange}
-        className={`peer block w-full appearance-none rounded-md border border-gray-300 bg-transparent ${spacingClass} text-sm text-gray-900 outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-primary ${selectClassName}`}
+        className={`peer block w-full appearance-none rounded-md border border-gray-300 bg-transparent ${spacingClass} text-sm text-gray-900 outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 ${selectClassName}`}
         aria-label={ariaLabel}
       >
         <option value='' disabled hidden>

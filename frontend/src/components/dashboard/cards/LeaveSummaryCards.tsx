@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ResponsiveContainer, BarChart, Bar, Tooltip, Cell } from 'recharts';
+import { BarChart, Bar, Tooltip, Cell } from 'recharts';
 import { Baby, TrendingDown, TrendingUp } from 'lucide-react';
 import type {
   LeaveBalance,
   LeaveChartData,
+  LeaveChartSeries,
   LeaveUsage,
 } from '@/types/leave';
 
@@ -15,7 +16,18 @@ type Props = {
   chartData?: LeaveChartData;
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+type TooltipPayloadRow = {
+  payload: { month: string; value: number };
+  color?: string;
+  fill?: string;
+};
+
+type CustomTooltipProps = {
+  active?: boolean;
+  payload?: TooltipPayloadRow[];
+};
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -33,19 +45,24 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const MiniChart = ({ color, data }: { color: string; data: any[] }) => {
+const MiniChart = ({
+  color,
+  data,
+}: {
+  color: string;
+  data: LeaveChartSeries;
+}) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-  console.log('mini chart data', data);
 
   return (
     <BarChart
       width={96}
       height={64}
       data={data}
-      onMouseMove={(state: any) => {
+      onMouseMove={(state) => {
         if (state?.isTooltipActive && state?.activeTooltipIndex != null) {
-          setActiveIndex(state.activeTooltipIndex);
+          const idx = state.activeTooltipIndex;
+          setActiveIndex(typeof idx === 'number' ? idx : null);
         } else {
           setActiveIndex(null);
         }

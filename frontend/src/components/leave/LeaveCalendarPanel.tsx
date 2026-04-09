@@ -228,7 +228,7 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
   return (
     <div className='flex flex-col bg-white shadow-md rounded-2xl overflow-hidden'>
       {/* Top banner */}
-      <div className='bg-gradient-to-br from-primary-dark via-primary to-[#0aafca] px-5 pt-5 pb-6'>
+      <div className='bg-linear-to-br from-primary-dark via-primary to-accent px-5 pt-5 pb-6'>
         <div className='flex flex-col gap-2'>
           <div>
             <div className='flex items-center gap-1.5 mb-1'>

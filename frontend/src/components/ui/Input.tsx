@@ -37,15 +37,18 @@ const Input: React.FC<InputProps> = ({
   const isDate = type === 'date';
   const [dynamicType, setDynamicType] = useState(isDate ? 'text' : type);
 
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleFocus = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setInternalFocused(true);
     if (isDate) {
       setDynamicType('date');
       setTimeout(() => {
         try {
-          // @ts-ignore
-          e.target.showPicker?.();
-        } catch {}
+          (e.target as HTMLInputElement).showPicker?.();
+        } catch {
+          /* showPicker not supported in some browsers */
+        }
       }, 0);
     }
   };
@@ -74,12 +77,12 @@ const Input: React.FC<InputProps> = ({
       ? internalFocused
         ? value
         : formatDisplayDate(value)
-      : value ?? '';
+      : (value ?? '');
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    onChange?.(e as any);
+    onChange?.(e);
   };
 
   return (
@@ -88,7 +91,7 @@ const Input: React.FC<InputProps> = ({
         <textarea
           id={id}
           value={value}
-          onChange={handleChange as any}
+          onChange={handleChange}
           placeholder={placeholderText}
           rows={rows || 4}
           className={sharedClassName}
@@ -101,10 +104,10 @@ const Input: React.FC<InputProps> = ({
           type={dynamicType}
           id={id}
           value={computedValue}
-          onChange={handleChange as any}
+          onChange={handleChange}
           placeholder={placeholderText}
           className={sharedClassName}
-          onFocus={handleFocus as any}
+          onFocus={handleFocus}
           onBlur={handleBlur}
           aria-label={ariaLabel}
           min={min}

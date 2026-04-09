@@ -1,61 +1,63 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
-import React, { useState } from "react";
-import Button from "../ui/Button";
-import { Bell, Moon, Settings, User } from "lucide-react";
-import RightPanel from "./RightPanel";
+import { usePathname } from 'next/navigation';
+import React, { useState } from 'react';
+import Button from '../ui/Button';
+import { Bell, Moon, Settings, User } from 'lucide-react';
+import RightPanel from './RightPanel';
+
+/** Single map: easier to update labels and avoids a long if/else chain. */
+const ROUTE_TITLES: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/leaves': 'My Leaves',
+  '/apply': 'Apply Leave',
+  '/team': 'Team Leaves',
+  '/policy': 'Leave Policy',
+};
 
 const Topbar = () => {
   const pathname = usePathname();
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
 
-  const getTitle = () => {
-    if (pathname === "/dashboard") {
-      return "Dashboard";
-    }
-    if (pathname === "/leaves") {
-      return "My Leaves";
-    }
-    if (pathname === "/apply") {
-      return "Apply Leave";
-    }
-    if (pathname === "/team") {
-      return "Team Leaves";
-    }
-    if (pathname === "/policy") {
-      return "Leave Policy";
-    }
-    return "Dashboard";
-  };
+  const pageTitle = ROUTE_TITLES[pathname] ?? 'Dashboard';
 
   return (
-    <div className="flex justify-between items-center bg-white shadow-md p-4">
-      <div>
-        <h1 className="font-bold text-2xl">{getTitle()}</h1>
-      </div>
-      <div className="flex gap-2">
-        <Button className="bg-transparent! hover:bg-gray-200 p-2 rounded-full">
-          <Moon size={20} color="gray" />
-        </Button>
+    <div className='flex items-center justify-between border-b border-gray-100 bg-white p-4 shadow-sm'>
+      <h1 className='text-2xl font-bold text-gray-900'>{pageTitle}</h1>
+      <div className='flex items-center gap-1'>
         <Button
-          onClick={() => {
-            (setActivePanel("notifications"), console.log("clicked"));
-          }}
-          className="bg-transparent! hover:bg-gray-200 ml-2 p-2 rounded-full"
+          type='button'
+          variant='ghost'
+          aria-label='Toggle theme (coming soon)'
+          className='!text-gray-600'
         >
-          <Bell size={20} color="gray" />
+          <Moon size={20} />
         </Button>
         <Button
-          onClick={() => setActivePanel("settings")}
-          className="bg-transparent! hover:bg-gray-200 ml-2 p-2 rounded-full"
+          type='button'
+          variant='ghost'
+          aria-label='Notifications'
+          onClick={() => setActivePanel('notifications')}
+          className='!text-gray-600'
         >
-          <Settings size={20} color="gray" />
+          <Bell size={20} />
         </Button>
         <Button
-          onClick={() => setActivePanel("profile")}
-          className="hover:bg-gray-200 ml-2 p-2 rounded-full"
+          type='button'
+          variant='ghost'
+          aria-label='Settings'
+          onClick={() => setActivePanel('settings')}
+          className='!text-gray-600'
+        >
+          <Settings size={20} />
+        </Button>
+        <Button
+          type='button'
+          variant='ghost'
+          aria-label='Profile'
+          onClick={() => setActivePanel('profile')}
+          className='!text-gray-800'
         >
           <User size={20} />
         </Button>

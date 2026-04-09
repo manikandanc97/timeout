@@ -18,8 +18,6 @@ import {
   Stethoscope,
   Baby,
   Umbrella,
-  Sparkles,
-  Info,
   Clock3,
 } from 'lucide-react';
 import Input from '../ui/Input';
@@ -89,13 +87,6 @@ const balanceKeyMap: Record<LeaveType, keyof LeaveBalance> = {
   SICK: 'sick',
   MATERNITY: 'maternity',
   PATERNITY: 'paternity',
-};
-
-const formatFriendlyDate = (dateStr?: string) => {
-  if (!dateStr) return null;
-  const parsed = new Date(dateStr);
-  if (Number.isNaN(parsed.getTime())) return dateStr;
-  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 const ApplyLeave = ({
@@ -171,46 +162,6 @@ const ApplyLeave = ({
     });
   }, [hasDateRange, history, startDate, endDate]);
 
-  const activeConfig =
-    type && type in leaveTypeConfig ? leaveTypeConfig[type as LeaveType] : null;
-
-  const upcomingHoliday = useMemo(() => {
-    if (!holidays || holidays.length === 0) return null;
-    const today = new Date();
-    const normalized = holidays
-      .map((holiday) => ({
-        ...holiday,
-        dateObj: new Date(holiday.date),
-      }))
-      .filter((holiday) => !Number.isNaN(holiday.dateObj.getTime()))
-      .filter((holiday) => holiday.dateObj >= today)
-      .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-    return normalized[0] ?? null;
-  }, [holidays]);
-
-  const lastRequest = useMemo(() => {
-    if (!history || history.length === 0) return null;
-    const sorted = [...history].sort((a, b) => {
-      const aDate = new Date(a.fromDate ?? a.startDate ?? 0).getTime();
-      const bDate = new Date(b.fromDate ?? b.startDate ?? 0).getTime();
-      return bDate - aDate;
-    });
-    return sorted[0];
-  }, [history]);
-
-  const balanceProgress = useMemo(() => {
-    if (!selectedBalance || selectedBalance <= 0) return null;
-    const remaining = Math.max(selectedBalance - daysToDeduct, 0);
-    const percent = Math.min(
-      100,
-      Math.max(0, (remaining / selectedBalance) * 100),
-    );
-    return { remaining, percent };
-  }, [selectedBalance, daysToDeduct]);
-
-  const startPreview = formatFriendlyDate(startDate);
-  const endPreview = formatFriendlyDate(endDate);
-
   const onSubmit = async (data: LeaveFormData) => {
     try {
       if (hasOverlap) {
@@ -225,7 +176,8 @@ const ApplyLeave = ({
       });
       toast.success('Leave request submitted successfully');
       reset();
-      onSuccess?.((response as any)?.data?.leave);
+      const created = response.data as { leave?: Leave } | undefined;
+      onSuccess?.(created?.leave);
     } catch {
       toast.error('Failed to submit leave request. Please try again.');
     }
@@ -238,7 +190,7 @@ const ApplyLeave = ({
       <div className='z-10 relative flex flex-col gap-6 p-6'>
         <div className='flex flex-wrap justify-between items-start gap-4 border-gray-100 border-b'>
           <div className='flex items-start gap-3'>
-            <div className='place-items-center grid bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 shadow-inner shadow-primary/15 rounded-2xl w-12 h-12 text-primary'>
+            <div className='grid h-12 w-12 place-items-center rounded-2xl bg-linear-to-br from-primary/15 via-primary/10 to-primary/5 text-primary shadow-inner shadow-primary/15'>
               <CalendarClock size={20} />
             </div>
             <div>
@@ -290,8 +242,10 @@ const ApplyLeave = ({
                         return (
                           <Button
                             key={key}
+                            type='button'
+                            unstyled
                             onClick={() => setValue('type', key)}
-                            className={`!bg-transparent !text-gray-800 !h-auto flex-col group relative flex min-w-[230px] max-w-[260px] gap-3 !rounded-xl border px-4 py-4 !text-left transition-all duration-150 hover:-translate-y-0.5 ${
+                            className={`group relative flex min-w-[230px] max-w-[260px] flex-col gap-3 rounded-xl border px-4 py-4 text-left !h-auto !bg-transparent !text-gray-800 transition-all duration-150 hover:-translate-y-0.5 ${
                               isSelected
                                 ? `${cfg.bg} !border-transparent ring-2 ring-offset-2 ring-offset-white ${cfg.ring} !shadow-[0_10px_28px_rgba(0,0,0,0.08)]`
                                 : 'border-gray-200 !bg-gray-50'
@@ -511,15 +465,17 @@ const ApplyLeave = ({
 
               <div className='flex items-center gap-3 md:ml-auto'>
                 <Button
+                  type='button'
+                  variant='outline'
                   onClick={() => reset()}
-                  className='inline-flex justify-center items-center !bg-transparent hover:!bg-gray-100 shadow-none px-5 md:px-6 !py-3 border border-gray-200 !rounded-lg font-semibold !text-gray-700 text-sm transition-colors duration-150'
+                  className='inline-flex items-center justify-center px-5 py-3 text-sm font-semibold shadow-none md:px-6'
                 >
                   Reset
                 </Button>
                 <Button
                   type='submit'
                   disabled={isSubmitting || isOverdrawn}
-                  className='shadow-md shadow-primary/20 px-6 md:px-8 py-3 font-semibold text-sm'
+                  className='px-6 py-3 text-sm font-semibold shadow-md shadow-primary/20 md:px-8'
                 >
                   {isSubmitting ? (
                     <span className='flex items-center gap-2'>

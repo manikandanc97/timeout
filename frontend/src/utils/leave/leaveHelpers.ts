@@ -29,7 +29,7 @@ export const calculateLeaveDays = (
 
   let weekends = 0;
   let holidayWeekdays = 0;
-  let current = new Date(start);
+  const current = new Date(start);
 
   while (current <= end) {
     const dayOfWeek = current.getDay();

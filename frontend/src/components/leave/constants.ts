@@ -61,6 +61,17 @@ export const TYPE_FILTER_OPTIONS: Array<{ value: LeaveType; label: string }> = [
   { value: 'PATERNITY', label: TYPE_CONFIG.PATERNITY.label },
 ];
 
+/** Same rules as Apply Leave: maternity only for female, paternity only for male. */
+export function typeFilterOptionsForGender(
+  gender: string | undefined | null,
+): Array<{ value: LeaveType; label: string }> {
+  return TYPE_FILTER_OPTIONS.filter((opt) => {
+    if (opt.value === 'MATERNITY') return gender === 'FEMALE';
+    if (opt.value === 'PATERNITY') return gender === 'MALE';
+    return true;
+  });
+}
+
 export const STATUS_FILTER_OPTIONS: Array<{
   value: FilterValue<LeaveStatus>;
   label: string;

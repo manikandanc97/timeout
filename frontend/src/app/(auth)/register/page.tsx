@@ -1,5 +1,6 @@
 'use client';
 
+import AuthPageShell from '@/components/auth/AuthPageShell';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -50,30 +51,26 @@ const Register = () => {
       toast.success('Account created successfully');
 
       router.push('/login');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed');
+    } catch (error: unknown) {
+      const axiosLike = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(axiosLike.response?.data?.message ?? 'Registration failed');
     }
   };
 
   return (
-    <div className='flex justify-center items-center bg-background px-4 min-h-screen'>
-      <form
-        onSubmit={handleSubmit}
-        className='space-y-6 bg-white shadow-lg p-8 rounded-2xl w-full max-w-md'
-      >
-        <div className='space-y-2 text-center'>
-          <h2 className='font-bold text-primary text-3xl'>Create Account</h2>
-          <p className='text-gray-500 text-sm'>
-            Register for your Timeout account
-          </p>
-        </div>
-
+    <AuthPageShell
+      title='Create Account'
+      subtitle='Register for your Timeout account'
+    >
+      <form onSubmit={handleSubmit} className='space-y-6'>
         <Input
           id='name'
           type='text'
           label='Name'
           value={name}
-          onChange={(e: any) => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
         />
 
         <Input
@@ -81,7 +78,7 @@ const Register = () => {
           type='email'
           label='Email'
           value={email}
-          onChange={(e: any) => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <Input
@@ -90,13 +87,14 @@ const Register = () => {
           label='Password'
           value={password}
           inputClassName='pr-10'
-          onChange={(e: any) => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           rightElement={
             <Button
               type='button'
+              variant='ghost'
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className='bg-transparent hover:bg-transparent p-0 rounded focus:outline-none text-gray-700 hover:text-primary'
+              className='!rounded !p-0 !text-gray-700 hover:!bg-transparent hover:!text-primary focus:outline-none'
             >
               {showPassword ? (
                 <EyeOff color='gray' size={18} />
@@ -112,13 +110,17 @@ const Register = () => {
           type={showConfirmPassword ? 'text' : 'password'}
           label='Confirm Password'
           value={confirmPassword}
-          onChange={(e: any) => setConfirmPassword(e.target.value)}
+          inputClassName='pr-10'
+          onChange={(e) => setConfirmPassword(e.target.value)}
           rightElement={
             <Button
               type='button'
+              variant='ghost'
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className='bg-transparent hover:bg-transparent p-0 rounded focus:outline-none text-gray-700 hover:text-primary'
+              aria-label={
+                showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+              }
+              className='!rounded !p-0 !text-gray-700 hover:!bg-transparent hover:!text-primary focus:outline-none'
             >
               {showConfirmPassword ? (
                 <EyeOff color='gray' size={18} />
@@ -130,30 +132,34 @@ const Register = () => {
         />
 
         <Select
+          id='gender'
+          label='Gender'
+          placeholder='Select gender'
           value={gender}
           onChange={(e) => setGender(e.target.value)}
           options={[
             { label: 'Male', value: 'MALE' },
             { label: 'Female', value: 'FEMALE' },
           ]}
-          rightElement={<ChevronDown size={18} />}
+          rightElement={<ChevronDown size={18} className='text-gray-500' />}
         />
 
         <Button type='submit' className='w-full'>
           Register
         </Button>
 
-        <p className='text-gray-500 text-sm text-center'>
+        <p className='text-center text-sm text-gray-500'>
           Already have an account?{' '}
-          <span
+          <button
+            type='button'
             onClick={() => router.push('/login')}
-            className='text-primary hover:underline cursor-pointer'
+            className='cursor-pointer text-primary hover:underline'
           >
             Login
-          </span>
+          </button>
         </p>
       </form>
-    </div>
+    </AuthPageShell>
   );
 };
 

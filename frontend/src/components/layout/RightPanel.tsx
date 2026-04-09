@@ -9,29 +9,29 @@ interface RightPanelProps {
   onClose: () => void;
 }
 
+const PANEL_TITLES: Record<string, string> = {
+  notifications: 'Notifications',
+  settings: 'Settings',
+  profile: 'Profile',
+};
+
 const RightPanel: React.FC<RightPanelProps> = ({ activePanel, onClose }) => {
   if (!activePanel) return null;
 
-  const getTitle = () => {
-    if (activePanel === 'notifications') {
-      return 'Notifications';
-    }
-    if (activePanel === 'settings') {
-      return 'Settings';
-    }
-    if (activePanel === 'profile') {
-      return 'Profile';
-    }
-  };
+  const title = PANEL_TITLES[activePanel] ?? 'Panel';
+
   return (
-    <div className='top-0 right-0 z-50 fixed bg-white shadow-lg p-4 w-80 h-full'>
-      <div className='flex justify-between items-center gap-2 mb-4'>
-        <h2 className='font-bold text-xl'>{getTitle()}</h2>
+    <div className='fixed right-0 top-0 z-50 h-full w-80 bg-white p-4 shadow-lg'>
+      <div className='mb-4 flex items-center justify-between gap-2'>
+        <h2 className='text-xl font-bold text-gray-900'>{title}</h2>
         <Button
+          type='button'
+          variant='ghost'
           onClick={onClose}
-          className='px-3 py-1 w-fit! text-gray-500 hover:text-gray-700'
+          aria-label='Close panel'
+          className='!w-fit !px-2 !py-1 !text-gray-500 hover:!text-gray-800'
         >
-          <X />
+          <X size={20} />
         </Button>
       </div>
       <div>

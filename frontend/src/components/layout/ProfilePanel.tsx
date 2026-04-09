@@ -16,20 +16,15 @@ const ProfilePanel = () => {
       clearAccessToken();
       toast.success('Logged out successfully');
       router.push('/login');
-    } catch (error) {
+    } catch {
       toast.error('Logout failed');
     }
   };
 
   return (
-    <>
-      <Button
-        onClick={handleLogout}
-        className='bg-red-500 hover:bg-red-700 w-full'
-      >
-        Logout
-      </Button>
-    </>
+    <Button type='button' variant='danger' onClick={handleLogout} className='w-full'>
+      Logout
+    </Button>
   );
 };
 

@@ -1,17 +1,24 @@
 import MyLeavesList from '@/components/leave/MyLeavesList';
 import { getLeaveHistory } from '@/services/dashboardService';
+import { serverFetch } from '@/services/serverApi';
 import type { Leave } from '@/types/leave';
+import type { User } from '@/types/user';
 import React from 'react';
 
 const LeavesPage = async () => {
-  const response = await getLeaveHistory();
+  const [response, profile] = await Promise.all([
+    getLeaveHistory(),
+    serverFetch<User>('/profile').catch(() => null),
+  ]);
+
   const leaves: Leave[] = Array.isArray(response)
     ? response
     : ((response as { data?: Leave[] })?.data ?? []);
 
-  console.log('history response', response);
+  const userGender =
+    profile && typeof profile.gender === 'string' ? profile.gender : null;
 
-  return <MyLeavesList leaves={leaves} />;
+  return <MyLeavesList leaves={leaves} userGender={userGender} />;
 };
 
 export default LeavesPage;

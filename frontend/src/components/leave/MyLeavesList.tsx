@@ -2,15 +2,9 @@
 
 import api from '@/services/api';
 import type { Leave, LeaveStatus, LeaveType } from '@/types/leave';
-import {
-  CalendarClock,
-  CalendarDays,
-  RotateCcw,
-  Search,
-  Sparkles,
-} from 'lucide-react';
+import { CalendarDays, RotateCcw, Search, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import Button from '@/components/ui/Button';
@@ -22,14 +16,14 @@ import NoMatchingLeaves from './NoMatchingLeaves';
 import {
   STATUS_FILTER_OPTIONS,
   TYPE_CONFIG,
-  TYPE_FILTER_OPTIONS,
   type FilterValue,
+  typeFilterOptionsForGender,
 } from './constants';
 import { getLeaveEnd, getLeaveStart } from './utils';
 
-type Props = { leaves: Leave[] };
+type Props = { leaves: Leave[]; userGender?: string | null };
 
-const MyLeavesList = ({ leaves }: Props) => {
+const MyLeavesList = ({ leaves, userGender = null }: Props) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<FilterValue<LeaveStatus>>('ALL');
@@ -37,6 +31,21 @@ const MyLeavesList = ({ leaves }: Props) => {
 
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const typeOptionsForUser = useMemo(
+    () => typeFilterOptionsForGender(userGender),
+    [userGender],
+  );
+
+  // If gender-based options change, drop a filter that no longer applies.
+  useEffect(() => {
+    if (typeFilter === 'MATERNITY' && userGender !== 'FEMALE') {
+      setTypeFilter('ALL');
+    }
+    if (typeFilter === 'PATERNITY' && userGender !== 'MALE') {
+      setTypeFilter('ALL');
+    }
+  }, [userGender, typeFilter]);
 
   const dedupedLeaves = useMemo(() => {
     if (!leaves?.length) return [];
@@ -117,14 +126,20 @@ const MyLeavesList = ({ leaves }: Props) => {
     setTypeFilter('ALL');
   };
 
-  const handleDelete = async (id: number) => {
+  /**
+   * Deletes a leave on the server. Returns true only when the API succeeds
+   * so the LeaveCard can close its confirmation modal.
+   */
+  const handleDelete = async (id: number): Promise<boolean> => {
     try {
       setDeletingId(id);
       await api.delete(`/leaves/${id}`);
       toast.success('Leave request cancelled successfully');
       router.refresh();
+      return true;
     } catch {
       toast.error('Failed to cancel leave request. Please try again.');
+      return false;
     } finally {
       setDeletingId(null);
     }
@@ -193,8 +208,10 @@ const MyLeavesList = ({ leaves }: Props) => {
           <div className='flex flex-wrap items-center gap-2'>
             {hasActiveFilters && (
               <Button
+                type='button'
+                variant='ghost'
                 onClick={clearFilters}
-                className='inline-flex justify-center items-center gap-1.5 hover:bg-rose-50 px-3 py-0 border border-transparent hover:border-rose-100 rounded-xl h-10 font-medium hover:text-rose-600 text-sm transition-colors'
+                className='!h-10 gap-1.5 rounded-xl px-3 !py-0 text-sm font-medium hover:!bg-rose-50 hover:!text-rose-600'
               >
                 <RotateCcw size={14} />
                 Clear
@@ -230,7 +247,7 @@ const MyLeavesList = ({ leaves }: Props) => {
                   { label: 'All Status', value: 'ALL' },
                   ...STATUS_FILTER_OPTIONS.filter((o) => o.value !== 'ALL'),
                 ]}
-                selectClassName='h-10 py-0 bg-white hover:bg-gray-50'
+                selectClassName='h-10 bg-white hover:bg-gray-50'
               />
             </div>
 
@@ -245,12 +262,12 @@ const MyLeavesList = ({ leaves }: Props) => {
                 }
                 options={[
                   { label: 'All Types', value: 'ALL' },
-                  ...TYPE_FILTER_OPTIONS.map((o) => ({
+                  ...typeOptionsForUser.map((o) => ({
                     label: o.label,
                     value: String(o.value),
                   })),
                 ]}
-                selectClassName='h-10 py-0 bg-white hover:bg-gray-50'
+                selectClassName='h-10 bg-white hover:bg-gray-50'
               />
             </div>
           </div>
@@ -269,10 +286,7 @@ const MyLeavesList = ({ leaves }: Props) => {
               ))}
             </div>
           ) : (
-            <NoMatchingLeaves
-              hasActiveFilters={hasActiveFilters}
-              onClearFilters={clearFilters}
-            />
+            <NoMatchingLeaves />
           )}
         </div>
       </div>

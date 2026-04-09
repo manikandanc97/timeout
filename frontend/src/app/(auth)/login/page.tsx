@@ -1,5 +1,6 @@
 'use client';
 
+import AuthPageShell from '@/components/auth/AuthPageShell';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { setAccessToken } from '@/lib/token';
@@ -40,21 +41,20 @@ const Login = () => {
       toast.success('Login successful!');
 
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed');
+    } catch (error: unknown) {
+      const axiosLike = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(axiosLike.response?.data?.message ?? 'Login failed');
     }
   };
 
   return (
-    <div className='flex justify-center items-center bg-background px-4 min-h-screen'>
-      <form
-        onSubmit={handleSubmit}
-        className='space-y-6 bg-white shadow-lg p-8 rounded-2xl w-full max-w-md'
-      >
-        <div className='space-y-2 text-center'>
-          <h2 className='font-bold text-primary text-3xl'>Welcome Back</h2>
-          <p className='text-gray-500 text-sm'>Login to your Timeout account</p>
-        </div>
+    <AuthPageShell
+      title='Welcome Back'
+      subtitle='Login to your Timeout account'
+    >
+      <form onSubmit={handleSubmit} className='space-y-6'>
         <Input
           id='email'
           type='email'
@@ -68,13 +68,14 @@ const Login = () => {
           label='Password'
           value={password}
           inputClassName='pr-10'
-          onChange={(e: any) => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           rightElement={
             <Button
               type='button'
+              variant='ghost'
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className='bg-transparent hover:bg-transparent p-0 rounded focus:outline-none text-gray-700 hover:text-primary'
+              className='!rounded !p-0 !text-gray-700 hover:!bg-transparent hover:!text-primary focus:outline-none'
             >
               {showPassword ? (
                 <EyeOff color='gray' size={18} />
@@ -87,17 +88,18 @@ const Login = () => {
         <Button type='submit' className='w-full'>
           Login
         </Button>
-        <p className='text-gray-500 text-sm text-center'>
+        <p className='text-center text-sm text-gray-500'>
           Don’t have an account?{' '}
-          <span
+          <button
+            type='button'
             onClick={() => router.push('/register')}
-            className='text-primary hover:underline cursor-pointer'
+            className='cursor-pointer text-primary hover:underline'
           >
             Register
-          </span>
+          </button>
         </p>
       </form>
-    </div>
+    </AuthPageShell>
   );
 };
 

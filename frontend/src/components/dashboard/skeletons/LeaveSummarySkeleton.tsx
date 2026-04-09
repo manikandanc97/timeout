@@ -1,22 +1,45 @@
-const CardSkeleton = () => (
-  <div className='bg-white shadow-md p-5 rounded-2xl animate-pulse'>
-    <div className='bg-gray-200 rounded w-28 h-4'></div>
+import type { ReactNode } from 'react';
 
-    <div className='flex items-baseline gap-2 mt-4'>
-      <div className='bg-gray-200 rounded w-16 h-10'></div>
-      <div className='bg-gray-200 rounded w-24 h-4'></div>
+const miniBars = [45, 70, 35, 80, 55, 40, 65];
+
+const MiniChartSkeleton = () => (
+  <div className='mt-1 flex h-16 w-24 shrink-0 items-end justify-center gap-1'>
+    {miniBars.map((pct, i) => (
+      <div
+        key={i}
+        className='w-2 animate-pulse rounded-t-sm bg-gray-200'
+        style={{ height: `${pct}%` }}
+      />
+    ))}
+  </div>
+);
+
+const SummaryCardSkeleton = ({ right }: { right: ReactNode }) => (
+  <div className='flex items-start justify-between rounded-2xl bg-white p-5 shadow-md'>
+    <div className='flex flex-col'>
+      <div className='h-4 w-28 animate-pulse rounded bg-gray-200' />
+      <div className='mt-4 flex items-baseline gap-2'>
+        <div className='h-10 w-16 animate-pulse rounded bg-gray-200' />
+        <div className='mt-1 h-4 w-28 animate-pulse rounded bg-gray-200' />
+      </div>
+      <div className='mt-3 h-7 w-52 max-w-full animate-pulse rounded-lg bg-gray-200' />
     </div>
-
-    <div className='bg-gray-200 mt-4 rounded w-40 h-6'></div>
+    {right}
   </div>
 );
 
 const LeaveSummarySkeleton = () => {
   return (
-    <div className='gap-5 grid grid-cols-1 md:grid-cols-3'>
-      <CardSkeleton />
-      <CardSkeleton />
-      <CardSkeleton />
+    <div className='grid grid-cols-1 gap-5 md:grid-cols-3'>
+      <SummaryCardSkeleton right={<MiniChartSkeleton />} />
+      <SummaryCardSkeleton right={<MiniChartSkeleton />} />
+      <SummaryCardSkeleton
+        right={
+          <div className='mt-1 flex size-14 shrink-0 items-center justify-center rounded-full bg-emerald-50'>
+            <div className='size-8 animate-pulse rounded-full bg-gray-200' />
+          </div>
+        }
+      />
     </div>
   );
 };
