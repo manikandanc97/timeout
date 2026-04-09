@@ -39,13 +39,11 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     }
 
     return (
-      <div className='flex h-screen overflow-hidden bg-gray-100'>
+      <div className='flex bg-gray-100 h-screen overflow-hidden'>
         <SidebarSkeleton />
         <div className='flex flex-col flex-1 overflow-hidden'>
           <TopbarSkeleton />
-          <main className='flex-1 overflow-y-auto p-6'>
-            {Content}
-          </main>
+          <main className='flex-1 p-6 overflow-y-auto'>{Content}</main>
         </div>
       </div>
     );

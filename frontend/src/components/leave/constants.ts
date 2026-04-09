@@ -13,7 +13,7 @@ export const TYPE_CONFIG: Record<
     bg: string;
     text: string;
     border: string;
-    accent: string;
+    accentBorder: string;
   }
 > = {
   ANNUAL: {
@@ -23,7 +23,7 @@ export const TYPE_CONFIG: Record<
     bg: 'bg-cyan-50',
     text: 'text-cyan-700',
     border: 'border-cyan-200',
-    accent: 'from-cyan-500 via-sky-500 to-cyan-400',
+    accentBorder: 'border-l-cyan-500',
   },
   SICK: {
     label: 'Sick Leave',
@@ -32,7 +32,7 @@ export const TYPE_CONFIG: Record<
     bg: 'bg-rose-50',
     text: 'text-rose-600',
     border: 'border-rose-200',
-    accent: 'from-rose-500 via-pink-500 to-rose-400',
+    accentBorder: 'border-l-rose-500',
   },
   MATERNITY: {
     label: 'Maternity Leave',
@@ -41,7 +41,7 @@ export const TYPE_CONFIG: Record<
     bg: 'bg-pink-50',
     text: 'text-pink-600',
     border: 'border-pink-200',
-    accent: 'from-pink-500 via-fuchsia-500 to-pink-400',
+    accentBorder: 'border-l-pink-500',
   },
   PATERNITY: {
     label: 'Paternity Leave',
@@ -50,7 +50,7 @@ export const TYPE_CONFIG: Record<
     bg: 'bg-violet-50',
     text: 'text-violet-600',
     border: 'border-violet-200',
-    accent: 'from-violet-500 via-indigo-500 to-violet-400',
+    accentBorder: 'border-l-violet-500',
   },
 };
 

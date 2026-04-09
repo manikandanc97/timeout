@@ -1,6 +1,7 @@
 'use client';
 
 import api from '@/services/api';
+import type { Holiday } from '@/types/holiday';
 import type { Leave, LeaveStatus, LeaveType } from '@/types/leave';
 import { CalendarDays, RotateCcw, Search, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -21,9 +22,17 @@ import {
 } from './constants';
 import { getLeaveEnd, getLeaveStart } from './utils';
 
-type Props = { leaves: Leave[]; userGender?: string | null };
+type Props = {
+  leaves: Leave[];
+  userGender?: string | null;
+  holidays?: Holiday[];
+};
 
-const MyLeavesList = ({ leaves, userGender = null }: Props) => {
+const MyLeavesList = ({
+  leaves,
+  userGender = null,
+  holidays = [],
+}: Props) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<FilterValue<LeaveStatus>>('ALL');
@@ -147,7 +156,7 @@ const MyLeavesList = ({ leaves, userGender = null }: Props) => {
 
   if (!dedupedLeaves.length) {
     return (
-      <div className='mt-6 xl:mt-0'>
+      <div className='mt-6 flex min-h-[calc(100dvh-9rem)] flex-col xl:mt-0'>
         <LeaveEmptyState />
       </div>
     );
@@ -211,7 +220,7 @@ const MyLeavesList = ({ leaves, userGender = null }: Props) => {
                 type='button'
                 variant='ghost'
                 onClick={clearFilters}
-                className='!h-10 gap-1.5 rounded-xl px-3 !py-0 text-sm font-medium hover:!bg-rose-50 hover:!text-rose-600'
+                className='flex items-center gap-1.5 hover:!bg-rose-50 px-3 rounded-xl font-medium hover:!text-rose-600 text-sm'
               >
                 <RotateCcw size={14} />
                 Clear
@@ -281,6 +290,7 @@ const MyLeavesList = ({ leaves, userGender = null }: Props) => {
                   key={leave.id}
                   leave={leave}
                   deletingId={deletingId}
+                  holidays={holidays}
                   onDelete={handleDelete}
                 />
               ))}

@@ -8,29 +8,70 @@ const getDefaultLeaveBalance = (user) => ({
   paternity: user.gender === 'MALE' ? 15 : 0,
 });
 
+/**
+ * Start of calendar day in the server local TZ — matches applyLeave `YYYY-MM-DDT00:00:00`.
+ * Avoids `new Date("YYYY-MM-DD")` (UTC) vs local mismatch that can drop a working day.
+ */
+const toLocalCalendarDate = (value) => {
+  if (value == null || value === '') return new Date(NaN);
+  const s = String(value).trim();
+  const ymd = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (ymd) {
+    const y = Number(ymd[1]);
+    const m = Number(ymd[2]) - 1;
+    const d = Number(ymd[3]);
+    return new Date(y, m, d);
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return parsed;
+  return new Date(
+    parsed.getFullYear(),
+    parsed.getMonth(),
+    parsed.getDate(),
+  );
+};
+
+const localDayKey = (d) => d.toDateString();
+
 const getWorkingDays = async (startDate, endDate) => {
-  let count = 0;
-  const currentDate = new Date(startDate);
+  const start = toLocalCalendarDate(startDate);
+  const end = toLocalCalendarDate(endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+  if (start > end) return 0;
+
+  const endInclusive = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
 
   const holidays = await prisma.holiday.findMany({
     where: {
       date: {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
+        gte: start,
+        lte: endInclusive,
       },
     },
   });
 
-  const holidayDates = holidays.map((h) => h.date.toDateString());
+  const holidayKeys = new Set(
+    holidays.map((h) => localDayKey(toLocalCalendarDate(h.date))),
+  );
 
-  while (currentDate <= new Date(endDate)) {
-    const dayOfWeek = currentDate.getDay();
+  let count = 0;
+  const cur = new Date(start);
+  while (cur <= end) {
+    const dayOfWeek = cur.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isHoliday = holidayDates.includes(currentDate.toDateString());
+    const isHoliday = holidayKeys.has(localDayKey(cur));
     if (!isWeekend && !isHoliday) {
       count++;
     }
-    currentDate.setDate(currentDate.getDate() + 1);
+    cur.setDate(cur.getDate() + 1);
   }
 
   return count;
@@ -176,10 +217,67 @@ export const updateLeaveStatus = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const updated = await prisma.leave.update({
-      where: { id: Number(req.params.id) },
-      data: { status },
-    });
+    const leaveId = Number(req.params.id);
+    const leave = await prisma.leave.findUnique({ where: { id: leaveId } });
+
+    if (!leave) {
+      return res.status(404).json({ message: 'Leave not found' });
+    }
+
+    if (leave.status !== 'PENDING') {
+      return res.status(400).json({
+        message: 'Only pending leave requests can be approved or rejected',
+      });
+    }
+
+    const leaveType = leave.type?.toUpperCase();
+    const totalDays = await getWorkingDays(leave.fromDate, leave.toDate);
+
+    if (status === 'REJECTED' && totalDays > 0) {
+      let bal = await prisma.leaveBalance.findUnique({
+        where: { userId: leave.userId },
+      });
+      if (!bal) {
+        const u = await prisma.user.findUnique({
+          where: { id: leave.userId },
+          select: { id: true, gender: true },
+        });
+        await prisma.leaveBalance.create({
+          data: getDefaultLeaveBalance(
+            u ?? { id: leave.userId, gender: 'MALE' },
+          ),
+        });
+      }
+    }
+
+    const ops = [
+      prisma.leave.update({
+        where: { id: leaveId },
+        data: { status },
+      }),
+    ];
+
+    if (status === 'REJECTED' && totalDays > 0) {
+      if (leaveType === 'SICK') {
+        ops.push(
+          prisma.leaveBalance.update({
+            where: { userId: leave.userId },
+            data: { sick: { increment: totalDays } },
+          }),
+        );
+      }
+      if (leaveType === 'ANNUAL') {
+        ops.push(
+          prisma.leaveBalance.update({
+            where: { userId: leave.userId },
+            data: { annual: { increment: totalDays } },
+          }),
+        );
+      }
+    }
+
+    const results = await prisma.$transaction(ops);
+    const updated = results[0];
 
     res.json({ message: 'Leave status updated', leave: updated });
   } catch (error) {
@@ -284,34 +382,46 @@ export const getDashboardStats = async (req, res) => {
       currentDate.getFullYear(),
       currentDate.getMonth() + 1,
       0,
+      23,
+      59,
+      59,
+      999,
     );
 
-    const [leaveCounts, existingBalance, monthlyLeaves] = await Promise.all([
-      prisma.leave.groupBy({
-        by: ['status'],
-        where: whereCondition,
-        _count: {
-          status: true,
-        },
-      }),
-      prisma.leaveBalance.findUnique({
-        where: { userId: user.id },
-      }),
-      prisma.leave.findMany({
-        where: {
-          ...whereCondition,
-          fromDate: {
-            gte: currentMonthStart,
-            lte: currentMonthEnd,
+    const [leaveCounts, existingBalance, monthlyLeaves, monthHolidays] =
+      await Promise.all([
+        prisma.leave.groupBy({
+          by: ['status'],
+          where: whereCondition,
+          _count: {
+            status: true,
           },
-        },
-        select: {
-          type: true,
-          fromDate: true,
-          toDate: true,
-        },
-      }),
-    ]);
+        }),
+        prisma.leaveBalance.findUnique({
+          where: { userId: user.id },
+        }),
+        prisma.leave.findMany({
+          where: {
+            ...whereCondition,
+            status: { in: ['PENDING', 'APPROVED'] },
+            fromDate: { lte: currentMonthEnd },
+            toDate: { gte: currentMonthStart },
+          },
+          select: {
+            type: true,
+            fromDate: true,
+            toDate: true,
+          },
+        }),
+        prisma.holiday.findMany({
+          where: {
+            date: {
+              gte: currentMonthStart,
+              lte: currentMonthEnd,
+            },
+          },
+        }),
+      ]);
 
     const balance =
       existingBalance ??
@@ -339,6 +449,10 @@ export const getDashboardStats = async (req, res) => {
       ...(user.gender === 'MALE' && { paternity: balance.paternity }),
     };
 
+    const holidayKeys = new Set(
+      monthHolidays.map((h) => localDayKey(toLocalCalendarDate(h.date))),
+    );
+
     const usageByType = {
       SICK: new Set(),
       ANNUAL: new Set(),
@@ -353,18 +467,31 @@ export const getDashboardStats = async (req, res) => {
         continue;
       }
 
-      let current = new Date(leave.fromDate);
-      const end = new Date(leave.toDate);
+      const rangeStart = toLocalCalendarDate(leave.fromDate);
+      const rangeEnd = toLocalCalendarDate(leave.toDate);
+      const monthStartDay = toLocalCalendarDate(currentMonthStart);
+      const monthEndDay = toLocalCalendarDate(currentMonthEnd);
+      const clipStart = rangeStart > monthStartDay ? rangeStart : monthStartDay;
+      const clipEnd = rangeEnd < monthEndDay ? rangeEnd : monthEndDay;
 
-      while (current <= end) {
-        const day = current.getDay();
-        const isWeekend = day === 0 || day === 6;
+      if (Number.isNaN(clipStart.getTime()) || Number.isNaN(clipEnd.getTime())) {
+        continue;
+      }
+      if (clipStart > clipEnd) {
+        continue;
+      }
 
-        if (!isWeekend) {
-          usageSet.add(current.toDateString());
+      const cur = new Date(clipStart);
+      while (cur <= clipEnd) {
+        const dow = cur.getDay();
+        const isWeekend = dow === 0 || dow === 6;
+        const isHoliday = holidayKeys.has(localDayKey(cur));
+
+        if (!isWeekend && !isHoliday) {
+          usageSet.add(localDayKey(cur));
         }
 
-        current.setDate(current.getDate() + 1);
+        cur.setDate(cur.getDate() + 1);
       }
     }
 
@@ -423,7 +550,7 @@ export const getLeaveHistory = async (req, res) => {
     const leaves = await prisma.leave.findMany({
       where: { userId: req.user.id },
       orderBy: { createdAt: 'desc' },
-      take: 10,
+      take: 200,
     });
     res.json(leaves);
   } catch (error) {
@@ -432,17 +559,22 @@ export const getLeaveHistory = async (req, res) => {
   }
 };
 
+/** Holidays in a multi-year window (for leave math + dashboard). Client may filter to “upcoming”. */
 export const getUpcomingHolidays = async (req, res) => {
   try {
-    const today = new Date();
+    const now = new Date();
+    const year = now.getFullYear();
+    const from = new Date(year - 1, 0, 1);
+    const to = new Date(year + 1, 11, 31, 23, 59, 59, 999);
+
     const holidays = await prisma.holiday.findMany({
       where: {
         date: {
-          gte: today,
+          gte: from,
+          lte: to,
         },
       },
       orderBy: { date: 'asc' },
-      take: 10,
     });
     res.json(holidays);
   } catch (error) {

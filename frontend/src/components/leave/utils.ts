@@ -12,17 +12,5 @@ export const fmt = (d?: string) => {
   });
 };
 
-export const countDays = (from?: string, to?: string) => {
-  const start = new Date(from ?? '');
-  const end = new Date(to ?? '');
-
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
-
-  return Math.max(
-    1,
-    Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1,
-  );
-};
-
 export const getLeaveStart = (leave: Leave) => leave.fromDate ?? leave.startDate ?? '';
 export const getLeaveEnd = (leave: Leave) => leave.toDate ?? leave.endDate ?? '';

@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { setAccessToken } from '@/lib/token';
 import api from '@/services/api';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
@@ -51,10 +51,15 @@ const Login = () => {
 
   return (
     <AuthPageShell
-      title='Welcome Back'
-      subtitle='Login to your Timeout account'
+      title='Welcome back'
+      subtitle='Sign in with your work email to manage leaves and time off.'
+      leading={
+        <div className='flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-inner ring-1 ring-primary/15'>
+          <LogIn className='h-7 w-7' strokeWidth={1.75} aria-hidden />
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} className='space-y-6'>
+      <form onSubmit={handleSubmit} className='space-y-5'>
         <Input
           id='email'
           type='email'
@@ -85,17 +90,17 @@ const Login = () => {
             </Button>
           }
         />
-        <Button type='submit' className='w-full'>
-          Login
+        <Button type='submit' className='mt-1 w-full py-2.5 text-[15px]'>
+          Sign in
         </Button>
-        <p className='text-center text-sm text-gray-500'>
-          Don’t have an account?{' '}
+        <p className='pt-1 text-center text-sm text-gray-500'>
+          New here?{' '}
           <button
             type='button'
             onClick={() => router.push('/register')}
-            className='cursor-pointer text-primary hover:underline'
+            className='cursor-pointer font-medium text-primary underline-offset-4 transition-colors hover:text-primary-dark hover:underline'
           >
-            Register
+            Create an account
           </button>
         </p>
       </form>

@@ -7,9 +7,9 @@ type PageCardProps = {
 
 const PageCard = ({ title, children }: PageCardProps) => {
   return (
-    <div className='rounded-2xl bg-white p-6 shadow-md'>
+    <div className='w-full rounded-2xl bg-white p-6 shadow-md'>
       <h1 className='text-2xl font-bold text-gray-900'>{title}</h1>
-      <div className='mt-2 text-gray-600'>{children}</div>
+      <div className='mt-2 w-full text-gray-600'>{children}</div>
     </div>
   );
 };

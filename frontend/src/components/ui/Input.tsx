@@ -16,6 +16,7 @@ interface InputProps {
   hideLabel?: boolean;
   min?: string;
   max?: string;
+  required?: boolean;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -32,6 +33,7 @@ const Input: React.FC<InputProps> = ({
   hideLabel = false,
   min,
   max,
+  required = false,
 }) => {
   const [internalFocused, setInternalFocused] = useState(false);
   const isDate = type === 'date';
@@ -79,6 +81,9 @@ const Input: React.FC<InputProps> = ({
         : formatDisplayDate(value)
       : (value ?? '');
 
+  /** Date inputs use internal show/hide; other types follow the `type` prop (e.g. password ↔ text). */
+  const effectiveInputType = isDate ? dynamicType : type;
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -98,10 +103,11 @@ const Input: React.FC<InputProps> = ({
           onFocus={handleFocus}
           onBlur={handleBlur}
           aria-label={ariaLabel}
+          required={required}
         />
       ) : (
         <input
-          type={dynamicType}
+          type={effectiveInputType}
           id={id}
           value={computedValue}
           onChange={handleChange}
@@ -112,6 +118,7 @@ const Input: React.FC<InputProps> = ({
           aria-label={ariaLabel}
           min={min}
           max={max}
+          required={required}
         />
       )}
       {!hideLabel && (
@@ -128,7 +135,7 @@ const Input: React.FC<InputProps> = ({
       )}
 
       {rightElement ? (
-        <div className='top-1/2 right-3 absolute -translate-y-1/2'>
+        <div className='pointer-events-auto absolute top-1/2 right-3 z-20 -translate-y-1/2'>
           {rightElement}
         </div>
       ) : null}

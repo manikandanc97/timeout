@@ -2,11 +2,14 @@
 
 import { History, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import type { Holiday } from '@/types/holiday';
 import type { Leave } from '@/types/leave';
 import LeaveStatusBadge from '@/components/leave/LeaveStatusBadge';
+import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
 
 type Props = {
   leaves: Leave[];
+  holidays?: Holiday[];
 };
 
 const formatDate = (dateStr: string) => {
@@ -19,14 +22,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const getLeaveDays = (fromDate: string, toDate: string) => {
-  const from = new Date(fromDate);
-  const to = new Date(toDate);
-
-  return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-};
-
-const LeaveHistory = ({ leaves = [] }: Props) => {
+const LeaveHistory = ({ leaves = [], holidays = [] }: Props) => {
   return (
     <div className='flex flex-col bg-white shadow-md p-5 rounded-2xl h-full'>
       <div className='flex justify-between items-center mb-6'>
@@ -63,7 +59,12 @@ const LeaveHistory = ({ leaves = [] }: Props) => {
                     {formatDate(leave.fromDate)} → {formatDate(leave.toDate)}
                     <span className='mx-2 text-gray-300'>•</span>
                     <span className='text-gray-400 text-xs'>
-                      {getLeaveDays(leave.fromDate, leave.toDate)} days
+                      {workingDaysForLeaveRange(
+                        leave.fromDate,
+                        leave.toDate,
+                        holidays,
+                      )}{' '}
+                      working days
                     </span>
                   </span>
                 </div>

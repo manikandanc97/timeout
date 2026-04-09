@@ -1,12 +1,11 @@
 import React from 'react';
 
-function LeaveCardSkeleton({ accentClass }: { accentClass: string }) {
+function LeaveCardSkeleton({ accentBorder }: { accentBorder: string }) {
   return (
-    <div className='relative flex md:flex-row flex-col gap-4 bg-white shadow-sm p-5 border border-gray-100 rounded-xl'>
-      <div
-        className={`absolute inset-y-0 left-0 w-1 rounded-l-xl opacity-80 ${accentClass}`}
-      />
-      <div className='flex flex-1 items-start gap-3.5 pl-1 min-w-0'>
+    <div
+      className={`relative flex md:flex-row flex-col gap-4 rounded-xl border border-gray-100 border-l-4 bg-white p-5 shadow-sm ${accentBorder}`}
+    >
+      <div className='flex min-w-0 flex-1 items-start gap-3.5'>
         <div className='bg-gray-200 rounded-xl border border-gray-100 w-10 h-10 shrink-0' />
         <div className='flex flex-col flex-1 justify-center mt-0.5 min-w-0'>
           <div className='flex flex-wrap items-center gap-2 mb-1'>
@@ -85,10 +84,10 @@ export default function Loading() {
 
         <div className='mt-2 pr-2 max-h-[calc(100vh-310px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'>
           <div className='flex flex-col gap-3'>
-            <LeaveCardSkeleton accentClass='bg-linear-to-b from-cyan-400 to-cyan-500' />
-            <LeaveCardSkeleton accentClass='bg-linear-to-b from-rose-400 to-rose-500' />
-            <LeaveCardSkeleton accentClass='bg-linear-to-b from-emerald-400 to-emerald-500' />
-            <LeaveCardSkeleton accentClass='bg-linear-to-b from-amber-400 to-amber-500' />
+            <LeaveCardSkeleton accentBorder='border-l-cyan-500' />
+            <LeaveCardSkeleton accentBorder='border-l-rose-500' />
+            <LeaveCardSkeleton accentBorder='border-l-pink-500' />
+            <LeaveCardSkeleton accentBorder='border-l-violet-500' />
           </div>
         </div>
       </div>

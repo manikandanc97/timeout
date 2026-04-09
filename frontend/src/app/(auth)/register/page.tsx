@@ -3,9 +3,8 @@
 import AuthPageShell from '@/components/auth/AuthPageShell';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import api from '@/services/api';
-import { ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
@@ -25,8 +24,13 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (!gender) {
+      toast.error('Please select gender');
       return;
     }
 
@@ -61,15 +65,26 @@ const Register = () => {
 
   return (
     <AuthPageShell
-      title='Create Account'
-      subtitle='Register for your Timeout account'
+      compact
+      maxWidthClassName='max-w-lg'
+      title='Create account'
+      subtitle='Request and track leave in one place.'
+      leading={
+        <div className='flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner ring-1 ring-primary/15 sm:h-12 sm:w-12 sm:rounded-2xl'>
+          <UserPlus className='h-6 w-6' strokeWidth={1.75} aria-hidden />
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} className='space-y-6'>
+      <form
+        onSubmit={handleSubmit}
+        className='grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-4 sm:gap-y-3'
+      >
         <Input
           id='name'
           type='text'
           label='Name'
           value={name}
+          required
           onChange={(e) => setName(e.target.value)}
         />
 
@@ -78,6 +93,7 @@ const Register = () => {
           type='email'
           label='Email'
           value={email}
+          required
           onChange={(e) => setEmail(e.target.value)}
         />
 
@@ -86,6 +102,7 @@ const Register = () => {
           type={showPassword ? 'text' : 'password'}
           label='Password'
           value={password}
+          required
           inputClassName='pr-10'
           onChange={(e) => setPassword(e.target.value)}
           rightElement={
@@ -108,8 +125,9 @@ const Register = () => {
         <Input
           id='confirmPassword'
           type={showConfirmPassword ? 'text' : 'password'}
-          label='Confirm Password'
+          label='Confirm'
           value={confirmPassword}
+          required
           inputClassName='pr-10'
           onChange={(e) => setConfirmPassword(e.target.value)}
           rightElement={
@@ -131,31 +149,47 @@ const Register = () => {
           }
         />
 
-        <Select
-          id='gender'
-          label='Gender'
-          placeholder='Select gender'
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
-          options={[
-            { label: 'Male', value: 'MALE' },
-            { label: 'Female', value: 'FEMALE' },
-          ]}
-          rightElement={<ChevronDown size={18} className='text-gray-500' />}
-        />
+        <fieldset className='min-w-0 space-y-1.5 border-0 p-0 pt-0.5 sm:col-span-2'>
+          <legend className='text-xs font-medium text-gray-500'>Gender</legend>
+          <div className='flex flex-wrap items-center gap-x-5 gap-y-1'>
+            <label className='flex cursor-pointer items-center gap-2 text-sm text-gray-700'>
+              <input
+                type='radio'
+                name='gender'
+                value='MALE'
+                checked={gender === 'MALE'}
+                onChange={() => setGender('MALE')}
+                required
+                className='h-4 w-4 shrink-0 border-gray-300 accent-primary focus:ring-2 focus:ring-primary/35 focus:ring-offset-0 focus:outline-none'
+              />
+              Male
+            </label>
+            <label className='flex cursor-pointer items-center gap-2 text-sm text-gray-700'>
+              <input
+                type='radio'
+                name='gender'
+                value='FEMALE'
+                checked={gender === 'FEMALE'}
+                onChange={() => setGender('FEMALE')}
+                className='h-4 w-4 shrink-0 border-gray-300 accent-primary focus:ring-2 focus:ring-primary/35 focus:ring-offset-0 focus:outline-none'
+              />
+              Female
+            </label>
+          </div>
+        </fieldset>
 
-        <Button type='submit' className='w-full'>
-          Register
+        <Button type='submit' className='col-span-full w-full py-2.5 text-[15px]'>
+          Create account
         </Button>
 
-        <p className='text-center text-sm text-gray-500'>
+        <p className='col-span-full -mt-0.5 text-center text-sm text-gray-500'>
           Already have an account?{' '}
           <button
             type='button'
             onClick={() => router.push('/login')}
-            className='cursor-pointer text-primary hover:underline'
+            className='cursor-pointer font-medium text-primary underline-offset-4 transition-colors hover:text-primary-dark hover:underline'
           >
-            Login
+            Sign in
           </button>
         </p>
       </form>
