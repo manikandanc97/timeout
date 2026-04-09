@@ -9,14 +9,7 @@ export interface Leave {
   toDate: string;
   reason: string;
   status: LeaveStatus;
-  /**
-   * Present on server responses; optional to keep client-created objects simple.
-   */
   userId?: number;
-  /**
-   * startDate/endDate are kept optional to support legacy client naming.
-   * Prefer fromDate/toDate whenever possible.
-   */
   startDate?: string;
   endDate?: string;
 }
