@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { Holiday } from '@/types/holiday';
 import type { Leave } from '@/types/leave';
+import Button from '@/components/ui/Button';
 
 type Props = {
   holidays: Holiday[];
@@ -268,34 +269,34 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
       <div className='flex flex-col flex-1 px-4 pt-4 pb-5'>
         {/* Month nav */}
         <div className='flex justify-between items-center mb-4'>
-          <button
+          <Button
             onClick={prevMonth}
-            className='flex justify-center items-center hover:bg-gray-100 rounded-lg w-8 h-8 text-gray-500 hover:text-primary transition-colors'
+            className='!bg-transparent !p-0 !text-gray-500 flex justify-center items-center hover:!bg-gray-100 !rounded-lg w-8 h-8 hover:!text-primary transition-colors'
           >
             <ChevronLeft size={18} />
-          </button>
+          </Button>
 
           <div className='flex flex-col items-center'>
             <span className='font-bold text-gray-800 text-base'>
               {MONTHS[viewMonth]} {viewYear}
             </span>
             {!isCurrentMonth && (
-              <button
+              <Button
                 onClick={goToday}
-                className='flex items-center gap-1 mt-0.5 text-[11px] text-primary hover:underline'
+                className='!bg-transparent !p-0 flex items-center gap-1 mt-0.5 text-[11px] !text-primary hover:underline hover:!bg-transparent !h-auto'
               >
                 <Sun size={10} />
                 Back to today
-              </button>
+              </Button>
             )}
           </div>
 
-          <button
+          <Button
             onClick={nextMonth}
-            className='flex justify-center items-center hover:bg-gray-100 rounded-lg w-8 h-8 text-gray-500 hover:text-primary transition-colors'
+            className='!bg-transparent !p-0 !text-gray-500 flex justify-center items-center hover:!bg-gray-100 !rounded-lg w-8 h-8 hover:!text-primary transition-colors'
           >
             <ChevronRight size={18} />
-          </button>
+          </Button>
         </div>
 
         {/* Grid */}

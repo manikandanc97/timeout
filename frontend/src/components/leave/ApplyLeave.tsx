@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import api from '@/services/api';
 import { leaveSchema, type LeaveFormData } from '@/utils/leave/leaveSchema';
@@ -280,15 +280,13 @@ const ApplyLeave = ({ userGender, balance, holidays, history, onSuccess }: Props
                           : null;
 
                         return (
-                          <button
+                          <Button
                             key={key}
-                            type='button'
-                            aria-pressed={isSelected}
                             onClick={() => setValue('type', key)}
-                            className={`group relative flex min-w-[230px] max-w-[260px] flex-col gap-3 rounded-xl border px-4 py-4 text-left transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md ${
+                            className={`!bg-transparent !text-gray-800 !p-0 !h-auto flex-col group relative flex min-w-[230px] max-w-[260px] gap-3 !rounded-xl border px-4 py-4 !text-left transition-all duration-150 hover:-translate-y-0.5 hover:!shadow-md ${
                               isSelected
-                                ? `${cfg.bg} border-transparent ring-2 ring-offset-2 ring-offset-white ${cfg.ring} shadow-[0_10px_28px_rgba(0,0,0,0.08)]`
-                                : 'border-gray-200 bg-gray-50'
+                                ? `${cfg.bg} !border-transparent ring-2 ring-offset-2 ring-offset-white ${cfg.ring} !shadow-[0_10px_28px_rgba(0,0,0,0.08)]`
+                                : 'border-gray-200 !bg-gray-50'
                             }`}
                           >
                             <div className='flex items-start gap-3'>
@@ -328,7 +326,7 @@ const ApplyLeave = ({ userGender, balance, holidays, history, onSuccess }: Props
                                 </div>
                               )}
                             </div>
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -504,13 +502,12 @@ const ApplyLeave = ({ userGender, balance, holidays, history, onSuccess }: Props
               </div>
 
               <div className='flex items-center gap-3 md:ml-auto'>
-                <button
-                  type='button'
+                <Button
                   onClick={() => reset()}
-                  className='inline-flex items-center justify-center hover:bg-gray-100 px-5 md:px-6 py-3 border border-gray-200 rounded-lg font-semibold text-gray-700 text-sm transition-colors duration-150'
+                  className='!bg-transparent inline-flex items-center justify-center hover:!bg-gray-100 px-5 md:px-6 !py-3 border border-gray-200 !rounded-lg font-semibold !text-gray-700 text-sm transition-colors duration-150 shadow-none'
                 >
                   Reset
-                </button>
+                </Button>
                 <Button
                   type='submit'
                   disabled={isSubmitting || isOverdrawn}
