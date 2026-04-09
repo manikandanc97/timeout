@@ -34,15 +34,18 @@ type Props = {
   onSuccess?: (leave: Leave | null | undefined) => void;
 };
 
-const leaveTypeConfig: Record<LeaveType, {
-  icon: React.ElementType;
-  color: string;
-  bg: string;
-  border: string;
-  ring: string;
-  label: string;
-  desc: string;
-}> = {
+const leaveTypeConfig: Record<
+  LeaveType,
+  {
+    icon: React.ElementType;
+    color: string;
+    bg: string;
+    border: string;
+    ring: string;
+    label: string;
+    desc: string;
+  }
+> = {
   ANNUAL: {
     icon: Umbrella,
     color: 'text-cyan-600',
@@ -95,7 +98,13 @@ const formatFriendlyDate = (dateStr?: string) => {
   return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const ApplyLeave = ({ userGender, balance, holidays, history, onSuccess }: Props) => {
+const ApplyLeave = ({
+  userGender,
+  balance,
+  holidays,
+  history,
+  onSuccess,
+}: Props) => {
   const {
     control,
     handleSubmit,
@@ -146,7 +155,8 @@ const ApplyLeave = ({ userGender, balance, holidays, history, onSuccess }: Props
     if (!hasDateRange || !history?.length) return false;
     const start = new Date(startDate);
     const end = new Date(endDate);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
+      return false;
 
     return history.some((leave) => {
       const leaveStart = new Date(leave.fromDate ?? leave.startDate ?? '');
@@ -162,9 +172,7 @@ const ApplyLeave = ({ userGender, balance, holidays, history, onSuccess }: Props
   }, [hasDateRange, history, startDate, endDate]);
 
   const activeConfig =
-    type && type in leaveTypeConfig
-      ? leaveTypeConfig[type as LeaveType]
-      : null;
+    type && type in leaveTypeConfig ? leaveTypeConfig[type as LeaveType] : null;
 
   const upcomingHoliday = useMemo(() => {
     if (!holidays || holidays.length === 0) return null;
@@ -504,7 +512,7 @@ const ApplyLeave = ({ userGender, balance, holidays, history, onSuccess }: Props
               <div className='flex items-center gap-3 md:ml-auto'>
                 <Button
                   onClick={() => reset()}
-                  className='!bg-transparent inline-flex items-center justify-center hover:!bg-gray-100 px-5 md:px-6 !py-3 border border-gray-200 !rounded-lg font-semibold !text-gray-700 text-sm transition-colors duration-150 shadow-none'
+                  className='inline-flex justify-center items-center !bg-transparent hover:!bg-gray-100 shadow-none px-5 md:px-6 !py-3 border border-gray-200 !rounded-lg font-semibold !text-gray-700 text-sm transition-colors duration-150'
                 >
                   Reset
                 </Button>
