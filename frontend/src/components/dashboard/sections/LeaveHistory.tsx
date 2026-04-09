@@ -2,33 +2,11 @@
 
 import { History, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import type { Leave, LeaveStatus } from '@/types/leave';
+import type { Leave } from '@/types/leave';
+import LeaveStatusBadge from '@/components/leave/LeaveStatusBadge';
 
 type Props = {
   leaves: Leave[];
-};
-
-export const getStatusBadge = (status: LeaveStatus | string) => {
-  switch (status?.toUpperCase()) {
-    case 'APPROVED':
-      return (
-        <span className='bg-green-100 px-3 py-1.5 rounded-md font-semibold text-emerald-700 text-xs'>
-          Approved
-        </span>
-      );
-    case 'REJECTED':
-      return (
-        <span className='bg-red-100 px-3 py-1.5 rounded-md font-semibold text-rose-700 text-xs'>
-          Rejected
-        </span>
-      );
-    default:
-      return (
-        <span className='bg-orange-100 px-3 py-1.5 rounded-md font-semibold text-amber-700 text-xs'>
-          Pending
-        </span>
-      );
-  }
 };
 
 const formatDate = (dateStr: string) => {
@@ -90,7 +68,7 @@ const LeaveHistory = ({ leaves = [] }: Props) => {
                   </span>
                 </div>
                 <div className='flex flex-1 justify-end'>
-                  {getStatusBadge(leave.status)}
+                  <LeaveStatusBadge status={leave.status} />
                 </div>
               </div>
             ))}

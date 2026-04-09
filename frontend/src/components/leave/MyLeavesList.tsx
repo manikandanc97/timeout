@@ -1,15 +1,12 @@
 'use client';
 
 import api from '@/services/api';
-import type { Leave, LeaveStatus, LeaveType } from '@/types/leave';
+import type { Leave, LeaveType } from '@/types/leave';
 import {
   CalendarDays,
   Clock3,
   Pencil,
   X,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   Stethoscope,
   Umbrella,
   Baby,
@@ -19,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useMemo, useState } from 'react';
 import Button from '../ui/Button';
+import LeaveStatusBadge, { STATUS_BADGE_CONFIG } from './LeaveStatusBadge';
 
 type Props = { leaves: Leave[] };
 
@@ -67,39 +65,6 @@ const TYPE_CONFIG: Record<
   },
 };
 
-const STATUS_CONFIG: Record<
-  string,
-  {
-    label: string;
-    icon: React.ElementType;
-    bg: string;
-    text: string;
-    dot: string;
-  }
-> = {
-  APPROVED: {
-    label: 'Approved',
-    icon: CheckCircle2,
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
-    dot: 'bg-emerald-400',
-  },
-  REJECTED: {
-    label: 'Rejected',
-    icon: XCircle,
-    bg: 'bg-red-50',
-    text: 'text-red-600',
-    dot: 'bg-red-400',
-  },
-  PENDING: {
-    label: 'Pending',
-    icon: AlertCircle,
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    dot: 'bg-amber-400',
-  },
-};
-
 const fmt = (d: string) =>
   new Date(d).toLocaleDateString('en-IN', {
     day: 'numeric',
@@ -110,27 +75,11 @@ const fmt = (d: string) =>
 const countDays = (from: string, to: string) =>
   Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / 86400000) + 1;
 
-const StatusBadge = ({
-  status,
-  className = '',
-}: {
-  status: LeaveStatus | string;
-  className?: string;
-}) => {
-  const s = status?.toUpperCase();
-  const cfg = STATUS_CONFIG[s] ?? STATUS_CONFIG.PENDING;
-  const Icon = cfg.icon;
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${cfg.bg} ${cfg.text} ${className}`}
-    >
-      <Icon size={12} strokeWidth={2.5} />
-      {cfg.label}
-    </span>
-  );
-};
-
 const MyLeavesList = ({ leaves }: Props) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [typeFilter, setTypeFilter] = useState<string>('ALL');
+
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const dedupedLeaves = useMemo(() => {
@@ -153,6 +102,20 @@ const MyLeavesList = ({ leaves }: Props) => {
         new Date(a.fromDate ?? a.startDate ?? '').getTime(),
     );
   }, [leaves]);
+
+  const filteredLeaves = useMemo(() => {
+    return leaves.filter((leave) => {
+      const matchesSearch =
+        leave.reason?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        leave.type.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === 'ALL' || leave.status === statusFilter;
+      const matchesType = typeFilter === 'ALL' || leave.type === typeFilter;
+
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [leaves, searchTerm, statusFilter, typeFilter]);
 
   const handleDelete = async (id: number) => {
     try {
@@ -193,52 +156,89 @@ const MyLeavesList = ({ leaves }: Props) => {
   return (
     <div className='space-y-6 mt-6'>
       {/* Summary chips */}
-      <div className='flex flex-wrap gap-3'>
-        {[
-          {
-            label: 'Total',
-            value: dedupedLeaves.length,
-            bg: 'bg-gray-100',
-            text: 'text-gray-700',
-          },
-          {
-            label: 'Approved',
-            value: approved,
-            bg: 'bg-emerald-50',
-            text: 'text-emerald-700',
-          },
-          {
-            label: 'Pending',
-            value: pending,
-            bg: 'bg-amber-50',
-            text: 'text-amber-700',
-          },
-          {
-            label: 'Rejected',
-            value: rejected,
-            bg: 'bg-red-50',
-            text: 'text-red-600',
-          },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl ${item.bg} ${item.text}`}
-          >
-            <span className='font-bold text-lg leading-none'>{item.value}</span>
-            <span className='opacity-80 font-medium text-xs'>{item.label}</span>
+      <div className='flex justify-between items-center'>
+        <div className='flex flex-wrap gap-3'>
+          {[
+            {
+              label: 'Total',
+              value: dedupedLeaves.length,
+              bg: 'bg-gray-100',
+              text: 'text-gray-700',
+            },
+            {
+              label: STATUS_BADGE_CONFIG.APPROVED.label,
+              value: approved,
+              bg: STATUS_BADGE_CONFIG.APPROVED.bg,
+              text: STATUS_BADGE_CONFIG.APPROVED.text,
+            },
+            {
+              label: STATUS_BADGE_CONFIG.PENDING.label,
+              value: pending,
+              bg: STATUS_BADGE_CONFIG.PENDING.bg,
+              text: STATUS_BADGE_CONFIG.PENDING.text,
+            },
+            {
+              label: STATUS_BADGE_CONFIG.REJECTED.label,
+              value: rejected,
+              bg: STATUS_BADGE_CONFIG.REJECTED.bg,
+              text: STATUS_BADGE_CONFIG.REJECTED.text,
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl ${item.bg} ${item.text}`}
+            >
+              <span className='font-bold text-lg leading-none'>
+                {item.value}
+              </span>
+              <span className='opacity-80 font-medium text-xs'>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div className='flex gap-3 mb-4'>
+            <input
+              type='text'
+              placeholder='Search leaves...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className='px-3 py-2 border rounded-lg'
+            />
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className='px-3 py-2 border rounded-lg'
+            >
+              <option value='ALL'>All Status</option>
+              <option value='PENDING'>Pending</option>
+              <option value='APPROVED'>Approved</option>
+              <option value='REJECTED'>Rejected</option>
+            </select>
+
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className='px-3 py-2 border rounded-lg'
+            >
+              <option value='ALL'>All Types</option>
+              <option value='SICK'>Sick</option>
+              <option value='ANNUAL'>Annual</option>
+              <option value='COMPOFF'>Comp Off</option>
+            </select>
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Leave cards */}
       <div className='space-y-3'>
-        {dedupedLeaves.map((leave) => {
+        {filteredLeaves.map((leave) => {
           const typeCfg = TYPE_CONFIG[leave.type] ?? TYPE_CONFIG.ANNUAL;
           const TypeIcon = typeCfg.icon;
           const days = countDays(leave.fromDate, leave.toDate);
           const isPending = leave.status === 'PENDING';
-          const statusCfg =
-            STATUS_CONFIG[leave.status?.toUpperCase()] ?? STATUS_CONFIG.PENDING;
 
           return (
             <div
@@ -264,7 +264,10 @@ const MyLeavesList = ({ leaves }: Props) => {
                       <span className={`text-sm font-semibold ${typeCfg.text}`}>
                         {typeCfg.label}
                       </span>
-                      <StatusBadge status={leave.status} className='sm:hidden' />
+                      <LeaveStatusBadge
+                        status={leave.status}
+                        className='sm:hidden'
+                      />
                     </div>
 
                     <div className='flex flex-wrap items-center gap-3 mt-1.5 text-gray-500 text-xs'>
@@ -288,31 +291,24 @@ const MyLeavesList = ({ leaves }: Props) => {
                 </div>
 
                 {/* Status indicator (desktop) */}
-                <div className='hidden sm:flex flex-shrink-0 items-center gap-2'>
-                  <span
-                    className={`w-2 h-2 rounded-full ${statusCfg.dot} ${
-                      leave.status === 'PENDING' ? 'animate-pulse' : ''
-                    }`}
-                  />
-                  <span className={`text-xs font-medium ${statusCfg.text}`}>
-                    {statusCfg.label}
-                  </span>
+                <div className='hidden sm:flex flex-shrink-0 items-center'>
+                  <LeaveStatusBadge status={leave.status} />
                 </div>
 
                 {/* Actions */}
                 {isPending && (
                   <div className='flex flex-shrink-0 items-center gap-2'>
-                    <Button className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors !bg-white !text-gray-700 border border-gray-200 hover:!bg-gray-50 hover:border-gray-300 shadow-sm'>
+                    <Button className='inline-flex items-center gap-1.5 !bg-white hover:!bg-gray-50 shadow-sm px-3 py-1.5 border border-gray-200 hover:border-gray-300 rounded-lg font-semibold !text-gray-700 text-xs transition-colors'>
                       <Pencil size={12} strokeWidth={2} />
                       Edit
                     </Button>
                     <Button
                       onClick={() => handleDelete(leave.id)}
                       disabled={deletingId === leave.id}
-                      className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors disabled:cursor-not-allowed shadow-sm !bg-red-600 hover:!bg-red-700 !text-white border border-red-600 hover:border-red-700'
+                      className='inline-flex items-center gap-1.5 !bg-red-600 hover:!bg-red-700 shadow-sm px-3 py-1.5 border border-red-600 hover:border-red-700 rounded-lg font-semibold !text-white text-xs transition-colors disabled:cursor-not-allowed'
                     >
                       {deletingId === leave.id ? (
-                        <span className='inline-block w-4 h-4 border-2 border-white/70 border-t-white rounded-full animate-spin' />
+                        <span className='inline-block border-2 border-white/70 border-t-white rounded-full w-4 h-4 animate-spin' />
                       ) : (
                         <X size={12} strokeWidth={2.5} />
                       )}

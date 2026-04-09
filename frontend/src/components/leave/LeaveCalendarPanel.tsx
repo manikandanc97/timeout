@@ -48,7 +48,6 @@ function getMonthDays(year: number, month: number) {
   for (let d = 1; d <= daysInMonth; d++) {
     days.push(new Date(year, month, d));
   }
-  // pad to full rows
   while (days.length % 7 !== 0) days.push(null);
   return days;
 }
@@ -120,7 +119,11 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
       }
     });
 
-    return { approvedDates: approved, pendingDates: pending, rejectedDates: rejected };
+    return {
+      approvedDates: approved,
+      pendingDates: pending,
+      rejectedDates: rejected,
+    };
   }, [history]);
 
   const upcomingHoliday = useMemo(() => {
@@ -202,11 +205,12 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
     setHoveredDay(date);
     if (label) {
       const containerRect = containerRef.current?.getBoundingClientRect();
-      const targetRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const targetRect = (
+        e.currentTarget as HTMLElement
+      ).getBoundingClientRect();
       setTooltip({
         text: label,
-        x:
-          targetRect.left - (containerRect?.left ?? 0) + targetRect.width / 2,
+        x: targetRect.left - (containerRect?.left ?? 0) + targetRect.width / 2,
         y: targetRect.top - (containerRect?.top ?? 0),
       });
     }
