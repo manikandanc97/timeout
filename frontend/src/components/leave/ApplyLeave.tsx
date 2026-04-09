@@ -291,7 +291,7 @@ const ApplyLeave = ({
                           <Button
                             key={key}
                             onClick={() => setValue('type', key)}
-                            className={`!bg-transparent !text-gray-800 !p-0 !h-auto flex-col group relative flex min-w-[230px] max-w-[260px] gap-3 !rounded-xl border px-4 py-4 !text-left transition-all duration-150 hover:-translate-y-0.5 hover:!shadow-md ${
+                            className={`!bg-transparent !text-gray-800 !h-auto flex-col group relative flex min-w-[230px] max-w-[260px] gap-3 !rounded-xl border px-4 py-4 !text-left transition-all duration-150 hover:-translate-y-0.5 ${
                               isSelected
                                 ? `${cfg.bg} !border-transparent ring-2 ring-offset-2 ring-offset-white ${cfg.ring} !shadow-[0_10px_28px_rgba(0,0,0,0.08)]`
                                 : 'border-gray-200 !bg-gray-50'
