@@ -8,10 +8,6 @@ const getDefaultLeaveBalance = (user) => ({
   paternity: user.gender === 'MALE' ? 15 : 0,
 });
 
-/**
- * Start of calendar day in the server local TZ — matches applyLeave `YYYY-MM-DDT00:00:00`.
- * Avoids `new Date("YYYY-MM-DD")` (UTC) vs local mismatch that can drop a working day.
- */
 const toLocalCalendarDate = (value) => {
   if (value == null || value === '') return new Date(NaN);
   const s = String(value).trim();
@@ -24,14 +20,10 @@ const toLocalCalendarDate = (value) => {
   }
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return parsed;
-  return new Date(
-    parsed.getFullYear(),
-    parsed.getMonth(),
-    parsed.getDate(),
-  );
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 };
 
-const localDayKey = (d) => d.toDateString();
+const localDayKey = (d) => d.endDateString();
 
 const getWorkingDays = async (startDate, endDate) => {
   const start = toLocalCalendarDate(startDate);
@@ -79,22 +71,22 @@ const getWorkingDays = async (startDate, endDate) => {
 
 export const applyLeave = async (req, res) => {
   try {
-    const { type, fromDate, toDate, reason } = req.body;
-    if (!type || !fromDate || !toDate || !reason) {
+    const { type, startDate, endDate, reason } = req.body;
+    if (!type || !startDate || !endDate || !reason) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    const normalizedFromDate = new Date(`${fromDate}T00:00:00`);
-    const normalizedToDate = new Date(`${toDate}T00:00:00`);
+    const normalizedstartDate = new Date(`${startDate}T00:00:00`);
+    const normalizedendDate = new Date(`${endDate}T00:00:00`);
 
     if (
-      Number.isNaN(normalizedFromDate.getTime()) ||
-      Number.isNaN(normalizedToDate.getTime())
+      Number.isNaN(normalizedstartDate.getTime()) ||
+      Number.isNaN(normalizedendDate.getTime())
     ) {
       return res.status(400).json({ message: 'Invalid leave dates provided' });
     }
 
-    if (normalizedFromDate > normalizedToDate) {
+    if (normalizedstartDate > normalizedendDate) {
       return res
         .status(400)
         .json({ message: 'From date cannot be after To date' });
@@ -113,7 +105,7 @@ export const applyLeave = async (req, res) => {
     }
 
     const leaveType = type.toUpperCase();
-    const totalDays = await getWorkingDays(fromDate, toDate);
+    const totalDays = await getWorkingDays(startDate, endDate);
 
     const existingLeave = await prisma.leave.findFirst({
       where: {
@@ -121,11 +113,11 @@ export const applyLeave = async (req, res) => {
         status: {
           in: ['PENDING', 'APPROVED'],
         },
-        fromDate: {
-          lte: normalizedToDate,
+        startDate: {
+          lte: normalizedendDate,
         },
-        toDate: {
-          gte: normalizedFromDate,
+        endDate: {
+          gte: normalizedstartDate,
         },
       },
     });
@@ -147,8 +139,8 @@ export const applyLeave = async (req, res) => {
     const leave = await prisma.leave.create({
       data: {
         type,
-        fromDate: normalizedFromDate,
-        toDate: normalizedToDate,
+        startDate: normalizedstartDate,
+        endDate: normalizedendDate,
         reason,
         userId: userId,
       },
@@ -231,7 +223,7 @@ export const updateLeaveStatus = async (req, res) => {
     }
 
     const leaveType = leave.type?.toUpperCase();
-    const totalDays = await getWorkingDays(leave.fromDate, leave.toDate);
+    const totalDays = await getWorkingDays(leave.startDate, leave.endDate);
 
     if (status === 'REJECTED' && totalDays > 0) {
       let bal = await prisma.leaveBalance.findUnique({
@@ -324,11 +316,13 @@ export const cancelLeave = async (req, res) => {
 
     if (!balance) {
       balance = await prisma.leaveBalance.create({
-        data: getDefaultLeaveBalance(user ?? { id: leave.userId, gender: 'MALE' }),
+        data: getDefaultLeaveBalance(
+          user ?? { id: leave.userId, gender: 'MALE' },
+        ),
       });
     }
 
-    const totalDays = await getWorkingDays(leave.fromDate, leave.toDate);
+    const totalDays = await getWorkingDays(leave.startDate, leave.endDate);
     const type = leave.type?.toUpperCase();
 
     const updates = [];
@@ -404,13 +398,13 @@ export const getDashboardStats = async (req, res) => {
           where: {
             ...whereCondition,
             status: { in: ['PENDING', 'APPROVED'] },
-            fromDate: { lte: currentMonthEnd },
-            toDate: { gte: currentMonthStart },
+            startDate: { lte: currentMonthEnd },
+            endDate: { gte: currentMonthStart },
           },
           select: {
             type: true,
-            fromDate: true,
-            toDate: true,
+            startDate: true,
+            endDate: true,
           },
         }),
         prisma.holiday.findMany({
@@ -467,14 +461,17 @@ export const getDashboardStats = async (req, res) => {
         continue;
       }
 
-      const rangeStart = toLocalCalendarDate(leave.fromDate);
-      const rangeEnd = toLocalCalendarDate(leave.toDate);
+      const rangeStart = toLocalCalendarDate(leave.startDate);
+      const rangeEnd = toLocalCalendarDate(leave.endDate);
       const monthStartDay = toLocalCalendarDate(currentMonthStart);
       const monthEndDay = toLocalCalendarDate(currentMonthEnd);
       const clipStart = rangeStart > monthStartDay ? rangeStart : monthStartDay;
       const clipEnd = rangeEnd < monthEndDay ? rangeEnd : monthEndDay;
 
-      if (Number.isNaN(clipStart.getTime()) || Number.isNaN(clipEnd.getTime())) {
+      if (
+        Number.isNaN(clipStart.getTime()) ||
+        Number.isNaN(clipEnd.getTime())
+      ) {
         continue;
       }
       if (clipStart > clipEnd) {

@@ -18,14 +18,68 @@ enum Gender {
   FEMALE
 }
 
+model Organization {
+  id           Int          @id @default(autoincrement())
+  name         String       @unique
+  email        String       @unique
+  createdAt    DateTime     @default(now())
+  users        User[]
+  teams        Team[]
+  departments  Department[]
+  holidays     Holiday[]
+  leaves       Leave[]
+}
+
+model Department {
+  id             Int      @id @default(autoincrement())
+  name           String
+  organizationId Int
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teams        Team[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model Team {
+  id             Int    @id @default(autoincrement())
+  name           String
+  organizationId Int
+  departmentId   Int
+  managerId      Int?
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  department   Department   @relation(fields: [departmentId], references: [id])
+
+  members User[]
+  leaves  Leave[]
+
+  @@unique([name, departmentId])
+}
+
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  password     String
-  role         Role          @default(EMPLOYEE)
-  gender       Gender
-  createdAt    DateTime      @default(now())
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
+  role     Role    @default(EMPLOYEE)
+  gender   Gender?
+  /** Calendar date (time ignored) for upcoming birthdays on admin dashboard */
+  birthDate DateTime?
+
+  organizationId Int
+  teamId         Int?
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  team         Team?        @relation(fields: [teamId], references: [id])
+
   leaves       Leave[]
   leaveBalance LeaveBalance?
 }
@@ -44,20 +98,28 @@ enum LeaveType {
 }
 
 model Leave {
-  id        Int         @id @default(autoincrement())
-  userId    Int
-  type      LeaveType
-  fromDate  DateTime
-  toDate    DateTime
-  reason    String
-  status    LeaveStatus @default(PENDING)
-  user      User        @relation(fields: [userId], references: [id])
-  createdAt DateTime    @default(now())
+  id             Int         @id @default(autoincrement())
+  userId         Int
+  organizationId Int
+  teamId         Int?
+  type           LeaveType
+  startDate      DateTime
+  endDate        DateTime
+  reason         String
+  status         LeaveStatus @default(PENDING)
+
+  approvedById Int?
+
+  createdAt DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  team         Team?        @relation(fields: [teamId], references: [id])
 
   @@index([userId, status])
-  @@index([userId, fromDate])
+  @@index([organizationId])
+  @@index([teamId])
   @@index([status])
-  @@index([fromDate])
 }
 
 model LeaveBalance {
@@ -72,6 +134,11 @@ model LeaveBalance {
 
 model Holiday {
   id   Int      @id @default(autoincrement())
-  date DateTime @unique
+  date DateTime
   name String
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([date, organizationId])
 }

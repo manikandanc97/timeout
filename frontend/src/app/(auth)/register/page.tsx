@@ -12,11 +12,11 @@ import { toast } from 'sonner';
 const Register = () => {
   const router = useRouter();
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
+  const [adminName, setAdminName] = useState('');
+  const [workEmail, setWorkEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [gender, setGender] = useState('');
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -24,13 +24,14 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (
+      !organizationName ||
+      !adminName ||
+      !workEmail ||
+      !password ||
+      !confirmPassword
+    ) {
       toast.error('Please fill in all fields');
-      return;
-    }
-
-    if (!gender) {
-      toast.error('Please select gender');
       return;
     }
 
@@ -46,10 +47,10 @@ const Register = () => {
 
     try {
       await api.post('/auth/register', {
-        name,
-        email,
+        organizationName,
+        adminName,
+        workEmail,
         password,
-        gender,
       });
 
       toast.success('Account created successfully');
@@ -70,31 +71,40 @@ const Register = () => {
       title='Create account'
       subtitle='Request and track leave in one place.'
       leading={
-        <div className='flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner ring-1 ring-primary/15 sm:h-12 sm:w-12 sm:rounded-2xl'>
-          <UserPlus className='h-6 w-6' strokeWidth={1.75} aria-hidden />
+        <div className='flex justify-center items-center bg-primary/10 shadow-inner rounded-xl sm:rounded-2xl ring-1 ring-primary/15 w-11 sm:w-12 h-11 sm:h-12 text-primary'>
+          <UserPlus className='w-6 h-6' strokeWidth={1.75} aria-hidden />
         </div>
       }
     >
       <form
         onSubmit={handleSubmit}
-        className='grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-4 sm:gap-y-3'
+        className='flex flex-col gap-3 sm:gap-x-4 sm:gap-y-3'
       >
         <Input
-          id='name'
+          id='organizationName'
           type='text'
-          label='Name'
-          value={name}
+          label='Organization Name'
+          value={organizationName}
           required
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => setOrganizationName(e.target.value)}
+        />
+
+        <Input
+          id='adminName'
+          type='text'
+          label='Admin Name'
+          value={adminName}
+          required
+          onChange={(e) => setAdminName(e.target.value)}
         />
 
         <Input
           id='email'
           type='email'
           label='Email'
-          value={email}
+          value={workEmail}
           required
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => setWorkEmail(e.target.value)}
         />
 
         <Input
@@ -111,7 +121,7 @@ const Register = () => {
               variant='ghost'
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className='!rounded !p-0 !text-gray-700 hover:!bg-transparent hover:!text-primary focus:outline-none'
+              className='hover:!bg-transparent !p-0 !rounded focus:outline-none !text-gray-700 hover:!text-primary'
             >
               {showPassword ? (
                 <EyeOff color='gray' size={18} />
@@ -136,9 +146,11 @@ const Register = () => {
               variant='ghost'
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               aria-label={
-                showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+                showConfirmPassword
+                  ? 'Hide confirm password'
+                  : 'Show confirm password'
               }
-              className='!rounded !p-0 !text-gray-700 hover:!bg-transparent hover:!text-primary focus:outline-none'
+              className='hover:!bg-transparent !p-0 !rounded focus:outline-none !text-gray-700 hover:!text-primary'
             >
               {showConfirmPassword ? (
                 <EyeOff color='gray' size={18} />
@@ -149,45 +161,19 @@ const Register = () => {
           }
         />
 
-        <fieldset className='min-w-0 space-y-1.5 border-0 p-0 pt-0.5 sm:col-span-2'>
-          <legend className='text-xs font-medium text-gray-500'>Gender</legend>
-          <div className='flex flex-wrap items-center gap-x-5 gap-y-1'>
-            <label className='flex cursor-pointer items-center gap-2 text-sm text-gray-700'>
-              <input
-                type='radio'
-                name='gender'
-                value='MALE'
-                checked={gender === 'MALE'}
-                onChange={() => setGender('MALE')}
-                required
-                className='h-4 w-4 shrink-0 border-gray-300 accent-primary focus:ring-2 focus:ring-primary/35 focus:ring-offset-0 focus:outline-none'
-              />
-              Male
-            </label>
-            <label className='flex cursor-pointer items-center gap-2 text-sm text-gray-700'>
-              <input
-                type='radio'
-                name='gender'
-                value='FEMALE'
-                checked={gender === 'FEMALE'}
-                onChange={() => setGender('FEMALE')}
-                className='h-4 w-4 shrink-0 border-gray-300 accent-primary focus:ring-2 focus:ring-primary/35 focus:ring-offset-0 focus:outline-none'
-              />
-              Female
-            </label>
-          </div>
-        </fieldset>
-
-        <Button type='submit' className='col-span-full w-full py-2.5 text-[15px]'>
+        <Button
+          type='submit'
+          className='col-span-full py-2.5 w-full text-[15px]'
+        >
           Create account
         </Button>
 
-        <p className='col-span-full -mt-0.5 text-center text-sm text-gray-500'>
+        <p className='col-span-full -mt-0.5 text-gray-500 text-sm text-center'>
           Already have an account?{' '}
           <button
             type='button'
             onClick={() => router.push('/login')}
-            className='cursor-pointer font-medium text-primary underline-offset-4 transition-colors hover:text-primary-dark hover:underline'
+            className='font-medium text-primary hover:text-primary-dark hover:underline underline-offset-4 transition-colors cursor-pointer'
           >
             Sign in
           </button>

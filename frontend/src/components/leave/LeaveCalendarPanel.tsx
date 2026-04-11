@@ -15,6 +15,17 @@ import Button from '@/components/ui/Button';
 type Props = {
   holidays: Holiday[];
   history: Leave[];
+  /** Small uppercase label above the title (default: apply-leave copy). */
+  bannerEyebrow?: string;
+  /** Main headline on the gradient banner. */
+  bannerTitle?: string;
+  /**
+   * When false (admin team calendar), only today, holidays, and weekends are
+   * highlighted — no pending / approved / rejected leave shading or legend.
+   */
+  showLeaveDays?: boolean;
+  /** Extra classes on the outer shell (e.g. `h-full min-h-0` in admin column). */
+  rootClassName?: string;
 };
 
 const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -53,7 +64,14 @@ function getMonthDays(year: number, month: number) {
   return days;
 }
 
-const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
+const LeaveCalendarPanel = ({
+  holidays = [],
+  history = [],
+  bannerEyebrow = 'Leave Calendar',
+  bannerTitle = 'Plan around the team',
+  showLeaveDays = true,
+  rootClassName = '',
+}: Props) => {
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -93,13 +111,20 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
   );
 
   const { approvedDates, pendingDates, rejectedDates } = useMemo(() => {
+    const empty = {
+      approvedDates: [] as Date[],
+      pendingDates: [] as Date[],
+      rejectedDates: [] as Date[],
+    };
+    if (!showLeaveDays) return empty;
+
     const approved: Date[] = [];
     const pending: Date[] = [];
     const rejected: Date[] = [];
 
     history.forEach((l) => {
-      const start = new Date(l.startDate ?? l.fromDate);
-      const end = new Date(l.endDate ?? l.toDate);
+      const start = new Date(l.startDate ?? l.startDate);
+      const end = new Date(l.endDate ?? l.endDate);
       if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
 
       const bucket =
@@ -125,7 +150,7 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
       pendingDates: pending,
       rejectedDates: rejected,
     };
-  }, [history]);
+  }, [history, showLeaveDays]);
 
   const upcomingHoliday = useMemo(() => {
     const todayTs = today.getTime();
@@ -147,9 +172,11 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
       const h = holidayDates.find((h) => isSameDay(h.date, date));
       return h?.name ?? 'Holiday';
     }
-    if (pendingDates.some((d) => isSameDay(d, date))) return 'Pending Leave';
-    if (approvedDates.some((d) => isSameDay(d, date))) return 'Approved Leave';
-    if (rejectedDates.some((d) => isSameDay(d, date))) return 'Rejected Leave';
+    if (showLeaveDays) {
+      if (pendingDates.some((d) => isSameDay(d, date))) return 'Pending Leave';
+      if (approvedDates.some((d) => isSameDay(d, date))) return 'Approved Leave';
+      if (rejectedDates.some((d) => isSameDay(d, date))) return 'Rejected Leave';
+    }
     const dow = date.getDay();
     if (dow === 0 || dow === 6) return 'Weekend';
     return '';
@@ -175,21 +202,23 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
         cell: `bg-amber-100 text-amber-700 font-semibold ${isHovered ? 'bg-amber-200' : ''}`,
         dot: 'bg-amber-400',
       };
-    if (isRejected)
-      return {
-        cell: `bg-red-50 text-red-700 font-semibold ${isHovered ? 'bg-red-100' : ''}`,
-        dot: 'bg-red-400',
-      };
-    if (isPending)
-      return {
-        cell: `bg-blue-50 text-blue-700 font-semibold ${isHovered ? 'bg-blue-100' : ''}`,
-        dot: 'bg-blue-400',
-      };
-    if (isApproved)
-      return {
-        cell: `bg-emerald-100 text-emerald-700 font-semibold ${isHovered ? 'bg-emerald-200' : ''}`,
-        dot: 'bg-emerald-400',
-      };
+    if (showLeaveDays) {
+      if (isRejected)
+        return {
+          cell: `bg-red-50 text-red-700 font-semibold ${isHovered ? 'bg-red-100' : ''}`,
+          dot: 'bg-red-400',
+        };
+      if (isPending)
+        return {
+          cell: `bg-blue-50 text-blue-700 font-semibold ${isHovered ? 'bg-blue-100' : ''}`,
+          dot: 'bg-blue-400',
+        };
+      if (isApproved)
+        return {
+          cell: `bg-emerald-100 text-emerald-700 font-semibold ${isHovered ? 'bg-emerald-200' : ''}`,
+          dot: 'bg-emerald-400',
+        };
+    }
     if (isWeekend)
       return {
         cell: `text-gray-300 ${isHovered ? 'bg-gray-100' : ''}`,
@@ -226,19 +255,21 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
     viewMonth === today.getMonth() && viewYear === today.getFullYear();
 
   return (
-    <div className='flex flex-col bg-white shadow-md rounded-2xl overflow-hidden'>
+    <div
+      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md ${rootClassName}`.trim()}
+    >
       {/* Top banner */}
-      <div className='bg-linear-to-br from-primary-dark via-primary to-accent px-5 pt-5 pb-6'>
+      <div className='shrink-0 bg-linear-to-br from-primary-dark via-primary to-accent px-5 pt-5 pb-6'>
         <div className='flex flex-col gap-2'>
           <div>
             <div className='flex items-center gap-1.5 mb-1'>
               <CalendarDays size={13} className='text-white/70' />
               <span className='font-semibold text-[11px] text-white/70 uppercase tracking-widest'>
-                Leave Calendar
+                {bannerEyebrow}
               </span>
             </div>
             <h2 className='font-bold text-white text-xl leading-tight'>
-              Plan around the team
+              {bannerTitle}
             </h2>
           </div>
 
@@ -266,12 +297,12 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
       </div>
 
       {/* Calendar body */}
-      <div className='flex flex-col flex-1 px-4 pt-4 pb-5'>
+      <div className='flex min-h-0 flex-1 flex-col px-4 pt-4 pb-5'>
         {/* Month nav */}
         <div className='flex justify-between items-center mb-4'>
           <Button
             onClick={prevMonth}
-            className='!bg-transparent !p-0 !text-gray-500 flex justify-center items-center hover:!bg-gray-100 !rounded-lg w-8 h-8 hover:!text-primary transition-colors'
+            className='flex justify-center items-center !bg-transparent hover:!bg-gray-100 !p-0 !rounded-lg w-8 h-8 !text-gray-500 hover:!text-primary transition-colors'
           >
             <ChevronLeft size={18} />
           </Button>
@@ -283,7 +314,7 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
             {!isCurrentMonth && (
               <Button
                 onClick={goToday}
-                className='!bg-transparent !p-0 flex items-center gap-1 mt-0.5 text-[11px] !text-primary hover:underline hover:!bg-transparent !h-auto'
+                className='flex items-center gap-1 !bg-transparent hover:!bg-transparent mt-0.5 !p-0 !h-auto !text-primary text-[11px] hover:underline'
               >
                 <Sun size={10} />
                 Back to today
@@ -293,7 +324,7 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
 
           <Button
             onClick={nextMonth}
-            className='!bg-transparent !p-0 !text-gray-500 flex justify-center items-center hover:!bg-gray-100 !rounded-lg w-8 h-8 hover:!text-primary transition-colors'
+            className='flex justify-center items-center !bg-transparent hover:!bg-gray-100 !p-0 !rounded-lg w-8 h-8 !text-gray-500 hover:!text-primary transition-colors'
           >
             <ChevronRight size={18} />
           </Button>
@@ -358,18 +389,31 @@ const LeaveCalendarPanel = ({ holidays = [], history = [] }: Props) => {
 
         {/* Legend */}
         <div className='mt-4 pt-3 border-gray-100 border-t'>
-          <div className='gap-x-4 gap-y-2 grid grid-cols-2'>
-            {[
-              { color: 'bg-primary', label: 'Today' },
-              { color: 'bg-amber-400', label: 'Holiday' },
-              { color: 'bg-blue-400', label: 'Pending leave' },
-              { color: 'bg-emerald-400', label: 'Approved leave' },
-              { color: 'bg-red-400', label: 'Rejected leave' },
-              { color: 'bg-gray-200', label: 'Weekend' },
-            ].map((item) => (
-              <div key={item.label} className='flex items-center gap-2'>
+          <div
+            className={
+              showLeaveDays
+                ? 'grid grid-cols-2 gap-x-4 gap-y-2'
+                : 'flex flex-nowrap items-center justify-center gap-5 sm:gap-6'
+            }
+          >
+            {(showLeaveDays
+              ? [
+                  { color: 'bg-primary', label: 'Today' },
+                  { color: 'bg-amber-400', label: 'Holiday' },
+                  { color: 'bg-blue-400', label: 'Pending leave' },
+                  { color: 'bg-emerald-400', label: 'Approved leave' },
+                  { color: 'bg-red-400', label: 'Rejected leave' },
+                  { color: 'bg-gray-200', label: 'Weekend' },
+                ]
+              : [
+                  { color: 'bg-primary', label: 'Today' },
+                  { color: 'bg-amber-400', label: 'Holiday' },
+                  { color: 'bg-gray-200', label: 'Weekend' },
+                ]
+            ).map((item) => (
+              <div key={item.label} className='flex shrink-0 items-center gap-2'>
                 <span
-                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.color}`}
+                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${item.color}`}
                 />
                 <span className='text-gray-500 text-xs'>{item.label}</span>
               </div>

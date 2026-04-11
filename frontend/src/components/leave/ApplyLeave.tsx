@@ -150,8 +150,8 @@ const ApplyLeave = ({
       return false;
 
     return history.some((leave) => {
-      const leaveStart = new Date(leave.fromDate ?? leave.startDate ?? '');
-      const leaveEnd = new Date(leave.toDate ?? leave.endDate ?? '');
+      const leaveStart = new Date(leave.startDate ?? leave.startDate ?? '');
+      const leaveEnd = new Date(leave.endDate ?? leave.endDate ?? '');
       if (
         Number.isNaN(leaveStart.getTime()) ||
         Number.isNaN(leaveEnd.getTime()) ||
@@ -170,8 +170,8 @@ const ApplyLeave = ({
       }
       const response = await api.post('/leaves', {
         type: data.type,
-        fromDate: data.startDate,
-        toDate: data.endDate,
+        startDate: data.startDate,
+        endDate: data.endDate,
         reason: data.reason,
       });
       toast.success('Leave request submitted successfully');
@@ -190,7 +190,7 @@ const ApplyLeave = ({
       <div className='z-10 relative flex flex-col gap-6 p-6'>
         <div className='flex flex-wrap justify-between items-start gap-4 border-gray-100 border-b'>
           <div className='flex items-start gap-3'>
-            <div className='grid h-12 w-12 place-items-center rounded-2xl bg-linear-to-br from-primary/15 via-primary/10 to-primary/5 text-primary shadow-inner shadow-primary/15'>
+            <div className='place-items-center grid bg-linear-to-br from-primary/15 via-primary/10 to-primary/5 shadow-inner shadow-primary/15 rounded-2xl w-12 h-12 text-primary'>
               <CalendarClock size={20} />
             </div>
             <div>
@@ -468,14 +468,14 @@ const ApplyLeave = ({
                   type='button'
                   variant='outline'
                   onClick={() => reset()}
-                  className='inline-flex items-center justify-center px-5 py-3 text-sm font-semibold shadow-none md:px-6'
+                  className='inline-flex justify-center items-center shadow-none px-5 md:px-6 py-3 font-semibold text-sm'
                 >
                   Reset
                 </Button>
                 <Button
                   type='submit'
                   disabled={isSubmitting || isOverdrawn}
-                  className='px-6 py-3 text-sm font-semibold shadow-md shadow-primary/20 md:px-8'
+                  className='shadow-md shadow-primary/20 px-6 md:px-8 py-3 font-semibold text-sm'
                 >
                   {isSubmitting ? (
                     <span className='flex items-center gap-2'>

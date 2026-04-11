@@ -12,5 +12,7 @@ export const fmt = (d?: string) => {
   });
 };
 
-export const getLeaveStart = (leave: Leave) => leave.fromDate ?? leave.startDate ?? '';
-export const getLeaveEnd = (leave: Leave) => leave.toDate ?? leave.endDate ?? '';
+export const getLeaveStart = (leave: Leave) =>
+  leave.startDate ?? leave.startDate ?? '';
+export const getLeaveEnd = (leave: Leave) =>
+  leave.endDate ?? leave.endDate ?? '';

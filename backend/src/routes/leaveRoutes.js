@@ -11,9 +11,12 @@ import { roleMiddleware } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
+router.get('/dashboard', authMiddleware, getDashboardStats);
+router.get('/history', authMiddleware, getLeaves);
+
 router.post('/', authMiddleware, applyLeave);
 router.get('/', authMiddleware, getLeaves);
-router.delete('/:id', authMiddleware, cancelLeave);
+
 router.put(
   '/:id',
   authMiddleware,
@@ -21,7 +24,6 @@ router.put(
   updateLeaveStatus,
 );
 
-router.get('/dashboard', authMiddleware, getDashboardStats);
-router.get('/history', authMiddleware, getLeaves);
+router.delete('/:id', authMiddleware, cancelLeave);
 
 export default router;

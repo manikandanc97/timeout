@@ -5,13 +5,20 @@ export type LeaveType = 'ANNUAL' | 'SICK' | 'MATERNITY' | 'PATERNITY';
 export interface Leave {
   id: number;
   type: LeaveType;
-  fromDate: string;
-  toDate: string;
+  startDate: string;
+  endDate: string;
   reason: string;
   status: LeaveStatus;
   userId?: number;
-  startDate?: string;
-  endDate?: string;
+  createdAt?: string;
+}
+
+/** Leave row returned for admin/manager from GET /leaves */
+export interface LeaveWithEmployee extends Leave {
+  user: {
+    name: string;
+    email?: string;
+  };
 }
 
 export interface LeaveBalance {

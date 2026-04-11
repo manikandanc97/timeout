@@ -56,12 +56,12 @@ const LeaveHistory = ({ leaves = [], holidays = [] }: Props) => {
                 </span>
                 <div className='flex flex-1 justify-center'>
                   <span className='text-gray-500 text-sm whitespace-nowrap'>
-                    {formatDate(leave.fromDate)} → {formatDate(leave.toDate)}
+                    {formatDate(leave.startDate)} → {formatDate(leave.endDate)}
                     <span className='mx-2 text-gray-300'>•</span>
                     <span className='text-gray-400 text-xs'>
                       {workingDaysForLeaveRange(
-                        leave.fromDate,
-                        leave.toDate,
+                        leave.startDate,
+                        leave.endDate,
                         holidays,
                       )}{' '}
                       working days

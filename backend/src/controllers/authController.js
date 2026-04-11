@@ -1,40 +1,41 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../prismaClient.js';
+import { createOrganizationStructure } from '../lib/defaultOrgStructure.js';
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, gender } = req.body;
+    const { organizationName, adminName, password, workEmail } = req.body;
 
-    if (!name || !email || !password || !gender) {
+    if (!organizationName || !adminName || !workEmail || !password) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: 'User already registered with this email' });
+    const existingOrganization = await prisma.organization.findUnique({
+      where: { name: organizationName },
+    });
+    if (existingOrganization) {
+      return res.status(400).json({ message: 'Organization already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
+    const organization = await prisma.organization.create({
       data: {
-        name,
-        email,
-        password: hashedPassword,
-        gender,
+        name: organizationName,
+        email: workEmail,
       },
     });
 
-    await prisma.leaveBalance.create({
+    await createOrganizationStructure(prisma, organization.id);
+
+    const user = await prisma.user.create({
       data: {
-        userId: user.id,
-        sick: 0,
-        annual: 12,
-        maternity: gender === 'FEMALE' ? 180 : 0,
-        paternity: gender === 'MALE' ? 15 : 0,
+        name: adminName,
+        email: workEmail,
+        password: hashedPassword,
+        role: 'ADMIN',
+        organizationId: organization.id,
       },
     });
 
@@ -63,7 +64,7 @@ export const login = async (req, res) => {
     console.log('👤 Login User:', user);
 
     const accessToken = jwt.sign(
-      { id: user.id, role: user.role, gender: user.gender },
+      { id: user.id, role: user.role, organizationId: user.organizationId },
       process.env.ACCESS_SECRET,
       {
         expiresIn: '15m',
@@ -107,7 +108,7 @@ export const refreshTokenHandler = (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: decoded.id } });
 
     const newAccessToken = jwt.sign(
-      { id: user.id, role: user.role, gender: user.gender },
+      { id: user.id, role: user.role, organizationId: user.organizationId },
       process.env.ACCESS_SECRET,
       {
         expiresIn: '15m',
@@ -124,6 +125,19 @@ export const refreshTokenHandler = (req, res) => {
 
     res.json({ accessToken: newAccessToken });
   });
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    res.json({
+      id: req.user.id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+      organizationId: req.user.organizationId,
+      gender: req.user.gender,
+    });
+  } catch (error) {}
 };
 
 export const logout = (req, res) => {

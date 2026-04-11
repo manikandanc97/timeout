@@ -42,7 +42,7 @@ export const workingDaysForLeaveRange = (
     holidays
       .map((h) => new Date(h.date))
       .filter((d) => !Number.isNaN(d.getTime()))
-      .map((d) => startOfLocalCalendarDay(d).toDateString()),
+      .map((d) => startOfLocalCalendarDay(d).endDateString()),
   );
 
   let count = 0;
@@ -50,7 +50,7 @@ export const workingDaysForLeaveRange = (
   while (cur <= end) {
     const dayOfWeek = cur.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isHoliday = holidaySet.has(cur.toDateString());
+    const isHoliday = holidaySet.has(cur.endDateString());
     if (!isWeekend && !isHoliday) count++;
     cur.setDate(cur.getDate() + 1);
   }
@@ -63,7 +63,12 @@ export const calculateLeaveDays = (
   holidays: Holiday[] = [],
 ) => {
   if (!startDate || !endDate)
-    return { totalCalendar: 0, weekends: 0, holidayWeekdays: 0, workingDays: 0 };
+    return {
+      totalCalendar: 0,
+      weekends: 0,
+      holidayWeekdays: 0,
+      workingDays: 0,
+    };
 
   const start = parseFormOrIsoToLocalDay(startDate);
   const end = parseFormOrIsoToLocalDay(endDate);
@@ -72,7 +77,7 @@ export const calculateLeaveDays = (
     holidays
       .map((h) => new Date(h.date))
       .filter((d) => !Number.isNaN(d.getTime()))
-      .map((d) => startOfLocalCalendarDay(d).toDateString()),
+      .map((d) => startOfLocalCalendarDay(d).endDateString()),
   );
 
   let weekends = 0;
@@ -82,7 +87,7 @@ export const calculateLeaveDays = (
   while (current <= end) {
     const dayOfWeek = current.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isHoliday = holidaySet.has(current.toDateString());
+    const isHoliday = holidaySet.has(current.endDateString());
 
     if (isWeekend) weekends++;
     else if (isHoliday) holidayWeekdays++;
@@ -92,14 +97,9 @@ export const calculateLeaveDays = (
 
   const msPerDay = 1000 * 60 * 60 * 24;
   const totalCalendar =
-    Math.floor(
-      (end.getTime() - start.getTime()) / msPerDay,
-    ) + 1;
+    Math.floor((end.getTime() - start.getTime()) / msPerDay) + 1;
 
-  const workingDays = Math.max(
-    0,
-    totalCalendar - weekends - holidayWeekdays,
-  );
+  const workingDays = Math.max(0, totalCalendar - weekends - holidayWeekdays);
 
   return { totalCalendar, weekends, holidayWeekdays, workingDays };
 };

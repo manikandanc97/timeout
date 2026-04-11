@@ -1,34 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import React from 'react';
-import {
-  LayoutDashboard,
-  CalendarDays,
-  FilePlus2,
-  BookOpen,
-  Hourglass,
-  Users,
-} from 'lucide-react';
+import { Hourglass } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-
-const menuList: { name: string; href: string; icon: React.ElementType }[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'My Leaves', href: '/leaves', icon: CalendarDays },
-  { name: 'Apply leave', href: '/apply', icon: FilePlus2 },
-  { name: 'Team Leaves', href: '/team', icon: Users },
-  { name: 'Leave Policy', href: '/policy', icon: BookOpen },
-];
+import { employeeMenuList, adminMenuList } from '@/constants/sidebarMenu';
+import { useAuth } from '@/context/AuthContext';
 
 const Sidebar = () => {
   const pathname = usePathname();
+
+  const { user } = useAuth();
+
+  let menuList = employeeMenuList;
+
+  if (user && user.role === 'ADMIN') {
+    menuList = adminMenuList;
+  }
+
   return (
-    <aside className='flex h-full w-40 flex-col bg-primary-dark text-white'>
-      <div className='flex shrink-0 items-center gap-2 p-5'>
+    <aside className='flex flex-col bg-primary-dark w-40 h-full text-white'>
+      <div className='flex items-center gap-2 p-5 shrink-0'>
         <Hourglass fill='white' />
-        <h2 className='text-2xl font-bold text-white'>Timeout</h2>
+        <h2 className='font-bold text-white text-2xl'>Timeout</h2>
       </div>
-      <nav className='flex flex-1 flex-col space-y-2 overflow-y-auto pb-4 text-sm font-medium'>
+      <nav className='flex flex-col flex-1 space-y-2 pb-4 overflow-y-auto font-medium text-sm'>
         {menuList.map((menu) => {
           const Icon = menu.icon;
           const isActive = pathname === menu.href;

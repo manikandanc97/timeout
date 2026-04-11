@@ -37,8 +37,8 @@ const ApplyLeaveClient = ({
       }
       return Array.from(byId.values()).sort(
         (a, b) =>
-          new Date(b.fromDate ?? b.startDate ?? '').getTime() -
-          new Date(a.fromDate ?? a.startDate ?? '').getTime(),
+          new Date(b.startDate ?? b.startDate ?? '').getTime() -
+          new Date(a.startDate ?? a.startDate ?? '').getTime(),
       );
     });
   };
