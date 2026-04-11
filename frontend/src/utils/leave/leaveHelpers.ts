@@ -42,7 +42,7 @@ export const workingDaysForLeaveRange = (
     holidays
       .map((h) => new Date(h.date))
       .filter((d) => !Number.isNaN(d.getTime()))
-      .map((d) => startOfLocalCalendarDay(d).endDateString()),
+      .map((d) => startDate(startOfLocalCalendarDay(d))),
   );
 
   let count = 0;
@@ -50,7 +50,7 @@ export const workingDaysForLeaveRange = (
   while (cur <= end) {
     const dayOfWeek = cur.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isHoliday = holidaySet.has(cur.endDateString());
+    const isHoliday = holidaySet.has(startDate(cur));
     if (!isWeekend && !isHoliday) count++;
     cur.setDate(cur.getDate() + 1);
   }
@@ -58,11 +58,11 @@ export const workingDaysForLeaveRange = (
 };
 
 export const calculateLeaveDays = (
-  startDate: string,
-  endDate: string,
+  startDateStr: string,
+  endDateStr: string,
   holidays: Holiday[] = [],
 ) => {
-  if (!startDate || !endDate)
+  if (!startDateStr || !endDateStr)
     return {
       totalCalendar: 0,
       weekends: 0,
@@ -70,14 +70,14 @@ export const calculateLeaveDays = (
       workingDays: 0,
     };
 
-  const start = parseFormOrIsoToLocalDay(startDate);
-  const end = parseFormOrIsoToLocalDay(endDate);
+  const start = parseFormOrIsoToLocalDay(startDateStr);
+  const end = parseFormOrIsoToLocalDay(endDateStr);
 
   const holidaySet = new Set(
     holidays
       .map((h) => new Date(h.date))
       .filter((d) => !Number.isNaN(d.getTime()))
-      .map((d) => startOfLocalCalendarDay(d).endDateString()),
+      .map((d) => startDate(startOfLocalCalendarDay(d))),
   );
 
   let weekends = 0;
@@ -87,7 +87,7 @@ export const calculateLeaveDays = (
   while (current <= end) {
     const dayOfWeek = current.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isHoliday = holidaySet.has(current.endDateString());
+    const isHoliday = holidaySet.has(startDate(current));
 
     if (isWeekend) weekends++;
     else if (isHoliday) holidayWeekdays++;

@@ -1,238 +1,148 @@
 'use client';
 
-import PageCard from '@/components/ui/PageCard';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import api from '@/services/api';
+import AddDepartmentModal from '@/components/teams/AddDepartmentModal';
+import AddTeamModal from '@/components/teams/AddTeamModal';
+import DepartmentsPanel from '@/components/teams/DepartmentsPanel';
+import EditDepartmentModal from '@/components/teams/EditDepartmentModal';
+import TeamsFilterBar from '@/components/teams/TeamsFilterBar';
+import TeamsNoAccess from '@/components/teams/TeamsNoAccess';
+import TeamsPageHeader from '@/components/teams/TeamsPageHeader';
+import TeamsPagination from '@/components/teams/TeamsPagination';
+import TeamsSummaryCards from '@/components/teams/TeamsSummaryCards';
+import TeamsTable from '@/components/teams/TeamsTable';
+import { useTeamsDirectory } from '@/components/teams/useTeamsDirectory';
 import { useAuth } from '@/context/AuthContext';
 import type { OrgDepartment } from '@/types/organization';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 
 export default function TeamPageClient() {
   const { user } = useAuth();
+  const canView =
+    user?.role === 'ADMIN' ||
+    user?.role === 'MANAGER' ||
+    user?.role === 'HR';
   const isAdmin = user?.role === 'ADMIN';
 
-  const [departments, setDepartments] = useState<OrgDepartment[]>([]);
-  const [loadingStructure, setLoadingStructure] = useState(true);
-
-  const [departmentId, setDepartmentId] = useState('');
-  const [teamId, setTeamId] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [gender, setGender] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!isAdmin) {
-      setLoadingStructure(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function load() {
-      setLoadingStructure(true);
-      try {
-        const { data } = await api.get<{ departments: OrgDepartment[] }>(
-          '/organization/structure',
-        );
-        if (!cancelled) setDepartments(data.departments ?? []);
-      } catch {
-        if (!cancelled) {
-          setDepartments([]);
-          toast.error('Could not load departments and teams');
-        }
-      } finally {
-        if (!cancelled) setLoadingStructure(false);
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [isAdmin]);
-
-  const departmentOptions = useMemo(
-    () =>
-      departments.map((d) => ({
-        label: d.name,
-        value: String(d.id),
-      })),
-    [departments],
+  const dir = useTeamsDirectory(canView);
+  const [departmentToEdit, setDepartmentToEdit] = useState<OrgDepartment | null>(
+    null,
   );
 
-  const teamOptions = useMemo(() => {
-    const dept = departments.find((d) => String(d.id) === departmentId);
-    if (!dept) return [];
-    return dept.teams.map((t) => ({ label: t.name, value: String(t.id) }));
-  }, [departments, departmentId]);
-
-  useEffect(() => {
-    if (!teamOptions.some((o) => o.value === teamId)) {
-      setTeamId('');
-    }
-  }, [teamOptions, teamId]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!teamId || !name || !email || !password) {
-      toast.error('Fill in name, email, password, and team');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await api.post('/organization/employees', {
-        name,
-        email,
-        password,
-        teamId: Number(teamId),
-        gender: gender || undefined,
-        birthDate: birthDate.trim() || undefined,
-      });
-      toast.success('Employee added');
-      setName('');
-      setEmail('');
-      setPassword('');
-      setGender('');
-      setBirthDate('');
-      setTeamId('');
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message ?? 'Could not add employee';
-      toast.error(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (!isAdmin) {
-    return (
-      <PageCard title='Team Leaves'>
-        <p className='text-gray-600 text-sm'>
-          Only organization admins can manage teams and add employees here.
-        </p>
-      </PageCard>
-    );
+  if (!canView) {
+    return <TeamsNoAccess />;
   }
 
   return (
-    <div className='space-y-6'>
-      <PageCard title='Departments & teams'>
-        <p className='text-gray-600 text-sm'>
-          Your organization uses departments and teams below. New accounts
-          created from registration get this structure automatically.
-        </p>
-        {loadingStructure ? (
-          <p className='mt-4 text-gray-500 text-sm'>Loading…</p>
-        ) : (
-          <ul className='mt-4 space-y-3 text-sm'>
-            {departments.map((d) => (
-              <li key={d.id} className='border-gray-100 border-b pb-3 last:border-0'>
-                <p className='font-semibold text-gray-900'>{d.name}</p>
-                <ul className='mt-1 list-inside list-disc text-gray-600'>
-                  {d.teams.map((t) => (
-                    <li key={t.id}>{t.name}</li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        )}
-      </PageCard>
+    <>
+      <section className='relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white/90 shadow-xl'>
+        <div className='absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
+        <div className='absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-indigo-100 blur-3xl' />
 
-      <PageCard title='Add employee'>
-        <p className='text-gray-600 text-sm'>
-          Assign the employee to a department and team. They can sign in with
-          the email and password you set.
-        </p>
-        <form
-          onSubmit={handleSubmit}
-          className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2'
-        >
-          <Select
-            id='department'
-            label='Department'
-            placeholder='Select department'
-            value={departmentId}
-            options={departmentOptions}
-            onChange={(e) => {
-              setDepartmentId(e.target.value);
-              setTeamId('');
+        <div className='relative z-10 flex min-h-0 flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5'>
+          <div className='flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4'>
+            <div className='flex min-h-0 min-w-0 flex-1 flex-col gap-3'>
+              <TeamsPageHeader
+                filteredCount={dir.filtered.length}
+                totalCount={dir.teams.length}
+                hasActiveFilters={dir.hasActiveFilters}
+              />
+
+              <div className='grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(260px,320px)_1fr] lg:items-stretch lg:gap-4'>
+                <div className='flex min-h-0 min-w-0 flex-col'>
+                  <DepartmentsPanel
+                    departments={dir.departments}
+                    loading={dir.structureLoading}
+                    isAdmin={isAdmin}
+                    departmentFilter={dir.departmentFilter}
+                    onFilterByDepartment={dir.setDepartmentFilter}
+                    onEdit={(d) => setDepartmentToEdit(d)}
+                    onStructureChanged={() => {
+                      void dir.loadStructure();
+                      void dir.loadTeams();
+                    }}
+                    onAddDepartment={
+                      isAdmin
+                        ? () => dir.setAddDepartmentOpen(true)
+                        : undefined
+                    }
+                  />
+                </div>
+
+                <section
+                  aria-labelledby='teams-heading'
+                  className='flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:gap-3.5 sm:p-4'
+                >
+                  <TeamsFilterBar
+                    searchTerm={dir.searchTerm}
+                    onSearchChange={dir.setSearchTerm}
+                    departmentFilter={dir.departmentFilter}
+                    onDepartmentChange={dir.setDepartmentFilter}
+                    departmentOptions={dir.departmentOptionsForFilter}
+                    hasActiveFilters={dir.hasActiveFilters}
+                    onClearFilters={dir.clearFilters}
+                    isAdmin={isAdmin}
+                    onAddTeam={() => dir.setAddOpen(true)}
+                  />
+
+                  <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/40'>
+                    <TeamsTable
+                      loading={dir.loadingList}
+                      rows={dir.pageSlice}
+                    />
+                  </div>
+
+                  <TeamsPagination
+                    visible={!dir.loadingList && dir.filtered.length > 0}
+                    safePage={dir.safePage}
+                    pageCount={dir.pageCount}
+                    filteredLength={dir.filtered.length}
+                    onPrev={() => dir.setPage((p) => Math.max(1, p - 1))}
+                    onNext={() =>
+                      dir.setPage((p) => Math.min(dir.pageCount, p + 1))
+                    }
+                  />
+                </section>
+              </div>
+            </div>
+
+            <TeamsSummaryCards
+              loading={dir.loadingList}
+              summary={dir.summary}
+            />
+          </div>
+        </div>
+      </section>
+
+      {isAdmin ? (
+        <>
+          <AddDepartmentModal
+            open={dir.addDepartmentOpen}
+            onClose={() => dir.setAddDepartmentOpen(false)}
+            onCreated={() => {
+              void dir.loadStructure();
+              void dir.loadTeams();
             }}
           />
-          <Select
-            id='team'
-            label='Team'
-            placeholder='Select team'
-            value={teamId}
-            options={teamOptions}
-            onChange={(e) => setTeamId(e.target.value)}
+          <EditDepartmentModal
+            open={departmentToEdit != null}
+            department={departmentToEdit}
+            onClose={() => setDepartmentToEdit(null)}
+            onSaved={() => {
+              void dir.loadStructure();
+              void dir.loadTeams();
+            }}
           />
-          <Input
-            id='emp-name'
-            type='text'
-            label='Full name'
-            value={name}
-            required
-            onChange={(e) => setName(e.target.value)}
+          <AddTeamModal
+            open={dir.addOpen}
+            onClose={() => dir.setAddOpen(false)}
+            departments={dir.departments}
+            onCreated={() => {
+              void dir.loadStructure();
+              void dir.loadTeams();
+            }}
           />
-          <Input
-            id='emp-email'
-            type='email'
-            label='Work email'
-            value={email}
-            required
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <Input
-            id='emp-password'
-            type='password'
-            label='Temporary password'
-            value={password}
-            required
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Select
-            id='emp-gender'
-            label='Gender (optional)'
-            placeholder='Optional'
-            value={gender}
-            options={[
-              { label: 'Male', value: 'MALE' },
-              { label: 'Female', value: 'FEMALE' },
-            ]}
-            onChange={(e) => setGender(e.target.value)}
-          />
-          <Input
-            id='emp-birthdate'
-            type='date'
-            label='Date of birth (optional)'
-            value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
-          />
-          <div className='sm:col-span-2'>
-            <Button
-              type='submit'
-              disabled={
-                submitting ||
-                !departmentId ||
-                !teamId ||
-                loadingStructure
-              }
-              className='w-full sm:w-auto'
-            >
-              {submitting ? 'Saving…' : 'Create employee'}
-            </Button>
-          </div>
-        </form>
-      </PageCard>
-    </div>
+        </>
+      ) : null}
+    </>
   );
 }

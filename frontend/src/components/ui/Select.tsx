@@ -32,9 +32,11 @@ const Select: React.FC<SelectProps> = ({
 }) => {
   // Compact (toolbar) selects: enough vertical padding + line-height so native
   // <select> text isn’t clipped at h-10 (inputs tolerate py-0; selects often don’t).
+  // Labeled selects use min-height + generous padding; do not combine with fixed h-10/h-11
+  // or the selected option text will clip inside the box.
   const spacingClass = hideLabel
     ? 'px-3 py-2 leading-5'
-    : 'px-3 pb-2 pt-5';
+    : 'min-h-[2.75rem] px-3 pb-2.5 pt-6 text-sm leading-normal';
   const ariaLabel = label || placeholder || id;
 
   return (
@@ -59,9 +61,11 @@ const Select: React.FC<SelectProps> = ({
       {label && !hideLabel && (
         <label
           htmlFor={id}
-          className={`absolute left-3 top-4 z-10 origin-left -translate-y-4 scale-75 transform text-sm text-gray-500 duration-300 peer-focus:top-4 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:text-primary bg-white px-1 ${
-            !value ? 'top-1/2 -translate-y-1/2 scale-100' : ''
-          }`}
+          className={
+            value
+              ? 'pointer-events-none absolute left-3 top-3 z-10 origin-left -translate-y-4 scale-75 transform bg-white px-1 text-sm text-gray-500 duration-300'
+              : 'pointer-events-none absolute left-3 top-1/2 z-10 origin-left -translate-y-1/2 scale-100 transform bg-white px-1 text-sm text-gray-500 duration-300 peer-focus:top-3 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:text-primary'
+          }
         >
           {label}
         </label>

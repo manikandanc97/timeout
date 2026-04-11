@@ -17,6 +17,7 @@ interface InputProps {
   min?: string;
   max?: string;
   required?: boolean;
+  disabled?: boolean;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -34,6 +35,7 @@ const Input: React.FC<InputProps> = ({
   min,
   max,
   required = false,
+  disabled = false,
 }) => {
   const [internalFocused, setInternalFocused] = useState(false);
   const isDate = type === 'date';
@@ -60,12 +62,17 @@ const Input: React.FC<InputProps> = ({
     if (isDate) setDynamicType('text');
   };
 
-  const spacingClass = hideLabel ? 'px-3 py-3' : 'px-3 pb-2 pt-5';
+  const spacingClass = hideLabel
+    ? 'px-3 py-3'
+    : 'px-3 pb-2.5 pt-6 leading-normal';
 
   const sharedClassName = `peer block w-full rounded-md border border-gray-300 bg-transparent ${spacingClass} text-sm text-gray-900 outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 ${inputClassName}`;
 
   const ariaLabel = label || placeholder || id;
   const placeholderText = placeholder ?? (isDate ? '' : ' ');
+  /** Real placeholder text would clash with a centered label; login-style fields use a space-only placeholder. */
+  const hasUserPlaceholder =
+    typeof placeholder === 'string' && placeholder.trim().length > 0;
 
   const formatDisplayDate = (iso?: string) => {
     if (!iso) return '';
@@ -104,6 +111,7 @@ const Input: React.FC<InputProps> = ({
           onBlur={handleBlur}
           aria-label={ariaLabel}
           required={required}
+          disabled={disabled}
         />
       ) : (
         <input
@@ -119,16 +127,19 @@ const Input: React.FC<InputProps> = ({
           min={min}
           max={max}
           required={required}
+          disabled={disabled}
         />
       )}
       {!hideLabel && (
         <label
           htmlFor={id}
-          className={`absolute left-3 z-10 origin-left -translate-y-4 scale-75 transform text-sm text-gray-500 duration-300 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-4 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:text-primary bg-white px-1 ${
+          className={
             type === 'textarea'
-              ? 'top-4 peer-placeholder-shown:top-6'
-              : 'top-4 peer-placeholder-shown:top-1/2'
-          }`}
+              ? 'absolute left-3 top-4 z-10 origin-left -translate-y-4 scale-75 transform bg-white px-1 text-sm text-gray-500 duration-300 peer-placeholder-shown:top-6 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-4 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:text-primary'
+              : hasUserPlaceholder
+                ? 'pointer-events-none absolute left-3 top-4 z-10 origin-left -translate-y-4 scale-75 transform bg-white px-1 text-sm text-gray-500 duration-300 peer-focus:text-primary'
+                : 'pointer-events-none absolute left-3 top-4 z-10 origin-left -translate-y-4 scale-75 transform bg-white px-1 text-sm text-gray-500 duration-300 peer-placeholder-shown:top-6 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-4 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:text-primary'
+          }
         >
           {label}
         </label>

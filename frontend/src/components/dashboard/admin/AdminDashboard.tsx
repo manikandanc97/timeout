@@ -1,3 +1,5 @@
+'use client';
+
 import { LayoutDashboard } from 'lucide-react';
 import AdminCalendarSidebar from './AdminCalendarSidebar';
 import AdminHrInsights from './AdminHrInsights';
@@ -14,38 +16,45 @@ const todayLabel = () =>
 
 const AdminDashboard = () => {
   return (
-    <div className='space-y-6'>
-      <header className='flex items-start gap-3'>
-        <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10'>
-          <LayoutDashboard
-            size={22}
-            className='text-primary'
-            strokeWidth={2}
-            aria-hidden
-          />
+    <div className='space-y-6 pb-8 min-h-screen'>
+      {/* Page Header */}
+      <div className='flex justify-between items-start'>
+        <div className='flex items-center gap-4'>
+          <div className='flex justify-center items-center bg-primary/10 rounded-2xl ring-1 ring-primary/20 w-12 h-12 shrink-0'>
+            <LayoutDashboard
+              size={22}
+              className='text-primary'
+              strokeWidth={2}
+              aria-hidden
+            />
+          </div>
+          <div>
+            <p className='font-semibold text-primary text-xs uppercase tracking-widest'>
+              Admin overview
+            </p>
+            <h1 className='mt-0.5 font-bold text-gray-900 text-2xl tracking-tight'>
+              Dashboard
+            </h1>
+            <p className='mt-0.5 text-gray-400 text-sm'>{todayLabel()}</p>
+          </div>
         </div>
-        <div className='min-w-0'>
-          <p className='text-sm font-medium text-primary'>Admin overview</p>
-          <h1 className='mt-0.5 text-2xl font-bold tracking-tight text-gray-900'>
-            Dashboard
-          </h1>
-          <p className='mt-1 text-sm text-gray-500'>{todayLabel()}</p>
-        </div>
-      </header>
+      </div>
 
-      <section aria-label='Organization summary'>
+      {/* Summary KPI Row */}
+      <section>
         <AdminSummaryCards />
       </section>
 
-      <section
-        aria-label='Pending requests, people insights, and calendar'
-        className='grid grid-cols-1 gap-6 xl:grid-cols-3 xl:items-start'
-      >
-        <div className='min-h-0 space-y-5 xl:col-span-2'>
+      {/* Main Content + Right Sidebar */}
+      <section className='xl:items-start gap-6 grid grid-cols-1 xl:grid-cols-3'>
+        {/* Left: Pending Requests + HR Insights */}
+        <div className='space-y-6 xl:col-span-2'>
           <PendingLeaveRequests />
           <AdminHrInsights />
         </div>
-        <div className='min-h-0 xl:col-span-1'>
+
+        {/* Right: Calendar — sticky within main scroll (needs self-start in grid) */}
+        <div className='top-2 z-10 self-start xl:sticky xl:col-span-1'>
           <AdminCalendarSidebar />
         </div>
       </section>

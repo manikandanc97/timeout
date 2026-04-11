@@ -9,62 +9,71 @@ type AdminDashboardPanelProps = {
   icon: LucideIcon;
   iconTileClass: string;
   iconClass: string;
-  accentBorder: string;
+  accentClass?: string;
   children: ReactNode;
+  action?: ReactNode;
 };
 
-/**
- * Shared shell for admin dashboard cards (matches summary stat cards:
- * rounded-2xl, border-gray-100, shadow-md, left accent).
- */
 export function AdminDashboardPanel({
   title,
   subtitle,
   icon: Icon,
   iconTileClass,
   iconClass,
-  accentBorder,
+  accentClass = '',
   children,
+  action,
 }: AdminDashboardPanelProps) {
   return (
     <div
-      className={`flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-md ${accentBorder}`}
+      className={`flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md ${accentClass}`}
     >
-      <div className='flex items-start gap-3'>
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${iconTileClass}`}
-        >
-          <Icon size={22} strokeWidth={2} className={iconClass} aria-hidden />
+      {/* Panel Header */}
+      <div className='flex justify-between items-center px-5 py-4 border-gray-50 border-b'>
+        <div className='flex items-center gap-3'>
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconTileClass}`}
+          >
+            <Icon size={18} strokeWidth={2} className={iconClass} aria-hidden />
+          </div>
+          <div>
+            <h2 className='font-semibold text-gray-900 text-sm'>{title}</h2>
+            {subtitle && (
+              <p className='font-medium text-[11px] text-gray-400 uppercase tracking-wide'>
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
-        <div className='min-w-0 flex-1 pt-0.5'>
-          <h2 className='font-semibold text-gray-900 text-lg leading-tight'>
-            {title}
-          </h2>
-          {subtitle ? (
-            <p className='mt-1 font-medium text-gray-500 text-xs uppercase tracking-wide'>
-              {subtitle}
-            </p>
-          ) : null}
-        </div>
+        {action && <div className='shrink-0'>{action}</div>}
       </div>
-      <div className='mt-4 min-h-0 flex-1'>{children}</div>
+
+      {/* Panel Body */}
+      <div className='flex-1 px-5 py-4'>{children}</div>
     </div>
   );
 }
 
-export function AdminDashboardEmpty({
-  message,
-  icon: Icon,
-}: {
-  message: string;
+type AdminDashboardEmptyProps = {
   icon: LucideIcon;
-}) {
+  message: string;
+};
+
+export function AdminDashboardEmpty({
+  icon: Icon,
+  message,
+}: AdminDashboardEmptyProps) {
   return (
-    <div className='flex flex-col items-center justify-center rounded-xl bg-gray-50/80 px-4 py-10 text-center ring-1 ring-gray-100/80'>
-      <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100'>
-        <Icon size={22} strokeWidth={1.5} className='text-gray-300' aria-hidden />
+    <div className='flex flex-col justify-center items-center bg-gray-50/70 px-6 py-10 rounded-xl text-center'>
+      <div className='flex justify-center items-center bg-white mb-3 rounded-xl ring-1 ring-gray-100 w-10 h-10'>
+        <Icon
+          size={18}
+          strokeWidth={1.5}
+          className='text-gray-300'
+          aria-hidden
+        />
       </div>
-      <p className='max-w-md text-pretty text-gray-500 text-sm leading-relaxed'>
+      <p className='max-w-xs text-gray-400 text-sm leading-relaxed'>
         {message}
       </p>
     </div>

@@ -10,7 +10,9 @@ import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
 import SidebarSkeleton from '@/components/dashboard/skeletons/SidebarSkeleton';
 import TopbarSkeleton from '@/components/dashboard/skeletons/TopbarSkeleton';
-import DashboardContentSkeleton from '@/components/dashboard/skeletons/DashboardContentSkeleton';
+import AdminDashboardSkeleton from '@/components/dashboard/skeletons/AdminDashboardSkeleton';
+import LeaveRequestsSkeleton from '@/components/dashboard/skeletons/LeaveRequestsSkeleton';
+import EmployeesSkeleton from '@/components/dashboard/skeletons/EmployeesSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
 import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
 
@@ -18,11 +20,15 @@ type Props = {
   children: React.ReactNode;
 };
 
+/** Main fills viewport under topbar; page scrolls inside its own panel (not whole main). */
+const MAIN_VIEWPORT_FILL_PATHS = new Set(['/requests', '/employees', '/team']);
+
 const DashboardShell = ({ children }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const fillMainHeight = MAIN_VIEWPORT_FILL_PATHS.has(pathname);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,11 +55,17 @@ const DashboardShell = ({ children }: Props) => {
   if (loading) {
     let content: React.ReactNode = null;
     if (pathname === '/dashboard') {
-      content = <DashboardContentSkeleton />;
+      content = <AdminDashboardSkeleton />;
     } else if (pathname === '/apply') {
       content = <ApplyLeaveSkeleton />;
     } else if (pathname === '/leaves') {
       content = <MyLeavesSkeleton />;
+    } else if (pathname === '/requests') {
+      content = <LeaveRequestsSkeleton />;
+    } else if (pathname === '/employees') {
+      content = <EmployeesSkeleton />;
+    } else if (pathname === '/team') {
+      content = <LeaveRequestsSkeleton />;
     }
 
     return (
@@ -61,7 +73,19 @@ const DashboardShell = ({ children }: Props) => {
         <SidebarSkeleton />
         <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
           <TopbarSkeleton />
-          <main className='flex-1 overflow-y-auto p-6'>{content}</main>
+          <main
+            className={
+              fillMainHeight
+                ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-6'
+                : 'flex-1 overflow-y-auto p-6'
+            }
+          >
+            {fillMainHeight ? (
+              <div className='flex min-h-0 flex-1 flex-col'>{content}</div>
+            ) : (
+              content
+            )}
+          </main>
         </div>
       </div>
     );
@@ -73,7 +97,19 @@ const DashboardShell = ({ children }: Props) => {
         <Sidebar />
         <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
           <Topbar />
-          <main className='flex-1 overflow-y-auto p-6'>{children}</main>
+          <main
+            className={
+              fillMainHeight
+                ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-6'
+                : 'flex-1 overflow-y-auto p-6'
+            }
+          >
+            {fillMainHeight ? (
+              <div className='flex min-h-0 flex-1 flex-col'>{children}</div>
+            ) : (
+              children
+            )}
+          </main>
         </div>
       </div>
     </AuthProvider>

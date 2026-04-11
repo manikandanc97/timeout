@@ -2,7 +2,7 @@
 
 import Button from '@/components/ui/Button';
 import api from '@/services/api';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, CheckCircle2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { LeaveWithEmployee } from '@/types/leave';
 import {
@@ -12,18 +12,23 @@ import {
 
 const MAX_VISIBLE = 5;
 
-function prettyLeaveType(type: string) {
+const LEAVE_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  ANNUAL: { bg: 'bg-sky-50', text: 'text-sky-700' },
+  SICK: { bg: 'bg-rose-50', text: 'text-rose-700' },
+  MATERNITY: { bg: 'bg-pink-50', text: 'text-pink-700' },
+  PATERNITY: { bg: 'bg-violet-50', text: 'text-violet-700' },
+};
+
+function leaveTypeLabel(type: string) {
   const lower = type.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
+  return lower.charAt(0).toUpperCase() + lower.slice(1) + ' leave';
 }
 
 function formatDate(dateString: string) {
   if (!dateString) return 'N/A';
-  const d = new Date(dateString);
-  return d.toLocaleDateString('en-US', {
+  return new Date(dateString).toLocaleDateString('en-US', {
     day: 'numeric',
     month: 'short',
-    year: 'numeric',
   });
 }
 
@@ -38,6 +43,20 @@ function pickLatestPending(rows: LeaveWithEmployee[]) {
     .slice(0, MAX_VISIBLE);
 }
 
+function InitialsAvatar({ name }: { name: string }) {
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div className='flex justify-center items-center bg-primary/10 rounded-xl w-9 h-9 font-bold text-primary text-xs shrink-0'>
+      {initials}
+    </div>
+  );
+}
+
 export default function PendingLeaveRequests() {
   const [pendingList, setPendingList] = useState<LeaveWithEmployee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,14 +68,12 @@ export default function PendingLeaveRequests() {
       try {
         const res = await api.get<LeaveWithEmployee[]>('/leaves');
         setPendingList(pickLatestPending(res.data));
-      } catch (err) {
-        console.error('Could not load leaves', err);
+      } catch {
         setPendingList([]);
       } finally {
         setLoading(false);
       }
     }
-
     loadPendingLeaves();
   }, []);
 
@@ -69,24 +86,34 @@ export default function PendingLeaveRequests() {
       await api.put(`/leaves/${leaveId}`, { status: newStatus });
       const res = await api.get<LeaveWithEmployee[]>('/leaves');
       setPendingList(pickLatestPending(res.data));
-    } catch (err) {
-      console.error('Could not update leave', err);
+    } catch {
+      // silent
     } finally {
       setBusyId(null);
     }
   }
 
+  const badge = (
+    <span className='flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full ring-1 ring-amber-200 font-semibold text-[11px] text-amber-700'>
+      <span className='bg-amber-500 rounded-full w-1.5 h-1.5' />
+      {pendingList.length} pending
+    </span>
+  );
+
   if (loading) {
     return (
       <AdminDashboardPanel
         title='Pending leave requests'
-        subtitle={`Up to ${MAX_VISIBLE} newest · awaiting approval`}
+        subtitle={`Up to ${MAX_VISIBLE} newest`}
         icon={ClipboardList}
-        iconTileClass='border-blue-100 bg-blue-50'
-        iconClass='text-blue-600'
-        accentBorder='border-l-4 border-l-blue-500'
+        iconTileClass='bg-violet-50'
+        iconClass='text-violet-600'
       >
-        <div className='h-36 animate-pulse rounded-xl bg-gray-50/90 ring-1 ring-gray-100/80' />
+        <div className='space-y-3'>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className='bg-gray-50 rounded-xl h-14 animate-pulse' />
+          ))}
+        </div>
       </AdminDashboardPanel>
     );
   }
@@ -96,53 +123,66 @@ export default function PendingLeaveRequests() {
       title='Pending leave requests'
       subtitle={`Up to ${MAX_VISIBLE} newest · awaiting approval`}
       icon={ClipboardList}
-      iconTileClass='border-blue-100 bg-blue-50'
-      iconClass='text-blue-600'
-      accentBorder='border-l-4 border-l-blue-500'
+      iconTileClass='bg-violet-50'
+      iconClass='text-violet-600'
+      action={badge}
     >
       {pendingList.length === 0 ? (
         <AdminDashboardEmpty
           icon={ClipboardList}
-          message='No pending leave requests. New submissions will appear here for quick approval.'
+          message='No pending leave requests. New submissions will appear here.'
         />
       ) : (
-        <ul className='border-gray-100 border-t'>
+        <ul className='space-y-2'>
           {pendingList.map((row) => {
             const isBusy = busyId === row.id;
             const name = row.user?.name ?? 'Unknown';
+            const typeColors = LEAVE_TYPE_COLORS[row.type] ?? {
+              bg: 'bg-gray-100',
+              text: 'text-gray-600',
+            };
 
             return (
               <li
                 key={row.id}
-                className='border-gray-100 border-b border-dashed py-4 last:border-b-0'
+                className='group flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-gray-50/70 hover:bg-gray-50 p-3 rounded-xl transition-colors duration-150'
               >
-                <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='flex items-center gap-3 min-w-0'>
+                  <InitialsAvatar name={name} />
                   <div className='min-w-0'>
-                    <p className='font-medium text-gray-900'>{name}</p>
-                    <p className='mt-0.5 text-gray-500 text-sm'>
-                      {prettyLeaveType(row.type)} leave ·{' '}
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <p className='font-semibold text-gray-900 text-sm'>
+                        {name}
+                      </p>
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${typeColors.bg} ${typeColors.text}`}
+                      >
+                        {leaveTypeLabel(row.type)}
+                      </span>
+                    </div>
+                    <p className='mt-0.5 text-gray-400 text-xs'>
                       {formatDate(row.startDate)} → {formatDate(row.endDate)}
                     </p>
                   </div>
+                </div>
 
-                  <div className='flex shrink-0 gap-2'>
-                    <Button
-                      variant='outline'
-                      disabled={isBusy}
-                      onClick={() => approveOrReject(row.id, 'APPROVED')}
-                      className='border-emerald-200 py-1.5 text-emerald-700! hover:bg-emerald-50!'
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant='outline'
-                      disabled={isBusy}
-                      onClick={() => approveOrReject(row.id, 'REJECTED')}
-                      className='border-red-200 py-1.5 text-red-700! hover:bg-red-50!'
-                    >
-                      Reject
-                    </Button>
-                  </div>
+                <div className='flex gap-2 pl-11 sm:pl-0 shrink-0'>
+                  <button
+                    disabled={isBusy}
+                    onClick={() => approveOrReject(row.id, 'APPROVED')}
+                    className='flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 px-3 py-1.5 rounded-lg ring-1 ring-emerald-200 font-semibold text-emerald-700 text-xs transition-all duration-150 disabled:cursor-not-allowed'
+                  >
+                    <CheckCircle2 size={13} />
+                    Approve
+                  </button>
+                  <button
+                    disabled={isBusy}
+                    onClick={() => approveOrReject(row.id, 'REJECTED')}
+                    className='flex items-center gap-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 px-3 py-1.5 rounded-lg ring-1 ring-red-200 font-semibold text-red-700 text-xs transition-all duration-150 disabled:cursor-not-allowed'
+                  >
+                    <XCircle size={13} />
+                    Reject
+                  </button>
                 </div>
               </li>
             );

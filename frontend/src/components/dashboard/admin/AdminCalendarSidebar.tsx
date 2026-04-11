@@ -33,14 +33,14 @@ export default function AdminCalendarSidebar() {
   if (loading) {
     return (
       <div
-        className='h-full min-h-[420px] flex-1 animate-pulse rounded-2xl border border-gray-100 bg-linear-to-br from-gray-50 to-gray-100/80 shadow-inner'
+        className='h-full min-h-[420px] w-full flex-1 animate-pulse rounded-2xl border border-gray-100 bg-linear-to-br from-gray-50 to-gray-100/80 shadow-inner'
         aria-hidden
       />
     );
   }
 
   return (
-    <div className='flex h-full min-h-0 flex-1 flex-col xl:sticky xl:top-2'>
+    <div className='flex h-full min-h-0 w-full flex-1 flex-col'>
       <LeaveCalendarPanel
         holidays={holidays}
         history={[]}

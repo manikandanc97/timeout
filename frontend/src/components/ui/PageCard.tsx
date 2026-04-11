@@ -5,6 +5,8 @@ type TitleTag = 'h1' | 'h2' | 'h3';
 type PageCardProps = {
   title: string;
   children: React.ReactNode;
+  /** Shown on the right of the title row (e.g. action buttons). */
+  titleTrailing?: React.ReactNode;
   /** Merged onto the outer card. If omitted, default padding is `p-6`. */
   className?: string;
   /** Heading element for the title (default `h1` for full pages). */
@@ -18,6 +20,7 @@ type PageCardProps = {
 const PageCard = ({
   title,
   children,
+  titleTrailing,
   className,
   titleAs = 'h1',
   titleClassName,
@@ -31,7 +34,14 @@ const PageCard = ({
 
   return (
     <div className={outerClass}>
-      <TitleTag className={`shrink-0 ${titleClass}`}>{title}</TitleTag>
+      <div className='flex shrink-0 flex-wrap items-start justify-between gap-3'>
+        <TitleTag className={`min-w-0 flex-1 ${titleClass}`}>{title}</TitleTag>
+        {titleTrailing ? (
+          <div className='flex shrink-0 flex-wrap items-center gap-2'>
+            {titleTrailing}
+          </div>
+        ) : null}
+      </div>
       <div className={contentClass}>{children}</div>
     </div>
   );

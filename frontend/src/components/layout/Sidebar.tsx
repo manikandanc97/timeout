@@ -13,7 +13,12 @@ const Sidebar = () => {
 
   let menuList = employeeMenuList;
 
-  if (user && user.role === 'ADMIN') {
+  if (
+    user &&
+    (user.role === 'ADMIN' ||
+      user.role === 'MANAGER' ||
+      user.role === 'HR')
+  ) {
     menuList = adminMenuList;
   }
 
