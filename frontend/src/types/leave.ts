@@ -18,6 +18,8 @@ export interface LeaveWithEmployee extends Leave {
   user: {
     name: string;
     email?: string;
+    /** Present when listing as admin/manager; identifies direct-report routing */
+    reportingManagerId?: number | null;
   };
 }
 

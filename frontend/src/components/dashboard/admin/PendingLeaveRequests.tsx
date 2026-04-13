@@ -5,6 +5,8 @@ import api from '@/services/api';
 import { ClipboardList, CheckCircle2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { LeaveWithEmployee } from '@/types/leave';
+import type { Holiday } from '@/types/holiday';
+import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
 import {
   AdminDashboardEmpty,
   AdminDashboardPanel,
@@ -59,6 +61,7 @@ function InitialsAvatar({ name }: { name: string }) {
 
 export default function PendingLeaveRequests() {
   const [pendingList, setPendingList] = useState<LeaveWithEmployee[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
 
@@ -66,10 +69,15 @@ export default function PendingLeaveRequests() {
     async function loadPendingLeaves() {
       setLoading(true);
       try {
-        const res = await api.get<LeaveWithEmployee[]>('/leaves');
-        setPendingList(pickLatestPending(res.data));
+        const [leaveRes, holidayRes] = await Promise.all([
+          api.get<LeaveWithEmployee[]>('/leaves'),
+          api.get<Holiday[]>('/holidays').catch(() => ({ data: [] as Holiday[] })),
+        ]);
+        setPendingList(pickLatestPending(leaveRes.data));
+        setHolidays(Array.isArray(holidayRes.data) ? holidayRes.data : []);
       } catch {
         setPendingList([]);
+        setHolidays([]);
       } finally {
         setLoading(false);
       }
@@ -162,6 +170,17 @@ export default function PendingLeaveRequests() {
                     </div>
                     <p className='mt-0.5 text-gray-400 text-xs'>
                       {formatDate(row.startDate)} → {formatDate(row.endDate)}
+                      <span className='mx-1.5 text-gray-300'>•</span>
+                      <span>
+                        {(() => {
+                          const workingDays = workingDaysForLeaveRange(
+                            row.startDate,
+                            row.endDate,
+                            holidays,
+                          );
+                          return `${workingDays} working ${workingDays === 1 ? 'day' : 'days'}`;
+                        })()}
+                      </span>
                     </p>
                   </div>
                 </div>

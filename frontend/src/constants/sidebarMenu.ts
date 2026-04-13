@@ -22,7 +22,6 @@ type MenuItem = {
 export const employeeMenuList: MenuItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'My Leaves', href: '/leaves', icon: CalendarDays },
-  { name: 'Holidays', href: '/holidays', icon: CalendarRange },
   { name: 'Apply Leave', href: '/apply', icon: FilePlus2 },
   { name: 'Leave Policy', href: '/policy', icon: BookOpen },
 ];

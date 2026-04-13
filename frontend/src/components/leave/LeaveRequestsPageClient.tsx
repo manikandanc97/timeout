@@ -6,15 +6,18 @@ import LeaveRequestsPagination from '@/components/leave/LeaveRequestsPagination'
 import LeaveRequestsSummaryCards from '@/components/leave/LeaveRequestsSummaryCards';
 import LeaveRequestsTable from '@/components/leave/LeaveRequestsTable';
 import { useLeaveRequestsPage } from '@/components/leave/useLeaveRequestsPage';
+import type { Holiday } from '@/types/holiday';
 import type { LeaveWithEmployee } from '@/types/leave';
 
 type Props = {
   initialLeaves: LeaveWithEmployee[];
+  holidays: Holiday[];
   canModerate: boolean;
 };
 
 export default function LeaveRequestsPageClient({
   initialLeaves,
+  holidays,
   canModerate,
 }: Props) {
   const req = useLeaveRequestsPage({ initialLeaves });
@@ -55,6 +58,7 @@ export default function LeaveRequestsPageClient({
               <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/40'>
                 <LeaveRequestsTable
                   rows={req.pageSlice}
+                  holidays={holidays}
                   canModerate={canModerate}
                   busyId={req.busyId}
                   onApproveReject={req.approveOrReject}

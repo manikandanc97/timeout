@@ -4,10 +4,7 @@ import { getCurrentUser } from '@/services/authService';
 
 const Dashboard = async () => {
   const user = await getCurrentUser();
-
-  console.log('Current user:', user);
-
-  if (user.role === 'ADMIN') {
+  if (user.role !== 'EMPLOYEE') {
     return <AdminDashboard />;
   }
 

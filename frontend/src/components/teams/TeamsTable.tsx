@@ -28,9 +28,6 @@ export function TeamsTableSkeletonBody() {
               {bar(`h-4 ${w('w-28', 'w-32', 'w-24')}`)}
             </td>
             <td className='px-4 py-3 align-middle'>
-              {bar(`h-4 ${w('w-32', 'w-40', 'w-28')}`)}
-            </td>
-            <td className='px-4 py-3 align-middle'>
               {bar(`h-4 ${w('w-7', 'w-8', 'w-6')}`)}
             </td>
             <td className='px-4 py-3 text-right align-middle'>
@@ -65,15 +62,12 @@ export default function TeamsTable({
       <table className='w-full table-fixed border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
           <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
-            <th className='w-[22%] px-4 py-3 text-left'>Team name</th>
-            <th className='w-[22%] px-4 py-3 text-left'>Department</th>
-            <th className='w-[24%] whitespace-nowrap px-4 py-3 text-left'>
-              Reporting manager
-            </th>
-            <th className='w-[14%] whitespace-nowrap px-2 py-3 text-left'>
+            <th className='w-[30%] px-4 py-3 text-left'>Team name</th>
+            <th className='w-[30%] px-4 py-3 text-left'>Department</th>
+            <th className='w-[15%] whitespace-nowrap px-2 py-3 text-left'>
               Employee count
             </th>
-            <th className='w-[18%] whitespace-nowrap px-2 py-3 text-right'>
+            <th className='w-[25%] whitespace-nowrap px-2 py-3 text-right'>
               Actions
             </th>
           </tr>
@@ -87,7 +81,7 @@ export default function TeamsTable({
           ) : rows.length === 0 ? (
             <tr>
               <td
-                colSpan={5}
+                colSpan={4}
                 className='px-4 py-16 text-center align-middle text-sm text-gray-500 sm:py-24'
               >
                 No teams match your filters.
@@ -105,9 +99,6 @@ export default function TeamsTable({
                   </td>
                   <td className='wrap-break-word px-4 py-3 text-left align-top text-gray-700'>
                     {row.departmentName}
-                  </td>
-                  <td className='wrap-break-word px-4 py-3 text-left align-top text-gray-700'>
-                    {row.lead?.name ?? '—'}
                   </td>
                   <td className='whitespace-nowrap px-2 py-3 pr-1 text-left align-top tabular-nums text-gray-700'>
                     {row.employeeCount}

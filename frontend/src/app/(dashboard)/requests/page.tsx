@@ -1,5 +1,6 @@
 import LeaveRequestsPageClient from '@/components/leave/LeaveRequestsPageClient';
 import { serverFetch } from '@/services/serverApi';
+import type { Holiday } from '@/types/holiday';
 import type { LeaveWithEmployee } from '@/types/leave';
 import type { User } from '@/types/user';
 import { redirect } from 'next/navigation';
@@ -21,15 +22,23 @@ export default async function LeaveRequestsPage() {
   }
 
   let initialLeaves: LeaveWithEmployee[] = [];
+  let holidays: Holiday[] = [];
   try {
-    initialLeaves = await serverFetch<LeaveWithEmployee[]>('/leaves');
+    const [leavesRes, holidaysRes] = await Promise.all([
+      serverFetch<LeaveWithEmployee[]>('/leaves'),
+      serverFetch<Holiday[]>('/holidays').catch(() => []),
+    ]);
+    initialLeaves = leavesRes;
+    holidays = Array.isArray(holidaysRes) ? holidaysRes : [];
   } catch {
     initialLeaves = [];
+    holidays = [];
   }
 
   return (
     <LeaveRequestsPageClient
       initialLeaves={Array.isArray(initialLeaves) ? initialLeaves : []}
+      holidays={holidays}
       canModerate={MOD_ROLES.has(role)}
     />
   );

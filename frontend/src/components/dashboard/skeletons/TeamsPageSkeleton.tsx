@@ -40,19 +40,16 @@ export default function TeamsPageSkeleton() {
                   <table className='w-full table-fixed border-collapse text-left text-sm'>
                     <thead className='sticky top-0 z-10'>
                       <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
-                        <th className='w-[22%] px-4 py-3 text-left'>
+                        <th className='w-[30%] px-4 py-3 text-left'>
                           Team name
                         </th>
-                        <th className='w-[22%] px-4 py-3 text-left'>
+                        <th className='w-[30%] px-4 py-3 text-left'>
                           Department
                         </th>
-                        <th className='w-[24%] whitespace-nowrap px-4 py-3 text-left'>
-                          Reporting manager
-                        </th>
-                        <th className='w-[14%] whitespace-nowrap px-2 py-3 text-left'>
+                        <th className='w-[15%] whitespace-nowrap px-2 py-3 text-left'>
                           Employee count
                         </th>
-                        <th className='w-[18%] whitespace-nowrap px-2 py-3 text-right'>
+                        <th className='w-[25%] whitespace-nowrap px-2 py-3 text-right'>
                           Actions
                         </th>
                       </tr>

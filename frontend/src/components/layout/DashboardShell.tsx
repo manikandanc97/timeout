@@ -11,6 +11,7 @@ import Topbar from '@/components/layout/Topbar';
 import SidebarSkeleton from '@/components/dashboard/skeletons/SidebarSkeleton';
 import TopbarSkeleton from '@/components/dashboard/skeletons/TopbarSkeleton';
 import AdminDashboardSkeleton from '@/components/dashboard/skeletons/AdminDashboardSkeleton';
+import DashboardContentSkeleton from '@/components/dashboard/skeletons/DashboardContentSkeleton';
 import LeaveRequestsSkeleton from '@/components/dashboard/skeletons/LeaveRequestsSkeleton';
 import EmployeesSkeleton from '@/components/dashboard/skeletons/EmployeesSkeleton';
 import TeamsPageSkeleton from '@/components/dashboard/skeletons/TeamsPageSkeleton';
@@ -19,6 +20,7 @@ import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
 
 type Props = {
   children: React.ReactNode;
+  initialRole?: string | null;
 };
 
 /** Main fills viewport under topbar; page scrolls inside its own panel (not whole main). */
@@ -29,23 +31,27 @@ const MAIN_VIEWPORT_FILL_PATHS = new Set([
   '/holidays',
 ]);
 
-const DashboardShell = ({ children }: Props) => {
+const DashboardShell = ({ children, initialRole = null }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [roleHint, setRoleHint] = useState<string | null>(initialRole);
   const fillMainHeight = MAIN_VIEWPORT_FILL_PATHS.has(pathname);
 
   useEffect(() => {
     let cancelled = false;
 
     const validateSession = async () => {
+      setLoading(true);
       try {
         const refreshRes = await api.post('/auth/refresh');
         setAccessToken(refreshRes.data.accessToken);
         const userRes = await api.get('/auth/me');
         if (cancelled) return;
         setUser(userRes.data);
+        const resolvedRole = String(userRes.data?.role ?? '');
+        if (resolvedRole) setRoleHint(resolvedRole);
         setLoading(false);
       } catch {
         if (!cancelled) router.push('/login');
@@ -56,12 +62,18 @@ const DashboardShell = ({ children }: Props) => {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [pathname, router]);
 
   if (loading) {
     let content: React.ReactNode = null;
     if (pathname === '/dashboard') {
-      content = <AdminDashboardSkeleton />;
+      const effectiveRole = String(user?.role ?? roleHint ?? '');
+      content =
+        effectiveRole === 'EMPLOYEE' ? (
+          <DashboardContentSkeleton />
+        ) : (
+          <AdminDashboardSkeleton />
+        );
     } else if (pathname === '/apply') {
       content = <ApplyLeaveSkeleton />;
     } else if (pathname === '/leaves') {

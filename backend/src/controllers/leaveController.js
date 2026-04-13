@@ -9,6 +9,53 @@ const getDefaultLeaveBalance = (user) => ({
   paternity: user.gender === 'MALE' ? 15 : 0,
 });
 
+const resolveActorContext = async (authUser) => {
+  const fallback = {
+    id: authUser?.id,
+    role: authUser?.role,
+    organizationId: authUser?.organizationId,
+    gender: authUser?.gender ?? null,
+  };
+
+  if (authUser?.id == null) {
+    return fallback;
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: authUser.id },
+    select: {
+      id: true,
+      role: true,
+      organizationId: true,
+      gender: true,
+    },
+  });
+
+  if (!dbUser) {
+    return fallback;
+  }
+
+  return {
+    id: dbUser.id,
+    role: dbUser.role,
+    organizationId: dbUser.organizationId,
+    gender: dbUser.gender ?? authUser?.gender ?? null,
+  };
+};
+
+const isMissingReportingManagerColumn = (error) => {
+  if (!error) return false;
+  const message = String(error.message ?? '');
+  if (
+    message.includes('reportingManagerId') ||
+    message.includes('Unknown field `reportingManagerId`')
+  ) {
+    return true;
+  }
+  const column = error.meta?.column;
+  return column != null && String(column).includes('reportingManager');
+};
+
 const toLocalCalendarDate = (value) => {
   if (value == null || value === '') return new Date(NaN);
   const s = String(value).trim();
@@ -24,7 +71,13 @@ const toLocalCalendarDate = (value) => {
   return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 };
 
-const localDayKey = (d) => d.endDateString();
+const localDayKey = (d) => {
+  if (!d || Number.isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 
 const getWorkingDays = async (startDate, endDate, organizationId) => {
   const start = toLocalCalendarDate(startDate);
@@ -92,6 +145,19 @@ export const applyLeave = async (req, res) => {
 
     const userId = req.user.id;
 
+    const applicant = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { organizationId: true, teamId: true },
+    });
+
+    if (!applicant) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (applicant.organizationId !== req.user.organizationId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     let balance = await prisma.leaveBalance.findUnique({
       where: { userId },
     });
@@ -140,11 +206,13 @@ export const applyLeave = async (req, res) => {
 
     const leave = await prisma.leave.create({
       data: {
-        type,
+        type: leaveType,
         startDate: normalizedstartDate,
         endDate: normalizedendDate,
         reason,
-        userId: userId,
+        userId,
+        organizationId: applicant.organizationId,
+        teamId: applicant.teamId ?? undefined,
       },
     });
 
@@ -171,9 +239,15 @@ export const applyLeave = async (req, res) => {
   }
 };
 
+const leaveListIncludeUser = {
+  user: {
+    select: { name: true, email: true },
+  },
+};
+
 export const getLeaves = async (req, res) => {
   try {
-    const user = req.user;
+    const user = await resolveActorContext(req.user);
     let leaves;
 
     if (user.role === 'EMPLOYEE') {
@@ -181,13 +255,37 @@ export const getLeaves = async (req, res) => {
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
       });
+    } else if (user.role === 'ADMIN') {
+      leaves = await prisma.leave.findMany({
+        where: { organizationId: user.organizationId },
+        include: leaveListIncludeUser,
+        orderBy: { createdAt: 'desc' },
+      });
+    } else if (user.role === 'MANAGER') {
+      try {
+        leaves = await prisma.leave.findMany({
+          where: {
+            organizationId: user.organizationId,
+            OR: [
+              { userId: user.id },
+              { user: { reportingManagerId: user.id } },
+            ],
+          },
+          include: leaveListIncludeUser,
+          orderBy: { createdAt: 'desc' },
+        });
+      } catch (error) {
+        if (!isMissingReportingManagerColumn(error)) throw error;
+        // Backward-compatible fallback when Prisma client/db is behind reporting-manager schema.
+        leaves = await prisma.leave.findMany({
+          where: { userId: user.id },
+          include: leaveListIncludeUser,
+          orderBy: { createdAt: 'desc' },
+        });
+      }
     } else {
       leaves = await prisma.leave.findMany({
-        include: {
-          user: {
-            select: { name: true, email: true },
-          },
-        },
+        where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
       });
     }
@@ -216,6 +314,32 @@ export const updateLeaveStatus = async (req, res) => {
 
     if (!leave) {
       return res.status(404).json({ message: 'Leave not found' });
+    }
+
+    if (leave.organizationId !== req.user.organizationId) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (req.user.role === 'MANAGER') {
+      let applicant;
+      try {
+        applicant = await prisma.user.findUnique({
+          where: { id: leave.userId },
+          select: { reportingManagerId: true },
+        });
+      } catch (error) {
+        if (!isMissingReportingManagerColumn(error)) throw error;
+        return res.status(503).json({
+          message:
+            'Reporting manager mapping is unavailable. Please run database migrations and prisma generate.',
+        });
+      }
+      if (applicant?.reportingManagerId !== req.user.id) {
+        return res.status(403).json({
+          message:
+            "Only an admin or the employee's reporting manager can approve or reject this request",
+        });
+      }
     }
 
     if (leave.status !== 'PENDING') {
@@ -298,10 +422,35 @@ export const cancelLeave = async (req, res) => {
       return res.status(404).json({ message: 'Leave not found' });
     }
 
-    const isManager = ['MANAGER', 'ADMIN'].includes(req.user.role);
     const isOwner = leave.userId === req.user.id;
+    const sameOrg = leave.organizationId === req.user.organizationId;
 
-    if (!isManager && !isOwner) {
+    if (!sameOrg) {
+      return res.status(403).json({ message: 'Not authorized to cancel' });
+    }
+
+    if (isOwner) {
+      // employee (or anyone) cancelling own pending leave
+    } else if (req.user.role === 'ADMIN') {
+      // admin may cancel any pending leave in org
+    } else if (req.user.role === 'MANAGER') {
+      let applicant;
+      try {
+        applicant = await prisma.user.findUnique({
+          where: { id: leave.userId },
+          select: { reportingManagerId: true },
+        });
+      } catch (error) {
+        if (!isMissingReportingManagerColumn(error)) throw error;
+        return res.status(503).json({
+          message:
+            'Reporting manager mapping is unavailable. Please run database migrations and prisma generate.',
+        });
+      }
+      if (applicant?.reportingManagerId !== req.user.id) {
+        return res.status(403).json({ message: 'Not authorized to cancel' });
+      }
+    } else {
       return res.status(403).json({ message: 'Not authorized to cancel' });
     }
 
@@ -368,11 +517,28 @@ export const cancelLeave = async (req, res) => {
 
 export const getDashboardStats = async (req, res) => {
   try {
-    const user = req.user;
+    const user = await resolveActorContext(req.user);
+
+    if (user.organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
     let whereCondition = {};
 
     if (user.role === 'EMPLOYEE') {
-      whereCondition.userId = user.id;
+      whereCondition = { userId: user.id };
+    } else if (user.role === 'ADMIN') {
+      whereCondition = { organizationId: user.organizationId };
+    } else if (user.role === 'MANAGER') {
+      whereCondition = {
+        organizationId: user.organizationId,
+        OR: [
+          { userId: user.id },
+          { user: { reportingManagerId: user.id } },
+        ],
+      };
+    } else {
+      whereCondition = { userId: user.id };
     }
 
     const currentDate = new Date();
@@ -392,37 +558,80 @@ export const getDashboardStats = async (req, res) => {
       999,
     );
 
-    const [leaveCounts, existingBalance, monthlyLeaves, monthHolidays] =
-      await Promise.all([
-        prisma.leave.groupBy({
-          by: ['status'],
-          where: whereCondition,
-          _count: {
-            status: true,
-          },
-        }),
-        prisma.leaveBalance.findUnique({
-          where: { userId: user.id },
-        }),
-        prisma.leave.findMany({
-          where: {
-            ...whereCondition,
-            status: { in: ['PENDING', 'APPROVED'] },
-            startDate: { lte: currentMonthEnd },
-            endDate: { gte: currentMonthStart },
-          },
-          select: {
-            type: true,
-            startDate: true,
-            endDate: true,
-          },
-        }),
-        findHolidaysForOrgInDateRange(
-          user.organizationId,
-          currentMonthStart,
-          currentMonthEnd,
-        ),
-      ]);
+    let leaveCounts;
+    let existingBalance;
+    let monthlyLeaves;
+    let monthHolidays;
+
+    try {
+      [leaveCounts, existingBalance, monthlyLeaves, monthHolidays] =
+        await Promise.all([
+          prisma.leave.groupBy({
+            by: ['status'],
+            where: whereCondition,
+            _count: {
+              status: true,
+            },
+          }),
+          prisma.leaveBalance.findUnique({
+            where: { userId: user.id },
+          }),
+          prisma.leave.findMany({
+            where: {
+              ...whereCondition,
+              status: { in: ['PENDING', 'APPROVED'] },
+              startDate: { lte: currentMonthEnd },
+              endDate: { gte: currentMonthStart },
+            },
+            select: {
+              type: true,
+              startDate: true,
+              endDate: true,
+            },
+          }),
+          findHolidaysForOrgInDateRange(
+            user.organizationId,
+            currentMonthStart,
+            currentMonthEnd,
+          ),
+        ]);
+    } catch (error) {
+      if (!(user.role === 'MANAGER' && isMissingReportingManagerColumn(error))) {
+        throw error;
+      }
+      const fallbackWhere = { userId: user.id };
+      [leaveCounts, existingBalance, monthlyLeaves, monthHolidays] =
+        await Promise.all([
+          prisma.leave.groupBy({
+            by: ['status'],
+            where: fallbackWhere,
+            _count: {
+              status: true,
+            },
+          }),
+          prisma.leaveBalance.findUnique({
+            where: { userId: user.id },
+          }),
+          prisma.leave.findMany({
+            where: {
+              ...fallbackWhere,
+              status: { in: ['PENDING', 'APPROVED'] },
+              startDate: { lte: currentMonthEnd },
+              endDate: { gte: currentMonthStart },
+            },
+            select: {
+              type: true,
+              startDate: true,
+              endDate: true,
+            },
+          }),
+          findHolidaysForOrgInDateRange(
+            user.organizationId,
+            currentMonthStart,
+            currentMonthEnd,
+          ),
+        ]);
+    }
 
     const balance =
       existingBalance ??

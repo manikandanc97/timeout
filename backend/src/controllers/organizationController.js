@@ -46,6 +46,37 @@ export const getOrganizationStructure = async (req, res) => {
   }
 };
 
+const employeeDirectorySelectBase = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  gender: true,
+  createdAt: true,
+  birthDate: true,
+  joiningDate: true,
+  team: {
+    select: {
+      id: true,
+      name: true,
+      department: {
+        select: { id: true, name: true },
+      },
+    },
+  },
+};
+
+function isMissingReportingManagerColumn(error) {
+  if (!error) return false;
+  const m = String(error.message ?? '');
+  if (m.includes('reportingManagerId') || m.includes('reportingManager')) {
+    return true;
+  }
+  const col = error.meta?.column;
+  if (col != null && String(col).includes('reportingManager')) return true;
+  return false;
+}
+
 export const getOrganizationEmployees = async (req, res) => {
   try {
     const organizationId = req.user.organizationId;
@@ -64,43 +95,41 @@ export const getOrganizationEmployees = async (req, res) => {
       role: { not: 'ADMIN' },
     };
 
-    const [users, leavesToday] = await Promise.all([
-      prisma.user.findMany({
+    const leavesPromise = prisma.leave.findMany({
+      where: {
+        organizationId,
+        status: 'APPROVED',
+        startDate: { lte: endOfDay },
+        endDate: { gte: startOfDay },
+      },
+      select: { userId: true },
+    });
+
+    let users;
+    try {
+      users = await prisma.user.findMany({
         where: employeeWhere,
         orderBy: { name: 'asc' },
         select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          gender: true,
-          createdAt: true,
-          birthDate: true,
-          joiningDate: true,
+          ...employeeDirectorySelectBase,
           reportingManager: {
             select: { id: true, name: true },
           },
-          team: {
-            select: {
-              id: true,
-              name: true,
-              department: {
-                select: { id: true, name: true },
-              },
-            },
-          },
         },
-      }),
-      prisma.leave.findMany({
-        where: {
-          organizationId,
-          status: 'APPROVED',
-          startDate: { lte: endOfDay },
-          endDate: { gte: startOfDay },
-        },
-        select: { userId: true },
-      }),
-    ]);
+      });
+    } catch (err) {
+      if (!isMissingReportingManagerColumn(err)) throw err;
+      console.warn(
+        '[employees] reportingManager column missing; run: npx prisma migrate deploy. Listing employees without reporting manager.',
+      );
+      users = await prisma.user.findMany({
+        where: employeeWhere,
+        orderBy: { name: 'asc' },
+        select: { ...employeeDirectorySelectBase },
+      });
+    }
+
+    const leavesToday = await leavesPromise;
 
     const onLeaveUserIds = new Set(leavesToday.map((l) => l.userId));
 
@@ -113,9 +142,10 @@ export const getOrganizationEmployees = async (req, res) => {
       createdAt: u.createdAt.toISOString(),
       birthDate: u.birthDate ? u.birthDate.toISOString() : null,
       joiningDate: u.joiningDate ? u.joiningDate.toISOString() : null,
-      reportingManager: u.reportingManager
-        ? { id: u.reportingManager.id, name: u.reportingManager.name }
-        : null,
+      reportingManager:
+        u.reportingManager != null
+          ? { id: u.reportingManager.id, name: u.reportingManager.name }
+          : null,
       team: u.team
         ? {
             id: u.team.id,

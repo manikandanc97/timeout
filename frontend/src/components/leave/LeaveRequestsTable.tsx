@@ -1,11 +1,14 @@
 import LeaveStatusBadge from '@/components/leave/LeaveStatusBadge';
 import { TYPE_CONFIG } from '@/components/leave/constants';
 import { fmt, getLeaveEnd, getLeaveStart } from '@/components/leave/utils';
+import type { Holiday } from '@/types/holiday';
 import type { LeaveWithEmployee } from '@/types/leave';
+import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 type Props = {
   rows: LeaveWithEmployee[];
+  holidays: Holiday[];
   canModerate: boolean;
   busyId: number | null;
   onApproveReject: (
@@ -16,6 +19,7 @@ type Props = {
 
 export default function LeaveRequestsTable({
   rows,
+  holidays,
   canModerate,
   busyId,
   onApproveReject,
@@ -29,6 +33,7 @@ export default function LeaveRequestsTable({
             <th className='px-4 py-3 text-left'>Leave type</th>
             <th className='px-4 py-3 text-left'>From</th>
             <th className='px-4 py-3 text-left'>To</th>
+            <th className='px-4 py-3 text-left'>Days</th>
             <th className='px-4 py-3 text-left'>Reason</th>
             <th className='px-4 py-3 text-left'>Status</th>
             <th className='px-4 py-3 text-right'>Actions</th>
@@ -38,7 +43,7 @@ export default function LeaveRequestsTable({
           {rows.length === 0 ? (
             <tr>
               <td
-                colSpan={7}
+                colSpan={8}
                 className='px-4 py-16 text-center align-middle text-sm text-gray-500 sm:py-24'
               >
                 No leave requests match your filters.
@@ -55,14 +60,7 @@ export default function LeaveRequestsTable({
                   className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
                 >
                   <td className='px-4 py-3 text-left align-top font-medium text-gray-900'>
-                    <div className='flex flex-col items-start text-left'>
-                      <span>{name}</span>
-                      {row.user?.email ? (
-                        <span className='text-xs font-normal text-gray-400'>
-                          {row.user.email}
-                        </span>
-                      ) : null}
-                    </div>
+                    <span>{name}</span>
                   </td>
                   <td className='px-4 py-3 text-left align-top'>
                     <span
@@ -76,6 +74,14 @@ export default function LeaveRequestsTable({
                   </td>
                   <td className='whitespace-nowrap px-4 py-3 text-left align-top text-gray-700'>
                     {fmt(getLeaveEnd(row))}
+                  </td>
+                  <td className='whitespace-nowrap px-4 py-3 text-left align-top text-gray-700'>
+                    {workingDaysForLeaveRange(
+                      getLeaveStart(row),
+                      getLeaveEnd(row),
+                      holidays,
+                    )}{' '}
+                    day(s)
                   </td>
                   <td className='max-w-[220px] px-4 py-3 text-left align-top text-gray-600'>
                     <span className='line-clamp-2 text-left' title={row.reason}>
