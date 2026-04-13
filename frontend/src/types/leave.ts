@@ -8,6 +8,7 @@ export interface Leave {
   startDate: string;
   endDate: string;
   reason: string;
+  rejectionReason?: string | null;
   status: LeaveStatus;
   userId?: number;
   createdAt?: string;

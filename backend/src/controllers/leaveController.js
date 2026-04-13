@@ -303,10 +303,19 @@ export const updateLeaveStatus = async (req, res) => {
       return res.status(400).json({ message: 'Body is required' });
     }
 
-    const { status } = req.body;
+    const { status, rejectionReason } = req.body;
 
     if (!status || !['APPROVED', 'REJECTED'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const normalizedRejectionReason =
+      typeof rejectionReason === 'string' ? rejectionReason.trim() : '';
+
+    if (status === 'REJECTED' && !normalizedRejectionReason) {
+      return res.status(400).json({
+        message: 'Rejection reason is required when rejecting a leave request',
+      });
     }
 
     const leaveId = Number(req.params.id);
@@ -375,7 +384,11 @@ export const updateLeaveStatus = async (req, res) => {
     const ops = [
       prisma.leave.update({
         where: { id: leaveId },
-        data: { status },
+        data: {
+          status,
+          rejectionReason:
+            status === 'REJECTED' ? normalizedRejectionReason : null,
+        },
       }),
     ];
 

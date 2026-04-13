@@ -1,6 +1,7 @@
 'use client';
 
 import Button from '@/components/ui/Button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import api from '@/services/api';
 import { ClipboardList, CheckCircle2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -64,6 +65,8 @@ export default function PendingLeaveRequests() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [rejectLeaveId, setRejectLeaveId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     async function loadPendingLeaves() {
@@ -88,10 +91,16 @@ export default function PendingLeaveRequests() {
   async function approveOrReject(
     leaveId: number,
     newStatus: 'APPROVED' | 'REJECTED',
+    rejectionReason?: string,
   ) {
     setBusyId(leaveId);
     try {
-      await api.put(`/leaves/${leaveId}`, { status: newStatus });
+      await api.put(`/leaves/${leaveId}`, {
+        status: newStatus,
+        ...(newStatus === 'REJECTED'
+          ? { rejectionReason: rejectionReason?.trim() ?? '' }
+          : {}),
+      });
       const res = await api.get<LeaveWithEmployee[]>('/leaves');
       setPendingList(pickLatestPending(res.data));
     } catch {
@@ -107,6 +116,29 @@ export default function PendingLeaveRequests() {
       {pendingList.length} pending
     </span>
   );
+
+  const isRejectingCurrent = rejectLeaveId !== null && busyId === rejectLeaveId;
+
+  const openRejectModal = (leaveId: number) => {
+    setRejectLeaveId(leaveId);
+    setRejectReason('');
+  };
+
+  const closeRejectModal = () => {
+    if (isRejectingCurrent) return;
+    setRejectLeaveId(null);
+    setRejectReason('');
+  };
+
+  const confirmReject = () => {
+    if (rejectLeaveId === null) return;
+    const trimmed = rejectReason.trim();
+    if (!trimmed) return;
+    void approveOrReject(rejectLeaveId, 'REJECTED', trimmed).finally(() => {
+      setRejectLeaveId(null);
+      setRejectReason('');
+    });
+  };
 
   if (loading) {
     return (
@@ -196,7 +228,7 @@ export default function PendingLeaveRequests() {
                   </button>
                   <button
                     disabled={isBusy}
-                    onClick={() => approveOrReject(row.id, 'REJECTED')}
+                    onClick={() => openRejectModal(row.id)}
                     className='flex items-center gap-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 px-3 py-1.5 rounded-lg ring-1 ring-red-200 font-semibold text-red-700 text-xs transition-all duration-150 disabled:cursor-not-allowed'
                   >
                     <XCircle size={13} />
@@ -208,6 +240,28 @@ export default function PendingLeaveRequests() {
           })}
         </ul>
       )}
+
+      <ConfirmModal
+        open={rejectLeaveId !== null}
+        title='Reject leave request'
+        message='Please provide a reason. This will be shown to the employee.'
+        cancelLabel='Cancel'
+        confirmLabel='Reject'
+        isProcessing={isRejectingCurrent}
+        onCancel={closeRejectModal}
+        onConfirm={confirmReject}
+      >
+        <textarea
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+          rows={4}
+          placeholder='Enter rejection reason'
+          className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none transition-colors focus:border-red-300 focus:ring-2 focus:ring-red-100'
+        />
+        {!rejectReason.trim() ? (
+          <p className='mt-2 text-xs text-rose-600'>Rejection reason is required.</p>
+        ) : null}
+      </ConfirmModal>
     </AdminDashboardPanel>
   );
 }

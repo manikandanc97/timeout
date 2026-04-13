@@ -91,10 +91,19 @@ export function useLeaveRequestsPage({ initialLeaves }: Args) {
   }, []);
 
   const approveOrReject = useCallback(
-    async (leaveId: number, newStatus: 'APPROVED' | 'REJECTED') => {
+    async (
+      leaveId: number,
+      newStatus: 'APPROVED' | 'REJECTED',
+      rejectionReason?: string,
+    ) => {
       setBusyId(leaveId);
       try {
-        await api.put(`/leaves/${leaveId}`, { status: newStatus });
+        await api.put(`/leaves/${leaveId}`, {
+          status: newStatus,
+          ...(newStatus === 'REJECTED'
+            ? { rejectionReason: rejectionReason?.trim() ?? '' }
+            : {}),
+        });
         toast.success(
           newStatus === 'APPROVED' ? 'Leave approved.' : 'Leave rejected.',
         );

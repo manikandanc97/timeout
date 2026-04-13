@@ -1,10 +1,12 @@
 import LeaveStatusBadge from '@/components/leave/LeaveStatusBadge';
 import { TYPE_CONFIG } from '@/components/leave/constants';
 import { fmt, getLeaveEnd, getLeaveStart } from '@/components/leave/utils';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import type { Holiday } from '@/types/holiday';
 import type { LeaveWithEmployee } from '@/types/leave';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
 import { CheckCircle2, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 type Props = {
   rows: LeaveWithEmployee[];
@@ -14,6 +16,7 @@ type Props = {
   onApproveReject: (
     leaveId: number,
     status: 'APPROVED' | 'REJECTED',
+    rejectionReason?: string,
   ) => void;
 };
 
@@ -24,6 +27,30 @@ export default function LeaveRequestsTable({
   busyId,
   onApproveReject,
 }: Props) {
+  const [rejectLeaveId, setRejectLeaveId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const isRejectingCurrent = rejectLeaveId !== null && busyId === rejectLeaveId;
+
+  const openRejectModal = (leaveId: number) => {
+    setRejectLeaveId(leaveId);
+    setRejectReason('');
+  };
+
+  const closeRejectModal = () => {
+    if (isRejectingCurrent) return;
+    setRejectLeaveId(null);
+    setRejectReason('');
+  };
+
+  const confirmReject = () => {
+    if (rejectLeaveId === null) return;
+    const trimmed = rejectReason.trim();
+    if (!trimmed) return;
+    onApproveReject(rejectLeaveId, 'REJECTED', trimmed);
+    setRejectLeaveId(null);
+    setRejectReason('');
+  };
+
   return (
     <div className='min-h-0 flex-1 overflow-auto'>
       <table className='min-h-full w-full min-w-[720px] border-collapse text-left text-sm'>
@@ -106,7 +133,7 @@ export default function LeaveRequestsTable({
                         <button
                           type='button'
                           disabled={isBusy}
-                          onClick={() => onApproveReject(row.id, 'REJECTED')}
+                          onClick={() => openRejectModal(row.id)}
                           className='inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50'
                         >
                           <XCircle size={13} />
@@ -123,6 +150,28 @@ export default function LeaveRequestsTable({
           )}
         </tbody>
       </table>
+
+      <ConfirmModal
+        open={rejectLeaveId !== null}
+        title='Reject leave request'
+        message='Please provide a reason. This will be shown to the employee.'
+        cancelLabel='Cancel'
+        confirmLabel='Reject'
+        isProcessing={isRejectingCurrent}
+        onCancel={closeRejectModal}
+        onConfirm={confirmReject}
+      >
+        <textarea
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+          rows={4}
+          placeholder='Enter rejection reason'
+          className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none transition-colors focus:border-red-300 focus:ring-2 focus:ring-red-100'
+        />
+        {!rejectReason.trim() ? (
+          <p className='mt-2 text-xs text-rose-600'>Rejection reason is required.</p>
+        ) : null}
+      </ConfirmModal>
     </div>
   );
 }

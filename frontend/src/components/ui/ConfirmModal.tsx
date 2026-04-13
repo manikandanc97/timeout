@@ -1,6 +1,7 @@
 'use client';
 
 import Button from '@/components/ui/Button';
+import type { ReactNode } from 'react';
 import { useEffect, useId, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -17,6 +18,7 @@ export type ConfirmModalProps = {
   onCancel: () => void;
   onConfirm: () => void | Promise<void>;
   isProcessing?: boolean;
+  children?: ReactNode;
 };
 
 export default function ConfirmModal({
@@ -28,6 +30,7 @@ export default function ConfirmModal({
   onCancel,
   onConfirm,
   isProcessing = false,
+  children,
 }: ConfirmModalProps) {
   const titleId = useId();
   const mounted = useSyncExternalStore(
@@ -50,7 +53,7 @@ export default function ConfirmModal({
   }
 
   return createPortal(
-    <div className='fixed inset-0 z-[100] flex items-center justify-center p-4'>
+    <div className='fixed inset-0 z-100 flex items-center justify-center p-4'>
       <button
         type='button'
         aria-label='Close dialog'
@@ -71,6 +74,7 @@ export default function ConfirmModal({
           {title}
         </h2>
         <p className='mt-3 text-gray-600 text-sm leading-relaxed'>{message}</p>
+        {children ? <div className='mt-4'>{children}</div> : null}
 
         <div className='flex flex-wrap justify-end gap-2 mt-6'>
           <Button

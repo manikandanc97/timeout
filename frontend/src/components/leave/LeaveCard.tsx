@@ -8,7 +8,7 @@
 import type { Holiday } from '@/types/holiday';
 import type { Leave } from '@/types/leave';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
-import { CalendarDays, Clock3, FileText, Pencil, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronUp, Clock3, FileText, Pencil, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Button from '../ui/Button';
@@ -32,6 +32,7 @@ export default function LeaveCard({
   holidays = [],
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [showRejectionReason, setShowRejectionReason] = useState(false);
   const isDeletingThis = deletingId === leave.id;
   const typeCfg = TYPE_CONFIG[leave.type] ?? TYPE_CONFIG.ANNUAL;
   const TypeIcon = typeCfg.icon;
@@ -76,6 +77,26 @@ export default function LeaveCard({
               <p className='text-[13px] text-gray-600 line-clamp-2 leading-relaxed'>
                 {leave.reason}
               </p>
+            </div>
+          )}
+
+          {leave.status === 'REJECTED' && leave.rejectionReason && (
+            <div className='mt-2'>
+              <button
+                type='button'
+                onClick={() => setShowRejectionReason((prev) => !prev)}
+                className='inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 font-semibold text-[11px] text-rose-700 uppercase tracking-wide transition-colors hover:bg-rose-100'
+              >
+                Rejection reason
+                {showRejectionReason ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              </button>
+              {showRejectionReason ? (
+                <div className='mt-1.5 rounded-lg border border-rose-100 bg-rose-50/60 px-2.5 py-2'>
+                  <p className='text-[13px] text-rose-700 leading-relaxed'>
+                    {leave.rejectionReason}
+                  </p>
+                </div>
+              ) : null}
             </div>
           )}
         </div>
