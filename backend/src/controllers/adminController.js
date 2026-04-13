@@ -225,3 +225,47 @@ export const getAdminDashboardData = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch dashboard stats' });
   }
 };
+
+export const getAdminPermissionRequests = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const rows = await prisma.permissionRequest.findMany({
+      where: { organizationId },
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    return res.status(200).json(rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Failed to fetch permission requests' });
+  }
+};
+
+export const getAdminCompOffRequests = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const rows = await prisma.compOffWorkLog.findMany({
+      where: { organizationId },
+      orderBy: [{ workDate: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    return res.status(200).json(rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Failed to fetch comp off requests' });
+  }
+};

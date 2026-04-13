@@ -5,7 +5,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import api from '@/services/api';
 import type { OrgDepartment } from '@/types/organization';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 type Props = {
@@ -17,6 +17,7 @@ export default function AddEmployeeForm({
   onCreated,
   compact = false,
 }: Props) {
+  const didInitDepartmentRef = useRef(false);
   const [departments, setDepartments] = useState<OrgDepartment[]>([]);
   const [loadingStructure, setLoadingStructure] = useState(true);
 
@@ -61,6 +62,14 @@ export default function AddEmployeeForm({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    // Keep department/team empty when the form first receives organization data.
+    if (didInitDepartmentRef.current || loadingStructure) return;
+    didInitDepartmentRef.current = true;
+    setDepartmentId('');
+    setTeamId('');
+  }, [loadingStructure]);
 
   useEffect(() => {
     let cancelled = false;

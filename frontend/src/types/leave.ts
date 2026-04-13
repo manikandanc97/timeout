@@ -1,6 +1,12 @@
 export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
-export type LeaveType = 'ANNUAL' | 'SICK' | 'MATERNITY' | 'PATERNITY';
+export type LeaveType =
+  | 'ANNUAL'
+  | 'SICK'
+  | 'MATERNITY'
+  | 'PATERNITY'
+  | 'COMP_OFF';
 
 export interface Leave {
   id: number;
@@ -27,6 +33,7 @@ export interface LeaveWithEmployee extends Leave {
 export interface LeaveBalance {
   annual: number;
   sick: number;
+  compOff?: number;
   maternity?: number;
   paternity?: number;
 }
@@ -34,6 +41,7 @@ export interface LeaveBalance {
 export interface LeaveUsage {
   annual: number;
   sick: number;
+  compOff?: number;
   maternity?: number;
   paternity?: number;
 }
@@ -43,6 +51,7 @@ export type LeaveChartSeries = { month: string; value: number }[];
 export interface LeaveChartData {
   annual: LeaveChartSeries;
   sick: LeaveChartSeries;
+  compOff?: LeaveChartSeries;
   maternity?: LeaveChartSeries;
   paternity?: LeaveChartSeries;
 }
@@ -51,4 +60,41 @@ export interface LeaveDashboardData {
   balance: LeaveBalance;
   monthlyUsage?: LeaveUsage;
   chartData?: LeaveChartData;
+}
+
+export interface PermissionRequest {
+  id: number;
+  date: string;
+  durationMinutes: number;
+  startTimeMinutes?: number | null;
+  endTimeMinutes?: number | null;
+  reason: string;
+  status: RequestStatus;
+  createdAt: string;
+}
+
+export interface PermissionRequestWithEmployee extends PermissionRequest {
+  user?: {
+    name?: string;
+    email?: string;
+  };
+}
+
+export interface CompOffRequestWithEmployee {
+  id: number;
+  workDate: string;
+  reason: string;
+  status: RequestStatus;
+  createdAt: string;
+  user?: {
+    name?: string;
+    email?: string;
+  };
+}
+
+export interface PermissionSummary {
+  limitMinutes: number;
+  usedMinutes: number;
+  remainingMinutes: number;
+  requests: PermissionRequest[];
 }

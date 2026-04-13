@@ -1,7 +1,11 @@
 import LeaveRequestsPageClient from '@/components/leave/LeaveRequestsPageClient';
 import { serverFetch } from '@/services/serverApi';
 import type { Holiday } from '@/types/holiday';
-import type { LeaveWithEmployee } from '@/types/leave';
+import type {
+  CompOffRequestWithEmployee,
+  LeaveWithEmployee,
+  PermissionRequestWithEmployee,
+} from '@/types/leave';
 import type { User } from '@/types/user';
 import { redirect } from 'next/navigation';
 
@@ -22,22 +26,36 @@ export default async function LeaveRequestsPage() {
   }
 
   let initialLeaves: LeaveWithEmployee[] = [];
+  let initialPermissionRequests: PermissionRequestWithEmployee[] = [];
+  let initialCompOffRequests: CompOffRequestWithEmployee[] = [];
   let holidays: Holiday[] = [];
   try {
-    const [leavesRes, holidaysRes] = await Promise.all([
+    const [leavesRes, holidaysRes, permissionRes, compOffRes] = await Promise.all([
       serverFetch<LeaveWithEmployee[]>('/leaves'),
       serverFetch<Holiday[]>('/holidays').catch(() => []),
+      serverFetch<PermissionRequestWithEmployee[]>('/leaves/permissions/requests').catch(
+        () => [],
+      ),
+      serverFetch<CompOffRequestWithEmployee[]>('/leaves/comp-off-requests').catch(
+        () => [],
+      ),
     ]);
     initialLeaves = leavesRes;
     holidays = Array.isArray(holidaysRes) ? holidaysRes : [];
+    initialPermissionRequests = Array.isArray(permissionRes) ? permissionRes : [];
+    initialCompOffRequests = Array.isArray(compOffRes) ? compOffRes : [];
   } catch {
     initialLeaves = [];
     holidays = [];
+    initialPermissionRequests = [];
+    initialCompOffRequests = [];
   }
 
   return (
     <LeaveRequestsPageClient
       initialLeaves={Array.isArray(initialLeaves) ? initialLeaves : []}
+      initialPermissionRequests={initialPermissionRequests}
+      initialCompOffRequests={initialCompOffRequests}
       holidays={holidays}
       canModerate={MOD_ROLES.has(role)}
     />

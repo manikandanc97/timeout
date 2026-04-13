@@ -61,6 +61,10 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid password' });
     }
 
+    if (user.isActive === false) {
+      return res.status(403).json({ message: 'User deactivated' });
+    }
+
     if (!process.env.ACCESS_SECRET?.trim() || !process.env.REFRESH_SECRET?.trim()) {
       console.error('[auth] ACCESS_SECRET and REFRESH_SECRET must be set in .env');
       return res.status(500).json({ message: 'Server misconfiguration' });
@@ -109,6 +113,10 @@ export const refreshTokenHandler = (req, res) => {
     if (err) return res.status(403).json({ message: 'Invalid token' });
 
     const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.isActive === false) {
+      return res.status(403).json({ message: 'User deactivated' });
+    }
 
     const newAccessToken = jwt.sign(
       { id: user.id, role: user.role, organizationId: user.organizationId },

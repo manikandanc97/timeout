@@ -36,6 +36,7 @@ export default function EditEmployeeForm({
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [gender, setGender] = useState('');
   const [role, setRole] = useState<'EMPLOYEE' | 'MANAGER'>('EMPLOYEE');
+  const [status, setStatus] = useState<'ACTIVE' | 'DEACTIVATED'>('ACTIVE');
   const [reportingManagerId, setReportingManagerId] = useState('');
   const [reportingManagerOptions, setReportingManagerOptions] = useState<
     { label: string; value: string }[]
@@ -53,6 +54,7 @@ export default function EditEmployeeForm({
     setEmail(employee.email);
     setGender(employee.gender ?? '');
     setRole(employee.role === 'MANAGER' ? 'MANAGER' : 'EMPLOYEE');
+    setStatus(employee.isActive === false ? 'DEACTIVATED' : 'ACTIVE');
     setBirthDate(isoToDateInput(employee.birthDate));
     setJoiningDate(
       isoToDateInput(employee.joiningDate) ||
@@ -147,6 +149,7 @@ export default function EditEmployeeForm({
         teamId: Number(teamId),
         gender,
         role,
+        status,
         birthDate: birthDate.trim() || null,
         joiningDate: joiningDate.trim(),
         reportingManagerId:
@@ -246,6 +249,20 @@ export default function EditEmployeeForm({
         ]}
         onChange={(e) =>
           setRole(e.target.value === 'MANAGER' ? 'MANAGER' : 'EMPLOYEE')
+        }
+      />
+      <Select
+        id={`edit-emp-status-${employee.id}`}
+        label='Status'
+        value={status}
+        options={[
+          { label: 'Active', value: 'ACTIVE' },
+          { label: 'Deactivated', value: 'DEACTIVATED' },
+        ]}
+        onChange={(e) =>
+          setStatus(
+            e.target.value === 'DEACTIVATED' ? 'DEACTIVATED' : 'ACTIVE',
+          )
         }
       />
       <Select

@@ -11,8 +11,19 @@ const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/leaves': 'My Leaves',
   '/apply': 'Apply Leave',
+  '/requests': 'Leave Requests',
+  '/employees': 'Employees',
+  '/holidays': 'Holidays',
   '/team': 'Team Leaves',
   '/policy': 'Leave Policy',
+};
+
+const resolvePageTitle = (pathname: string) => {
+  if (ROUTE_TITLES[pathname]) return ROUTE_TITLES[pathname];
+  const matchedPrefix = Object.keys(ROUTE_TITLES).find(
+    (route) => pathname.startsWith(`${route}/`) && route !== '/',
+  );
+  return matchedPrefix ? ROUTE_TITLES[matchedPrefix] : 'Dashboard';
 };
 
 const Topbar = () => {
@@ -20,7 +31,7 @@ const Topbar = () => {
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
 
-  const pageTitle = ROUTE_TITLES[pathname] ?? 'Dashboard';
+  const pageTitle = resolvePageTitle(pathname);
 
   return (
     <div className='flex items-center justify-between border-b border-gray-100 bg-white p-4 shadow-sm'>
@@ -30,7 +41,7 @@ const Topbar = () => {
           type='button'
           variant='ghost'
           aria-label='Toggle theme (coming soon)'
-          className='!text-gray-600'
+          className='text-gray-600!'
         >
           <Moon size={20} />
         </Button>
@@ -39,7 +50,7 @@ const Topbar = () => {
           variant='ghost'
           aria-label='Notifications'
           onClick={() => setActivePanel('notifications')}
-          className='!text-gray-600'
+          className='text-gray-600!'
         >
           <Bell size={20} />
         </Button>
@@ -48,7 +59,7 @@ const Topbar = () => {
           variant='ghost'
           aria-label='Settings'
           onClick={() => setActivePanel('settings')}
-          className='!text-gray-600'
+          className='text-gray-600!'
         >
           <Settings size={20} />
         </Button>
@@ -57,7 +68,7 @@ const Topbar = () => {
           variant='ghost'
           aria-label='Profile'
           onClick={() => setActivePanel('profile')}
-          className='!text-gray-800'
+          className='text-gray-800!'
         >
           <User size={20} />
         </Button>

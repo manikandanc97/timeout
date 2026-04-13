@@ -1,10 +1,13 @@
 import prisma from '../prismaClient.js';
 import { findHolidaysForOrgInDateRange } from '../lib/findHolidaysForOrgInDateRange.js';
 
+const MONTHLY_PERMISSION_LIMIT_MINUTES = 4 * 60;
+
 const getDefaultLeaveBalance = (user) => ({
   userId: user.id,
-  sick: 0,
+  sick: 12,
   annual: 12,
+  compOff: 0,
   maternity: user.gender === 'FEMALE' ? 180 : 0,
   paternity: user.gender === 'MALE' ? 15 : 0,
 });
@@ -77,6 +80,61 @@ const localDayKey = (d) => {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+};
+
+const isWeekendDate = (value) => {
+  const day = toLocalCalendarDate(value);
+  if (Number.isNaN(day.getTime())) return false;
+  const dow = day.getDay();
+  return dow === 0 || dow === 6;
+};
+
+const getMonthBounds = (value) => {
+  const date = toLocalCalendarDate(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const start = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+};
+
+/** Parses "HH:mm", "HH:mm:ss", or "hh:mm AM/PM" to minutes; NaN if invalid */
+const parseTimeToMinutes = (value) => {
+  if (value == null || String(value).trim() === '') return NaN;
+  const input = String(value).trim();
+  const m12 = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(input);
+  if (m12) {
+    const hh12 = Number(m12[1]);
+    const mm = Number(m12[2]);
+    const meridiem = m12[3].toUpperCase();
+    if (
+      !Number.isFinite(hh12) ||
+      !Number.isFinite(mm) ||
+      hh12 < 1 ||
+      hh12 > 12 ||
+      mm < 0 ||
+      mm > 59
+    ) {
+      return NaN;
+    }
+    const hh24 = hh12 % 12 + (meridiem === 'PM' ? 12 : 0);
+    return hh24 * 60 + mm;
+  }
+
+  const m24 = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(input);
+  if (!m24) return NaN;
+  const hh = Number(m24[1]);
+  const mm = Number(m24[2]);
+  if (
+    !Number.isFinite(hh) ||
+    !Number.isFinite(mm) ||
+    hh < 0 ||
+    hh > 23 ||
+    mm < 0 ||
+    mm > 59
+  ) {
+    return NaN;
+  }
+  return hh * 60 + mm;
 };
 
 const getWorkingDays = async (startDate, endDate, organizationId) => {
@@ -204,6 +262,10 @@ export const applyLeave = async (req, res) => {
       return res.status(400).json({ message: 'No annual leave left' });
     }
 
+    if (leaveType === 'COMP_OFF' && (balance.compOff ?? 0) < totalDays) {
+      return res.status(400).json({ message: 'No comp off balance left' });
+    }
+
     const leave = await prisma.leave.create({
       data: {
         type: leaveType,
@@ -230,12 +292,438 @@ export const applyLeave = async (req, res) => {
       });
     }
 
+    if (leaveType === 'COMP_OFF') {
+      await prisma.leaveBalance.update({
+        where: { userId },
+        data: { compOff: { decrement: totalDays } },
+      });
+    }
+
     console.log('Leave applied:', totalDays, leave);
 
     res.status(201).json({ message: 'Leave applied successfully', leave });
   } catch (error) {
     console.error('ERROR:', error);
     res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const applyCompOffCredit = async (req, res) => {
+  try {
+    const { workDate, reason } = req.body;
+    if (!workDate || !reason || !String(reason).trim()) {
+      return res
+        .status(400)
+        .json({ message: 'Work date and reason are required' });
+    }
+
+    const normalizedWorkDate = toLocalCalendarDate(workDate);
+    if (Number.isNaN(normalizedWorkDate.getTime())) {
+      return res.status(400).json({ message: 'Invalid work date' });
+    }
+    if (!isWeekendDate(normalizedWorkDate)) {
+      return res
+        .status(400)
+        .json({ message: 'Comp off can only be claimed for weekend work' });
+    }
+
+    const today = toLocalCalendarDate(new Date());
+    if (normalizedWorkDate > today) {
+      return res
+        .status(400)
+        .json({ message: 'Work date cannot be in the future' });
+    }
+
+    const userId = req.user.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, organizationId: true, gender: true },
+    });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (user.organizationId !== req.user.organizationId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const workDateStart = new Date(
+      normalizedWorkDate.getFullYear(),
+      normalizedWorkDate.getMonth(),
+      normalizedWorkDate.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
+
+    const existing = await prisma.compOffWorkLog.findUnique({
+      where: {
+        userId_workDate: { userId, workDate: workDateStart },
+      },
+    });
+    if (existing) {
+      return res
+        .status(400)
+        .json({ message: 'Comp off already claimed for this date' });
+    }
+
+    await prisma.compOffWorkLog.create({
+      data: {
+        userId,
+        organizationId: user.organizationId,
+        workDate: workDateStart,
+        reason: String(reason).trim(),
+        status: 'PENDING',
+      },
+    });
+
+    return res.status(201).json({ message: 'Comp off request submitted' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const applyPermissionRequest = async (req, res) => {
+  try {
+    const { date, reason, startTime, endTime } = req.body;
+    if (!date || !reason || !String(reason).trim()) {
+      return res.status(400).json({
+        message: 'Date and reason are required',
+      });
+    }
+
+    let parsedDuration;
+    let startTimeMinutes = null;
+    let endTimeMinutes = null;
+    const startM = parseTimeToMinutes(startTime);
+    const endM = parseTimeToMinutes(endTime);
+    if (Number.isNaN(startM) || Number.isNaN(endM)) {
+      return res.status(400).json({
+        message: 'Valid from and to times are required',
+      });
+    }
+    if (endM <= startM) {
+      return res.status(400).json({
+        message: 'To time must be after from time on the same day',
+      });
+    }
+    parsedDuration = endM - startM;
+    if (parsedDuration > 240) {
+      return res.status(400).json({
+        message: 'In-between permission cannot exceed 240 minutes',
+      });
+    }
+    startTimeMinutes = startM;
+    endTimeMinutes = endM;
+
+    const permissionDate = toLocalCalendarDate(date);
+    if (Number.isNaN(permissionDate.getTime())) {
+      return res.status(400).json({ message: 'Invalid permission date' });
+    }
+
+    const todayLocal = toLocalCalendarDate(new Date());
+    const tomorrowLocal = new Date(todayLocal);
+    tomorrowLocal.setDate(tomorrowLocal.getDate() + 1);
+    const isSameLocalDay = (a, b) =>
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
+    if (
+      !isSameLocalDay(permissionDate, todayLocal) &&
+      !isSameLocalDay(permissionDate, tomorrowLocal)
+    ) {
+      return res.status(400).json({
+        message: 'Permission can only be applied for today or tomorrow',
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, organizationId: true },
+    });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.organizationId !== req.user.organizationId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const monthBounds = getMonthBounds(permissionDate);
+    if (!monthBounds) {
+      return res.status(400).json({ message: 'Invalid permission date' });
+    }
+
+    const aggregate = await prisma.permissionRequest.aggregate({
+      where: {
+        userId: user.id,
+        status: { in: ['PENDING', 'APPROVED'] },
+        date: { gte: monthBounds.start, lte: monthBounds.end },
+      },
+      _sum: { durationMinutes: true },
+    });
+
+    const usedMinutes = aggregate._sum.durationMinutes ?? 0;
+    const remainingMinutes = MONTHLY_PERMISSION_LIMIT_MINUTES - usedMinutes;
+    if (parsedDuration > remainingMinutes) {
+      return res.status(400).json({
+        message: `Monthly permission limit exceeded. Remaining ${remainingMinutes} minutes`,
+      });
+    }
+
+    const created = await prisma.permissionRequest.create({
+      data: {
+        userId: user.id,
+        organizationId: user.organizationId,
+        date: new Date(
+          permissionDate.getFullYear(),
+          permissionDate.getMonth(),
+          permissionDate.getDate(),
+          12,
+          0,
+          0,
+          0,
+        ),
+        durationMinutes: parsedDuration,
+        startTimeMinutes,
+        endTimeMinutes,
+        reason: String(reason).trim(),
+        status: 'PENDING',
+      },
+    });
+
+    return res.status(201).json({
+      message: 'Permission request submitted',
+      request: created,
+      monthly: {
+        limitMinutes: MONTHLY_PERMISSION_LIMIT_MINUTES,
+        usedMinutes: usedMinutes + parsedDuration,
+        remainingMinutes: remainingMinutes - parsedDuration,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const getPermissionSummary = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, organizationId: true },
+    });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const inputDate =
+      req.query?.month != null && String(req.query.month).trim() !== ''
+        ? `${String(req.query.month).trim()}-01`
+        : new Date();
+    const bounds = getMonthBounds(inputDate);
+    if (!bounds) return res.status(400).json({ message: 'Invalid month' });
+
+    const [aggregate, recent] = await Promise.all([
+      prisma.permissionRequest.aggregate({
+        where: {
+          userId: user.id,
+          organizationId: user.organizationId,
+          status: { in: ['PENDING', 'APPROVED'] },
+          date: { gte: bounds.start, lte: bounds.end },
+        },
+        _sum: { durationMinutes: true },
+      }),
+      prisma.permissionRequest.findMany({
+        where: {
+          userId: user.id,
+          organizationId: user.organizationId,
+          date: { gte: bounds.start, lte: bounds.end },
+        },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        take: 10,
+      }),
+    ]);
+
+    const usedMinutes = aggregate._sum.durationMinutes ?? 0;
+    return res.json({
+      limitMinutes: MONTHLY_PERMISSION_LIMIT_MINUTES,
+      usedMinutes,
+      remainingMinutes: Math.max(MONTHLY_PERMISSION_LIMIT_MINUTES - usedMinutes, 0),
+      requests: recent,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const getPermissionRequests = async (req, res) => {
+  try {
+    const user = await resolveActorContext(req.user);
+
+    let where;
+    if (user.role === 'ADMIN') {
+      where = { organizationId: user.organizationId };
+    } else if (user.role === 'MANAGER') {
+      where = {
+        organizationId: user.organizationId,
+        OR: [{ userId: user.id }, { user: { reportingManagerId: user.id } }],
+      };
+    } else {
+      where = { userId: user.id };
+    }
+
+    const rows = await prisma.permissionRequest.findMany({
+      where,
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    return res.json(rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const getCompOffRequests = async (req, res) => {
+  try {
+    const user = await resolveActorContext(req.user);
+
+    let where;
+    if (user.role === 'ADMIN') {
+      where = { organizationId: user.organizationId };
+    } else if (user.role === 'MANAGER') {
+      where = {
+        organizationId: user.organizationId,
+        OR: [{ userId: user.id }, { user: { reportingManagerId: user.id } }],
+      };
+    } else {
+      where = { userId: user.id };
+    }
+
+    const rows = await prisma.compOffWorkLog.findMany({
+      where,
+      orderBy: [{ workDate: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    return res.json(rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+const canModerateUserRequest = async (actor, requestUserId) => {
+  if (actor.role === 'ADMIN') return true;
+  if (actor.role !== 'MANAGER') return false;
+
+  const applicant = await prisma.user.findUnique({
+    where: { id: requestUserId },
+    select: { reportingManagerId: true },
+  });
+  return applicant?.reportingManagerId === actor.id;
+};
+
+export const updatePermissionRequestStatus = async (req, res) => {
+  try {
+    const actor = await resolveActorContext(req.user);
+    const requestId = Number(req.params.id);
+    const { status } = req.body ?? {};
+    if (!Number.isFinite(requestId)) {
+      return res.status(400).json({ message: 'Invalid permission request id' });
+    }
+    if (!['APPROVED', 'REJECTED'].includes(String(status))) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const row = await prisma.permissionRequest.findUnique({
+      where: { id: requestId },
+      select: { id: true, userId: true, organizationId: true, status: true },
+    });
+    if (!row) return res.status(404).json({ message: 'Request not found' });
+    if (row.organizationId !== actor.organizationId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    if (!(await canModerateUserRequest(actor, row.userId))) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    if (row.status !== 'PENDING') {
+      return res.status(400).json({ message: 'Only pending requests can be updated' });
+    }
+
+    const updated = await prisma.permissionRequest.update({
+      where: { id: requestId },
+      data: { status },
+    });
+    return res.json({ message: 'Permission request updated', request: updated });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const updateCompOffRequestStatus = async (req, res) => {
+  try {
+    const actor = await resolveActorContext(req.user);
+    const requestId = Number(req.params.id);
+    const { status } = req.body ?? {};
+    if (!Number.isFinite(requestId)) {
+      return res.status(400).json({ message: 'Invalid comp off request id' });
+    }
+    if (!['APPROVED', 'REJECTED'].includes(String(status))) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const row = await prisma.compOffWorkLog.findUnique({
+      where: { id: requestId },
+      select: { id: true, userId: true, organizationId: true, status: true },
+    });
+    if (!row) return res.status(404).json({ message: 'Request not found' });
+    if (row.organizationId !== actor.organizationId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    if (!(await canModerateUserRequest(actor, row.userId))) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    if (row.status !== 'PENDING') {
+      return res.status(400).json({ message: 'Only pending requests can be updated' });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const next = await tx.compOffWorkLog.update({
+        where: { id: requestId },
+        data: { status },
+      });
+      if (status === 'APPROVED') {
+        const existingBalance = await tx.leaveBalance.findUnique({
+          where: { userId: row.userId },
+        });
+        if (!existingBalance) {
+          const u = await tx.user.findUnique({
+            where: { id: row.userId },
+            select: { id: true, gender: true },
+          });
+          await tx.leaveBalance.create({
+            data: getDefaultLeaveBalance(
+              u ?? { id: row.userId, gender: 'MALE' },
+            ),
+          });
+        }
+        await tx.leaveBalance.update({
+          where: { userId: row.userId },
+          data: { compOff: { increment: 1 } },
+        });
+      }
+      return next;
+    });
+
+    return res.json({ message: 'Comp off request updated', request: updated });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -409,6 +897,14 @@ export const updateLeaveStatus = async (req, res) => {
           }),
         );
       }
+      if (leaveType === 'COMP_OFF') {
+        ops.push(
+          prisma.leaveBalance.update({
+            where: { userId: leave.userId },
+            data: { compOff: { increment: totalDays } },
+          }),
+        );
+      }
     }
 
     const results = await prisma.$transaction(ops);
@@ -513,6 +1009,15 @@ export const cancelLeave = async (req, res) => {
         prisma.leaveBalance.update({
           where: { userId: leave.userId },
           data: { annual: { increment: totalDays } },
+        }),
+      );
+    }
+
+    if (type === 'COMP_OFF') {
+      updates.push(
+        prisma.leaveBalance.update({
+          where: { userId: leave.userId },
+          data: { compOff: { increment: totalDays } },
         }),
       );
     }
@@ -668,6 +1173,7 @@ export const getDashboardStats = async (req, res) => {
     const filteredBalance = {
       sick: balance.sick,
       annual: balance.annual,
+      compOff: balance.compOff ?? 0,
       ...(user.gender === 'FEMALE' && { maternity: balance.maternity }),
       ...(user.gender === 'MALE' && { paternity: balance.paternity }),
     };
@@ -679,6 +1185,7 @@ export const getDashboardStats = async (req, res) => {
     const usageByType = {
       SICK: new Set(),
       ANNUAL: new Set(),
+      COMP_OFF: new Set(),
       MATERNITY: new Set(),
       PATERNITY: new Set(),
     };
@@ -724,6 +1231,7 @@ export const getDashboardStats = async (req, res) => {
     const monthlyUsage = {
       sick: usageByType.SICK.size,
       annual: usageByType.ANNUAL.size,
+      compOff: usageByType.COMP_OFF.size,
       maternity: usageByType.MATERNITY.size,
       paternity: usageByType.PATERNITY.size,
     };
@@ -753,6 +1261,10 @@ export const getDashboardStats = async (req, res) => {
       sick: months.map((month, index) => ({
         month,
         value: index === currentMonthIndex ? monthlyUsage.sick : 0,
+      })),
+      compOff: months.map((month, index) => ({
+        month,
+        value: index === currentMonthIndex ? monthlyUsage.compOff : 0,
       })),
     };
 

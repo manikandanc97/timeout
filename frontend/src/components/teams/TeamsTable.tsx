@@ -21,16 +21,16 @@ export function TeamsTableSkeletonBody() {
           [a, b, c][i % 3] as string;
         return (
           <tr key={i} className='border-b border-gray-50' aria-hidden>
-            <td className='px-4 py-3 align-middle'>
+            <td className='px-4 py-2 align-middle'>
               {bar(`h-4 ${w('w-36', 'w-44', 'w-32')} max-w-full`)}
             </td>
-            <td className='px-4 py-3 align-middle'>
+            <td className='px-4 py-2 align-middle'>
               {bar(`h-4 ${w('w-28', 'w-32', 'w-24')}`)}
             </td>
-            <td className='px-4 py-3 align-middle'>
+            <td className='px-4 py-2 align-middle'>
               {bar(`h-4 ${w('w-7', 'w-8', 'w-6')}`)}
             </td>
-            <td className='px-4 py-3 text-right align-middle'>
+            <td className='px-4 py-2 text-right align-middle'>
               <div className='flex justify-end'>
                 {bar(`h-8 ${w('w-24', 'w-28', 'w-24')} rounded-lg`)}
               </div>
@@ -62,12 +62,12 @@ export default function TeamsTable({
       <table className='w-full table-fixed border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
           <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
-            <th className='w-[30%] px-4 py-3 text-left'>Team name</th>
-            <th className='w-[30%] px-4 py-3 text-left'>Department</th>
-            <th className='w-[15%] whitespace-nowrap px-2 py-3 text-left'>
+            <th className='w-[30%] px-4 py-3.5 text-left'>Team name</th>
+            <th className='w-[30%] px-4 py-3.5 text-left'>Department</th>
+            <th className='w-[15%] whitespace-nowrap px-2 py-3.5 text-left'>
               Employee count
             </th>
-            <th className='w-[25%] whitespace-nowrap px-2 py-3 text-right'>
+            <th className='w-[25%] whitespace-nowrap px-2 py-3.5 text-right'>
               Actions
             </th>
           </tr>
@@ -94,16 +94,16 @@ export default function TeamsTable({
                   key={row.id}
                   className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
                 >
-                  <td className='wrap-break-word px-4 py-3 text-left align-top font-medium text-gray-900'>
+                  <td className='wrap-break-word px-4 py-2 text-left align-top font-medium text-gray-900'>
                     {row.name}
                   </td>
-                  <td className='wrap-break-word px-4 py-3 text-left align-top text-gray-700'>
+                  <td className='wrap-break-word px-4 py-2 text-left align-top text-gray-700'>
                     {row.departmentName}
                   </td>
-                  <td className='whitespace-nowrap px-2 py-3 pr-1 text-left align-top tabular-nums text-gray-700'>
+                  <td className='whitespace-nowrap px-2 py-2 pr-1 text-left align-top tabular-nums text-gray-700'>
                     {row.employeeCount}
                   </td>
-                  <td className='px-2 py-3 pl-1 text-right align-top'>
+                  <td className='px-2 py-2 pl-1 text-right align-top'>
                     <div className='flex flex-col items-end justify-end gap-1.5 sm:flex-row sm:flex-wrap sm:gap-1.5'>
                       {row.lead ? (
                         <a
@@ -121,7 +121,7 @@ export default function TeamsTable({
                             variant='ghost'
                             aria-label={`Edit ${row.name}`}
                             onClick={() => onEditTeam(row)}
-                            className='!rounded-lg !p-2 text-gray-600 hover:!bg-gray-200'
+                            className='rounded-lg! p-2! text-gray-600 hover:bg-gray-200!'
                           >
                             <Pencil size={16} />
                           </Button>
@@ -139,7 +139,7 @@ export default function TeamsTable({
                               aria-label={`Delete ${row.name}`}
                               disabled={row.employeeCount > 0}
                               onClick={() => onRequestDeleteTeam(row)}
-                              className='!rounded-lg !p-2 text-gray-600 hover:!bg-rose-50 hover:!text-rose-700'
+                              className='rounded-lg! p-2! text-gray-600 hover:bg-rose-50! hover:text-rose-700!'
                             >
                               <Trash2 size={16} />
                             </Button>

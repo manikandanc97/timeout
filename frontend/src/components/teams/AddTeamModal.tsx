@@ -39,11 +39,7 @@ export default function AddTeamModal({
   useEffect(() => {
     if (!open) return;
     setName('');
-    if (departments.length > 0) {
-      setDepartmentId(String(departments[0].id));
-    } else {
-      setDepartmentId('');
-    }
+    setDepartmentId('');
     setSubmitting(false);
   }, [open, departments]);
 
@@ -128,6 +124,7 @@ export default function AddTeamModal({
             <Select
               id='add-team-dept'
               label='Department'
+              placeholder='Select department'
               value={departmentId}
               onChange={(e) => setDepartmentId(e.target.value)}
               options={
@@ -149,7 +146,7 @@ export default function AddTeamModal({
             </Button>
             <Button
               type='submit'
-              disabled={submitting || departments.length === 0}
+              disabled={submitting || departments.length === 0 || !departmentId}
               className='rounded-xl px-5'
             >
               {submitting ? 'Creating…' : 'Create team'}

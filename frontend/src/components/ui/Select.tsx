@@ -48,7 +48,7 @@ const Select: React.FC<SelectProps> = ({
         className={`peer block w-full appearance-none rounded-md border border-gray-300 bg-transparent ${spacingClass} text-sm text-gray-900 outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 ${selectClassName}`}
         aria-label={ariaLabel}
       >
-        <option value='' disabled hidden>
+        <option value=''>
           {placeholder}
         </option>
 

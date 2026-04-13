@@ -50,6 +50,7 @@ const employeeDirectorySelectBase = {
   id: true,
   name: true,
   email: true,
+  isActive: true,
   role: true,
   gender: true,
   createdAt: true,
@@ -138,6 +139,7 @@ export const getOrganizationEmployees = async (req, res) => {
       name: u.name,
       email: u.email,
       role: u.role,
+      isActive: u.isActive ?? true,
       gender: u.gender ?? null,
       createdAt: u.createdAt.toISOString(),
       birthDate: u.birthDate ? u.birthDate.toISOString() : null,
@@ -741,6 +743,7 @@ export const createEmployeeUser = async (req, res) => {
         name: true,
         email: true,
         role: true,
+        isActive: true,
         teamId: true,
         gender: true,
         birthDate: true,
@@ -791,6 +794,7 @@ export const updateEmployeeUser = async (req, res) => {
       name,
       email,
       password,
+      status,
       gender,
       teamId,
       birthDate,
@@ -837,6 +841,14 @@ export const updateEmployeeUser = async (req, res) => {
           .json({ message: 'Role must be Employee or Manager' });
       }
       data.role = role;
+    }
+    if (status !== undefined) {
+      if (status !== 'ACTIVE' && status !== 'DEACTIVATED') {
+        return res
+          .status(400)
+          .json({ message: 'Status must be Active or Deactivated' });
+      }
+      data.isActive = status === 'ACTIVE';
     }
     if (teamId !== undefined) {
       const teamIdNum = Number(teamId);
@@ -914,6 +926,7 @@ export const updateEmployeeUser = async (req, res) => {
         name: true,
         email: true,
         role: true,
+        isActive: true,
         teamId: true,
         gender: true,
         birthDate: true,

@@ -25,8 +25,9 @@ const LeaveBalance = ({ balance }: Props) => {
     () => [
       { name: "annual", value: balance.annual },
       { name: "Sick", value: balance.sick },
+      { name: "Comp off", value: balance.compOff ?? 0 },
     ],
-    [balance.annual, balance.sick],
+    [balance.annual, balance.sick, balance.compOff],
   );
 
   const total = useMemo(

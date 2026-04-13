@@ -3,6 +3,7 @@ export type OrganizationEmployee = {
   name: string;
   email: string;
   role: string;
+  isActive?: boolean;
   gender?: string | null;
   createdAt: string;
   birthDate?: string | null;

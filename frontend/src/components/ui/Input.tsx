@@ -7,6 +7,9 @@ interface InputProps {
   onChange?: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
+  onBlur?: (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
   id: string;
   containerClassName?: string;
   inputClassName?: string;
@@ -25,6 +28,7 @@ const Input: React.FC<InputProps> = ({
   label,
   value,
   onChange,
+  onBlur,
   id,
   containerClassName = '',
   inputClassName = '',
@@ -57,9 +61,12 @@ const Input: React.FC<InputProps> = ({
     }
   };
 
-  const handleBlur = () => {
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setInternalFocused(false);
     if (isDate) setDynamicType('text');
+    onBlur?.(e);
   };
 
   const spacingClass = hideLabel
@@ -142,6 +149,7 @@ const Input: React.FC<InputProps> = ({
           }
         >
           {label}
+          {required ? <span className='ml-0.5 text-red-500'>*</span> : null}
         </label>
       )}
 

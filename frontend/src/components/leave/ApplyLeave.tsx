@@ -2,27 +2,20 @@
 
 import api from '@/services/api';
 import { leaveSchema, type LeaveFormData } from '@/utils/leave/leaveSchema';
-import type { Leave, LeaveBalance, LeaveType } from '@/types/leave';
+import type { Leave, LeaveBalance, LeaveType, PermissionSummary } from '@/types/leave';
 import type { Holiday } from '@/types/holiday';
 import type { Gender } from '@/types/user';
-import { LEAVE_BALANCE_LABELS } from '@/constants/leave';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useMemo } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import Button from '../ui/Button';
-import {
-  AlertTriangle,
-  ShieldCheck,
-  CalendarClock,
-  Stethoscope,
-  Baby,
-  Umbrella,
-  Clock3,
-} from 'lucide-react';
-import Input from '../ui/Input';
-import { calculateLeaveDays } from '@/utils/leave/leaveHelpers';
-import { startDate as formatDate } from '@/utils/leave/leaveHelpers';
+import { CalendarClock } from 'lucide-react';
+import { calculateLeaveDays, startDate as formatDate } from '@/utils/leave/leaveHelpers';
+import ApplyLeaveApplyTab from './ApplyLeaveApplyTab';
+import ApplyLeaveCompOffTab from './ApplyLeaveCompOffTab';
+import ApplyLeavePermissionTab from './ApplyLeavePermissionTab';
+import { balanceKeyMap } from './applyLeaveConfig';
 
 type Props = {
   userGender: Gender | string;
@@ -32,61 +25,23 @@ type Props = {
   onSuccess?: (leave: Leave | null | undefined) => void;
 };
 
-const leaveTypeConfig: Record<
-  LeaveType,
-  {
-    icon: React.ElementType;
-    color: string;
-    bg: string;
-    border: string;
-    ring: string;
-    label: string;
-    desc: string;
+const parseTimeToMinutes = (value: string): number | null => {
+  if (!value?.trim()) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if (
+    !Number.isFinite(hh) ||
+    !Number.isFinite(mm) ||
+    hh < 0 ||
+    hh > 23 ||
+    mm < 0 ||
+    mm > 59
+  ) {
+    return null;
   }
-> = {
-  ANNUAL: {
-    icon: Umbrella,
-    color: 'text-cyan-600',
-    bg: 'bg-cyan-50',
-    border: 'border-cyan-200',
-    ring: 'ring-cyan-500',
-    label: 'Annual Leave',
-    desc: 'Planned time off',
-  },
-  SICK: {
-    icon: Stethoscope,
-    color: 'text-rose-500',
-    bg: 'bg-rose-50',
-    border: 'border-rose-200',
-    ring: 'ring-rose-400',
-    label: 'Sick Leave',
-    desc: 'Medical and wellness',
-  },
-  MATERNITY: {
-    icon: Baby,
-    color: 'text-pink-500',
-    bg: 'bg-pink-50',
-    border: 'border-pink-200',
-    ring: 'ring-pink-400',
-    label: 'Maternity Leave',
-    desc: 'Parental care',
-  },
-  PATERNITY: {
-    icon: Baby,
-    color: 'text-violet-500',
-    bg: 'bg-violet-50',
-    border: 'border-violet-200',
-    ring: 'ring-violet-400',
-    label: 'Paternity Leave',
-    desc: 'Parental care',
-  },
-};
-
-const balanceKeyMap: Record<LeaveType, keyof LeaveBalance> = {
-  ANNUAL: 'annual',
-  SICK: 'sick',
-  MATERNITY: 'maternity',
-  PATERNITY: 'paternity',
+  return hh * 60 + mm;
 };
 
 const ApplyLeave = ({
@@ -96,6 +51,19 @@ const ApplyLeave = ({
   history,
   onSuccess,
 }: Props) => {
+  const [activeTab, setActiveTab] = useState<
+    'LEAVE_APPLY' | 'COMP_OFF' | 'PERMISSION'
+  >('LEAVE_APPLY');
+  const [leaveTypeStart, setLeaveTypeStart] = useState(0);
+  const [compOffDate, setCompOffDate] = useState('');
+  const [compOffReason, setCompOffReason] = useState('');
+  const [compOffSubmitting, setCompOffSubmitting] = useState(false);
+  const [permissionDate, setPermissionDate] = useState('');
+  const [permissionStartTime, setPermissionStartTime] = useState('');
+  const [permissionEndTime, setPermissionEndTime] = useState('');
+  const [permissionReason, setPermissionReason] = useState('');
+  const [permissionSubmitting, setPermissionSubmitting] = useState(false);
+  const [permissionSummary, setPermissionSummary] = useState<PermissionSummary | null>(null);
   const {
     control,
     handleSubmit,
@@ -116,20 +84,30 @@ const ApplyLeave = ({
   const type = watch('type');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
+  const reason = watch('reason');
 
   const dateStats = useMemo(
     () => calculateLeaveDays(startDate, endDate, holidays),
     [startDate, endDate, holidays],
   );
 
-  const todayIso = useMemo(() => formatDate(new Date()), []);
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const todayIso = formatDate(today);
+  const tomorrowIso = formatDate(tomorrow);
 
   const leaveOptions = useMemo<LeaveType[]>(() => {
-    const options: LeaveType[] = ['ANNUAL', 'SICK'];
+    const options: LeaveType[] = ['ANNUAL', 'SICK', 'COMP_OFF'];
     if (userGender === 'FEMALE') options.push('MATERNITY');
     else if (userGender === 'MALE') options.push('PATERNITY');
     return options;
   }, [userGender]);
+
+  const VISIBLE_LEAVE_TYPES = 3;
+  const maxLeaveTypeStart = Math.max(0, leaveOptions.length - VISIBLE_LEAVE_TYPES);
+  const canGoPrev = leaveTypeStart > 0;
+  const canGoNext = leaveTypeStart < maxLeaveTypeStart;
 
   const selectedBalance = useMemo(() => {
     if (!type || !balance) return null;
@@ -161,6 +139,14 @@ const ApplyLeave = ({
       return leaveStart <= end && start <= leaveEnd;
     });
   }, [hasDateRange, history, startDate, endDate]);
+  const canSubmitLeave =
+    Boolean(type) &&
+    Boolean(startDate) &&
+    Boolean(endDate) &&
+    Boolean(reason?.trim()) &&
+    daysToDeduct > 0 &&
+    !hasOverlap &&
+    !isOverdrawn;
 
   const onSubmit = async (data: LeaveFormData) => {
     try {
@@ -178,8 +164,139 @@ const ApplyLeave = ({
       reset();
       const created = response.data as { leave?: Leave } | undefined;
       onSuccess?.(created?.leave);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string; error?: string } } })
+          ?.response?.data?.message ??
+        (err as { response?: { data?: { message?: string; error?: string } } })
+          ?.response?.data?.error ??
+        'Failed to submit leave request. Please try again.';
+      toast.error(msg);
+    }
+  };
+
+  const onCompOffApply = async () => {
+    if (!compOffDate || !compOffReason.trim()) {
+      toast.error('Work date and reason are required');
+      return;
+    }
+    setCompOffSubmitting(true);
+    try {
+      await api.post('/leaves/comp-off-credit', {
+        workDate: compOffDate,
+        reason: compOffReason.trim(),
+      });
+      toast.success('Comp off credit added');
+      setCompOffDate('');
+      setCompOffReason('');
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string; error?: string } } })
+          ?.response?.data?.message ??
+        (err as { response?: { data?: { message?: string; error?: string } } })
+          ?.response?.data?.error ??
+        'Failed to add comp off credit.';
+      toast.error(msg);
+    } finally {
+      setCompOffSubmitting(false);
+    }
+  };
+
+  const resetCompOffForm = () => {
+    setCompOffDate('');
+    setCompOffReason('');
+  };
+
+  const resetPermissionForm = () => {
+    setPermissionDate('');
+    setPermissionStartTime('');
+    setPermissionEndTime('');
+    setPermissionReason('');
+  };
+
+  const loadPermissionSummary = async () => {
+    try {
+      const response = await api.get<PermissionSummary>('/leaves/permissions/summary');
+      setPermissionSummary(response.data);
     } catch {
-      toast.error('Failed to submit leave request. Please try again.');
+      setPermissionSummary(null);
+    }
+  };
+
+  useEffect(() => {
+    void loadPermissionSummary();
+  }, []);
+
+  const onPermissionApply = async () => {
+    if (!permissionDate || !permissionReason.trim()) {
+      toast.error('Date and reason are required');
+      return;
+    }
+
+    if (permissionDate !== todayIso && permissionDate !== tomorrowIso) {
+      toast.error('Permission can only be applied for today or tomorrow');
+      return;
+    }
+
+    if (!permissionStartTime || !permissionEndTime) {
+      toast.error('From and to times are required');
+      return;
+    }
+    const startMinutes = parseTimeToMinutes(permissionStartTime);
+    const endMinutes = parseTimeToMinutes(permissionEndTime);
+    if (startMinutes == null || endMinutes == null) {
+      toast.error('Please select valid from and to times');
+      return;
+    }
+    if (endMinutes <= startMinutes) {
+      toast.error('To time must be after from time');
+      return;
+    }
+    if (endMinutes - startMinutes > 240) {
+      toast.error('In-between permission cannot exceed 240 minutes');
+      return;
+    }
+
+    setPermissionSubmitting(true);
+    try {
+      const response = await api.post<{
+        monthly?: {
+          limitMinutes: number;
+          usedMinutes: number;
+          remainingMinutes: number;
+        };
+      }>('/leaves/permissions', {
+        date: permissionDate,
+        startTime: permissionStartTime,
+        endTime: permissionEndTime,
+        reason: permissionReason.trim(),
+      });
+      toast.success('Permission request submitted');
+      setPermissionDate('');
+      setPermissionReason('');
+      setPermissionStartTime('');
+      setPermissionEndTime('');
+      if (response.data.monthly) {
+        setPermissionSummary((prev) => ({
+          limitMinutes: response.data.monthly?.limitMinutes ?? prev?.limitMinutes ?? 240,
+          usedMinutes: response.data.monthly?.usedMinutes ?? prev?.usedMinutes ?? 0,
+          remainingMinutes:
+            response.data.monthly?.remainingMinutes ?? prev?.remainingMinutes ?? 240,
+          requests: prev?.requests ?? [],
+        }));
+      } else {
+        await loadPermissionSummary();
+      }
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string; error?: string } } })
+          ?.response?.data?.message ??
+        (err as { response?: { data?: { message?: string; error?: string } } })
+          ?.response?.data?.error ??
+        'Failed to submit permission request.';
+      toast.error(msg);
+    } finally {
+      setPermissionSubmitting(false);
     }
   };
 
@@ -204,292 +321,105 @@ const ApplyLeave = ({
           </div>
         </div>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className='gap-5 grid lg:grid-cols-[1.7fr,1fr]'
-        >
-          <div className='space-y-5'>
-            <div className='gap-4 grid'>
-              <section className='bg-white/80 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
-                <div className='flex justify-between items-center gap-3'>
-                  <div>
-                    <h3 className='font-semibold text-gray-900 text-lg'>
-                      Choose leave type
-                    </h3>
-                  </div>
-                  <div className='flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full font-medium text-[11px] text-gray-600'>
-                    <ShieldCheck size={12} className='text-primary' />
-                    <span>
-                      {LEAVE_BALANCE_LABELS[type as LeaveType] ??
-                        'Balance aware'}
-                    </span>
-                  </div>
-                </div>
+        <div className='flex items-center gap-2 rounded-xl border border-gray-100 bg-white/80 p-1'>
+          <Button
+            type='button'
+            unstyled
+            onClick={() => setActiveTab('LEAVE_APPLY')}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === 'LEAVE_APPLY'
+                ? 'bg-primary text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Leave apply
+          </Button>
+          <Button
+            type='button'
+            unstyled
+            onClick={() => setActiveTab('PERMISSION')}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === 'PERMISSION'
+                ? 'bg-primary text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Permission
+          </Button>
+          <Button
+            type='button'
+            unstyled
+            onClick={() => setActiveTab('COMP_OFF')}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === 'COMP_OFF'
+                ? 'bg-primary text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Comp off
+          </Button>
+        </div>
 
-                <Controller
-                  name='type'
-                  control={control}
-                  render={({ field }) => (
-                    <div className='gap-3 grid grid-cols-3 mt-3 pb-1'>
-                      {leaveOptions.map((key) => {
-                        const cfg = leaveTypeConfig[key];
-                        const Icon = cfg.icon;
-                        const isSelected = field.value === key;
-                        const balanceLabel = balance
-                          ? (balance[balanceKeyMap[key]] ?? null)
-                          : null;
+        {activeTab === 'LEAVE_APPLY' ? (
+          <ApplyLeaveApplyTab
+            control={control}
+            errors={errors}
+            isSubmitting={isSubmitting}
+            onSubmit={onSubmit}
+            handleSubmit={handleSubmit}
+            reset={reset}
+            setValue={setValue}
+            type={type}
+            startDate={startDate}
+            endDate={endDate}
+            todayIso={todayIso}
+            leaveOptions={leaveOptions}
+            leaveTypeStart={leaveTypeStart}
+            setLeaveTypeStart={setLeaveTypeStart}
+            canGoPrev={canGoPrev}
+            canGoNext={canGoNext}
+            maxLeaveTypeStart={maxLeaveTypeStart}
+            balance={balance}
+            dateStats={dateStats}
+            daysToDeduct={daysToDeduct}
+            hasDateRange={hasDateRange}
+            hasOverlap={hasOverlap}
+            isOverdrawn={isOverdrawn}
+            canSubmitLeave={canSubmitLeave}
+          />
+        ) : null}
 
-                        return (
-                          <Button
-                            key={key}
-                            type='button'
-                            unstyled
-                            onClick={() => setValue('type', key)}
-                            className={`group relative flex min-w-[230px] max-w-[260px] flex-col gap-3 rounded-xl border px-4 py-4 text-left !h-auto !bg-transparent !text-gray-800 transition-all duration-150 hover:-translate-y-0.5 ${
-                              isSelected
-                                ? `${cfg.bg} !border-transparent ring-2 ring-offset-2 ring-offset-white ${cfg.ring} !shadow-[0_10px_28px_rgba(0,0,0,0.08)]`
-                                : 'border-gray-200 !bg-gray-50'
-                            }`}
-                          >
-                            <div className='flex items-start gap-3'>
-                              <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-lg border bg-white shadow-sm ${
-                                  isSelected ? cfg.border : 'border-gray-200'
-                                }`}
-                              >
-                                <Icon
-                                  size={18}
-                                  className={
-                                    isSelected ? cfg.color : 'text-gray-500'
-                                  }
-                                />
-                              </div>
-                              <div className='space-y-1'>
-                                <p
-                                  className={`text-sm font-semibold leading-tight ${
-                                    isSelected ? cfg.color : 'text-gray-800'
-                                  }`}
-                                >
-                                  {cfg.label}
-                                </p>
-                                <p className='text-gray-500 text-xs'>
-                                  {cfg.desc}
-                                </p>
-                              </div>
-                              {balanceLabel !== null && (
-                                <div
-                                  className={`ml-auto items-center justify-center px-2 py-1 text-xs font-semibold ${
-                                    isSelected
-                                      ? `${cfg.border} ${cfg.color}`
-                                      : 'border-gray-200 text-gray-600'
-                                  }`}
-                                >
-                                  {balanceLabel}d
-                                </div>
-                              )}
-                            </div>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  )}
-                />
-                {errors.type && (
-                  <p className='flex items-center gap-1 mt-2 text-red-500 text-xs'>
-                    <AlertTriangle size={11} />
-                    {errors.type.message}
-                  </p>
-                )}
-              </section>
+        {activeTab === 'COMP_OFF' ? (
+          <ApplyLeaveCompOffTab
+            todayIso={todayIso}
+            compOffDate={compOffDate}
+            setCompOffDate={setCompOffDate}
+            compOffReason={compOffReason}
+            setCompOffReason={setCompOffReason}
+            compOffSubmitting={compOffSubmitting}
+            onCompOffApply={onCompOffApply}
+            onReset={resetCompOffForm}
+          />
+        ) : null}
 
-              <section className='bg-white/80 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
-                <div className='flex justify-between items-start gap-3'>
-                  <div>
-                    <h3 className='font-semibold text-gray-900 text-lg'>
-                      Duration
-                    </h3>
-                    <p className='text-gray-500 text-xs'>
-                      Weekends are excluded automatically from working days.
-                    </p>
-                  </div>
-                  <div className='flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full font-semibold text-[11px] text-primary'>
-                    <Clock3 size={12} />
-                    <span>
-                      {dateStats.totalCalendar > 0
-                        ? `${dateStats.totalCalendar} calendar days`
-                        : 'Awaiting dates'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className='gap-3 grid sm:grid-cols-2 mt-4'>
-                  <Controller
-                    name='startDate'
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id='startDate'
-                        label='Start Date'
-                        type='date'
-                        min={todayIso}
-                        max={endDate || undefined}
-                        {...field}
-                      />
-                    )}
-                  />
-                  <Controller
-                    name='endDate'
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id='endDate'
-                        label='End Date'
-                        type='date'
-                        min={startDate || todayIso}
-                        {...field}
-                      />
-                    )}
-                  />
-                </div>
-
-                {(errors.startDate || errors.endDate) && (
-                  <div className='space-y-1 mt-2 text-red-500 text-xs'>
-                    {errors.startDate?.message && (
-                      <p className='flex items-center gap-1'>
-                        <AlertTriangle size={11} />
-                        {errors.startDate.message}
-                      </p>
-                    )}
-                    {errors.endDate?.message && (
-                      <p className='flex items-center gap-1'>
-                        <AlertTriangle size={11} />
-                        {errors.endDate.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {hasDateRange && hasOverlap && (
-                  <p className='flex items-center gap-1 mt-2 text-red-500 text-xs'>
-                    <AlertTriangle size={11} />
-                    You already applied for one or more of these dates.
-                  </p>
-                )}
-
-                {hasDateRange && (
-                  <div className='gap-3 grid grid-cols-2 md:grid-cols-4 mt-4'>
-                    {[
-                      {
-                        label: 'Calendar days',
-                        value: dateStats.totalCalendar,
-                        tone: 'text-gray-800',
-                      },
-                      {
-                        label: 'Weekends skipped',
-                        value: dateStats.weekends,
-                        tone: 'text-amber-600',
-                      },
-                      {
-                        label: 'Holidays skipped',
-                        value: dateStats.holidayWeekdays,
-                        tone: 'text-emerald-600',
-                      },
-                      {
-                        label: 'Working days',
-                        value: daysToDeduct,
-                        tone: 'text-primary',
-                      },
-                    ].map((item) => (
-                      <div
-                        key={item.label}
-                        className='bg-gray-50 px-3 py-2 border border-gray-100 rounded-xl text-center'
-                      >
-                        <p className='font-medium text-[11px] text-gray-500 uppercase tracking-wide'>
-                          {item.label}
-                        </p>
-                        <p className={`text-lg font-bold ${item.tone}`}>
-                          {item.value}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </div>
-
-            <section className='bg-white/80 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
-              <div className='flex justify-between items-center gap-3'>
-                <div>
-                  <h3 className='font-semibold text-gray-900 text-lg'>
-                    Reason
-                  </h3>
-                  <p className='text-gray-500 text-xs'>
-                    Keep it short. Your manager will see this note.
-                  </p>
-                </div>
-              </div>
-
-              <div className='mt-4'>
-                <Controller
-                  name='reason'
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      id='reason'
-                      label='Reason for leave'
-                      type='textarea'
-                      rows={3}
-                      {...field}
-                    />
-                  )}
-                />
-                {errors.reason && (
-                  <p className='flex items-center gap-1 mt-2 text-red-500 text-xs'>
-                    <AlertTriangle size={11} />
-                    {errors.reason.message}
-                  </p>
-                )}
-              </div>
-            </section>
-
-            <section className='flex md:flex-row flex-col md:items-center gap-4 bg-white/90 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
-              <div className='flex flex-col flex-1 gap-1 text-gray-500 text-xs'>
-                <div className='flex items-center gap-2 text-gray-600'>
-                  <AlertTriangle size={12} className='text-amber-500' />
-                  <span>Requests route to your manager for approval.</span>
-                </div>
-                <div className='flex items-center gap-2 text-gray-600'>
-                  <ShieldCheck size={12} className='text-primary' />
-                  <span>Typical review time: 1-2 business days.</span>
-                </div>
-              </div>
-
-              <div className='flex items-center gap-3 md:ml-auto'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => reset()}
-                  className='inline-flex justify-center items-center shadow-none px-5 md:px-6 py-3 font-semibold text-sm'
-                >
-                  Reset
-                </Button>
-                <Button
-                  type='submit'
-                  disabled={isSubmitting || isOverdrawn}
-                  className='shadow-md shadow-primary/20 px-6 md:px-8 py-3 font-semibold text-sm'
-                >
-                  {isSubmitting ? (
-                    <span className='flex items-center gap-2'>
-                      <span className='inline-block border-2 border-white/50 border-t-white rounded-full w-4 h-4 animate-spin' />
-                      Submitting...
-                    </span>
-                  ) : (
-                    'Submit request'
-                  )}
-                </Button>
-              </div>
-            </section>
-          </div>
-        </form>
+        {activeTab === 'PERMISSION' ? (
+          <ApplyLeavePermissionTab
+            permissionSummary={permissionSummary}
+            todayIso={todayIso}
+            tomorrowIso={tomorrowIso}
+            permissionDate={permissionDate}
+            setPermissionDate={setPermissionDate}
+            permissionStartTime={permissionStartTime}
+            setPermissionStartTime={setPermissionStartTime}
+            permissionEndTime={permissionEndTime}
+            setPermissionEndTime={setPermissionEndTime}
+            permissionReason={permissionReason}
+            setPermissionReason={setPermissionReason}
+            permissionSubmitting={permissionSubmitting}
+            onPermissionApply={onPermissionApply}
+            onReset={resetPermissionForm}
+          />
+        ) : null}
       </div>
     </div>
   );

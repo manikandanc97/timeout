@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { BarChart, Bar, Tooltip, Cell } from 'recharts';
-import { Baby, TrendingDown, TrendingUp } from 'lucide-react';
+import { CalendarClock, TrendingDown, TrendingUp } from 'lucide-react';
 import type {
   LeaveBalance,
   LeaveChartData,
@@ -154,48 +154,60 @@ const LeaveCard = ({
 );
 
 const LeaveSummaryCards = ({ balance, monthlyUsage, chartData }: Props) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const usage = monthlyUsage ?? {
     sick: 0,
     annual: 0,
+    compOff: 0,
     maternity: 0,
     paternity: 0,
   };
 
-  const thirdLeave = balance.maternity ?? balance.paternity ?? 0;
-  const thirdLeaveLabel =
-    balance.maternity !== undefined ? 'Maternity Leave' : 'Paternity Leave';
-  const thirdUsed =
-    balance.maternity !== undefined
-      ? (usage.maternity ?? 0)
-      : (usage.paternity ?? 0);
-
   return (
-    <div className='gap-5 grid grid-cols-1 md:grid-cols-3'>
-      <LeaveCard
-        label='Annual Leave'
-        count={balance.annual}
-        used={usage.annual}
-        right={<MiniChart color='#0E7490' data={chartData?.annual || []} />}
-      />
+    <div className='relative'>
+      <div
+        ref={scrollRef}
+        className='flex snap-x snap-mandatory gap-5 overflow-x-auto pb-1 [scrollbar-width:none] md:grid md:grid-cols-3 md:overflow-visible'
+      >
+        <div className='min-w-[280px] snap-start md:min-w-0'>
+          <LeaveCard
+            label='Annual Leave'
+            count={balance.annual}
+            used={usage.annual}
+            right={<MiniChart color='#0E7490' data={chartData?.annual || []} />}
+          />
+        </div>
 
-      <LeaveCard
-        label='Sick Leave'
-        count={balance.sick}
-        used={usage.sick}
-        right={<MiniChart color='#14B8A6' data={chartData?.sick || []} />}
-      />
+        <div className='min-w-[280px] snap-start md:min-w-0'>
+          <LeaveCard
+            label='Sick Leave'
+            count={balance.sick}
+            used={usage.sick}
+            right={<MiniChart color='#14B8A6' data={chartData?.sick || []} />}
+          />
+        </div>
 
-      <LeaveCard
-        label={thirdLeaveLabel}
-        count={thirdLeave}
-        used={thirdUsed}
-        isOneTime={true}
-        right={
-          <div className='flex justify-center items-center bg-[#22C55E]/10 rounded-full w-14 h-14'>
-            <Baby size={30} className='text-[#22C55E]' strokeWidth={1.5} />
-          </div>
-        }
-      />
+        <div className='min-w-[280px] snap-start md:min-w-0'>
+          <LeaveCard
+            label='Comp Off'
+            count={balance.compOff ?? 0}
+            used={usage.compOff ?? 0}
+            right={
+              chartData?.compOff?.length ? (
+                <MiniChart color='#4F46E5' data={chartData.compOff} />
+              ) : (
+                <div className='flex justify-center items-center bg-indigo-50 rounded-full w-14 h-14'>
+                  <CalendarClock
+                    size={28}
+                    className='text-indigo-600'
+                    strokeWidth={1.5}
+                  />
+                </div>
+              )
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 };

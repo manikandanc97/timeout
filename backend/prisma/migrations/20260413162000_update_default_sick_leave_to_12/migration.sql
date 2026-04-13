@@ -1,0 +1,2 @@
+ALTER TABLE "LeaveBalance"
+ALTER COLUMN "sick" SET DEFAULT 12;

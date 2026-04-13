@@ -1,5 +1,9 @@
 import express from 'express';
-import { getAdminDashboardData } from '../controllers/adminController.js';
+import {
+  getAdminCompOffRequests,
+  getAdminDashboardData,
+  getAdminPermissionRequests,
+} from '../controllers/adminController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { roleMiddleware } from '../middleware/roleMiddleware.js';
 
@@ -10,6 +14,18 @@ router.get(
   authMiddleware,
   roleMiddleware('ADMIN'),
   getAdminDashboardData,
+);
+router.get(
+  '/permission-requests',
+  authMiddleware,
+  roleMiddleware('ADMIN'),
+  getAdminPermissionRequests,
+);
+router.get(
+  '/comp-off-requests',
+  authMiddleware,
+  roleMiddleware('ADMIN'),
+  getAdminCompOffRequests,
 );
 
 export default router;

@@ -56,14 +56,14 @@ export default function LeaveRequestsTable({
       <table className='min-h-full w-full min-w-[720px] border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
           <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
-            <th className='px-4 py-3 text-left'>Employee</th>
-            <th className='px-4 py-3 text-left'>Leave type</th>
-            <th className='px-4 py-3 text-left'>From</th>
-            <th className='px-4 py-3 text-left'>To</th>
-            <th className='px-4 py-3 text-left'>Days</th>
-            <th className='px-4 py-3 text-left'>Reason</th>
-            <th className='px-4 py-3 text-left'>Status</th>
-            <th className='px-4 py-3 text-right'>Actions</th>
+            <th className='px-4 py-3.5 text-left'>Employee</th>
+            <th className='px-4 py-3.5 text-left'>Leave type</th>
+            <th className='px-4 py-3.5 text-left'>From</th>
+            <th className='px-4 py-3.5 text-left'>To</th>
+            <th className='px-4 py-3.5 text-left'>Days</th>
+            <th className='px-4 py-3.5 text-left'>Reason</th>
+            <th className='px-4 py-3.5 text-left'>Status</th>
+            <th className='px-4 py-3.5 text-right'>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -86,23 +86,23 @@ export default function LeaveRequestsTable({
                   key={row.id}
                   className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
                 >
-                  <td className='px-4 py-3 text-left align-top font-medium text-gray-900'>
+                  <td className='px-4 py-2 text-left align-top font-medium text-gray-900'>
                     <span>{name}</span>
                   </td>
-                  <td className='px-4 py-3 text-left align-top'>
+                  <td className='px-4 py-2 text-left align-top'>
                     <span
                       className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold ${typeCfg.bg} ${typeCfg.text} ${typeCfg.border}`}
                     >
                       {typeCfg.label}
                     </span>
                   </td>
-                  <td className='whitespace-nowrap px-4 py-3 text-left align-top text-gray-700'>
+                  <td className='whitespace-nowrap px-4 py-2 text-left align-top text-gray-700'>
                     {fmt(getLeaveStart(row))}
                   </td>
-                  <td className='whitespace-nowrap px-4 py-3 text-left align-top text-gray-700'>
+                  <td className='whitespace-nowrap px-4 py-2 text-left align-top text-gray-700'>
                     {fmt(getLeaveEnd(row))}
                   </td>
-                  <td className='whitespace-nowrap px-4 py-3 text-left align-top text-gray-700'>
+                  <td className='whitespace-nowrap px-4 py-2 text-left align-top text-gray-700'>
                     {workingDaysForLeaveRange(
                       getLeaveStart(row),
                       getLeaveEnd(row),
@@ -110,15 +110,15 @@ export default function LeaveRequestsTable({
                     )}{' '}
                     day(s)
                   </td>
-                  <td className='max-w-[220px] px-4 py-3 text-left align-top text-gray-600'>
+                  <td className='max-w-[220px] px-4 py-2 text-left align-top text-gray-600'>
                     <span className='line-clamp-2 text-left' title={row.reason}>
                       {row.reason || '—'}
                     </span>
                   </td>
-                  <td className='px-4 py-3 text-left align-top'>
+                  <td className='px-4 py-2 text-left align-top'>
                     <LeaveStatusBadge status={row.status} />
                   </td>
-                  <td className='px-4 py-3 text-right align-top'>
+                  <td className='px-4 py-2 text-right align-top'>
                     {canModerate && row.status === 'PENDING' ? (
                       <div className='flex justify-end gap-2'>
                         <button

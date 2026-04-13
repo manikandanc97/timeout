@@ -1,4 +1,4 @@
-import { Baby, Stethoscope, Umbrella } from 'lucide-react';
+import { Baby, Stethoscope, Umbrella, CalendarClock } from 'lucide-react';
 import type { ElementType } from 'react';
 import type { LeaveType, LeaveStatus } from '@/types/leave';
 
@@ -34,6 +34,15 @@ export const TYPE_CONFIG: Record<
     border: 'border-rose-200',
     accentBorder: 'border-l-rose-500',
   },
+  COMP_OFF: {
+    label: 'Comp Off',
+    description: 'Time-off using weekend work credits',
+    icon: CalendarClock,
+    bg: 'bg-indigo-50',
+    text: 'text-indigo-700',
+    border: 'border-indigo-200',
+    accentBorder: 'border-l-indigo-500',
+  },
   MATERNITY: {
     label: 'Maternity Leave',
     description: 'Parental support and care',
@@ -57,6 +66,7 @@ export const TYPE_CONFIG: Record<
 export const TYPE_FILTER_OPTIONS: Array<{ value: LeaveType; label: string }> = [
   { value: 'ANNUAL', label: TYPE_CONFIG.ANNUAL.label },
   { value: 'SICK', label: TYPE_CONFIG.SICK.label },
+  { value: 'COMP_OFF', label: TYPE_CONFIG.COMP_OFF.label },
   { value: 'MATERNITY', label: TYPE_CONFIG.MATERNITY.label },
   { value: 'PATERNITY', label: TYPE_CONFIG.PATERNITY.label },
 ];

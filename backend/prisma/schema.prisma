@@ -30,6 +30,8 @@ model Organization {
   departments  Department[]
   holidays     Holiday[]
   leaves       Leave[]
+  compOffWorkLogs CompOffWorkLog[]
+  permissionRequests PermissionRequest[]
 }
 
 model Department {
@@ -70,6 +72,7 @@ model User {
   email    String  @unique
   password String
   role     Role    @default(EMPLOYEE)
+  isActive Boolean @default(true)
   gender   Gender?
   /** Calendar date (time ignored) for upcoming birthdays on admin dashboard */
   birthDate DateTime?
@@ -91,6 +94,8 @@ model User {
 
   leaves       Leave[]
   leaveBalance LeaveBalance?
+  compOffWorkLogs CompOffWorkLog[]
+  permissionRequests PermissionRequest[]
 
   @@index([reportingManagerId])
 }
@@ -101,9 +106,16 @@ enum LeaveStatus {
   REJECTED
 }
 
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum LeaveType {
   ANNUAL
   SICK
+  COMP_OFF
   MATERNITY
   PATERNITY
 }
@@ -137,11 +149,28 @@ model Leave {
 model LeaveBalance {
   id        Int  @id @default(autoincrement())
   userId    Int  @unique
-  sick      Int  @default(0)
+  sick      Int  @default(12)
   annual    Int  @default(12)
+  compOff   Int  @default(0)
   maternity Int  @default(180)
   paternity Int  @default(15)
   user      User @relation(fields: [userId], references: [id])
+}
+
+model CompOffWorkLog {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  organizationId Int
+  workDate       DateTime
+  reason         String
+  status         RequestStatus @default(PENDING)
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workDate])
+  @@index([organizationId, workDate])
 }
 
 model Holiday {
@@ -153,4 +182,24 @@ model Holiday {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([date, organizationId])
+}
+
+model PermissionRequest {
+  id              Int            @id @default(autoincrement())
+  userId          Int
+  organizationId  Int
+  date            DateTime
+  durationMinutes Int
+  /** Minutes from midnight (0–1439) for in-between-time permission */
+  startTimeMinutes Int?
+  endTimeMinutes   Int?
+  reason          String
+  status          RequestStatus @default(PENDING)
+  createdAt       DateTime       @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([organizationId, date])
 }
