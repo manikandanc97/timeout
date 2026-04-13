@@ -25,12 +25,12 @@ export default function LeaveRequestsTable({
       <table className='min-h-full w-full min-w-[720px] border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
           <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
-            <th className='px-4 py-3'>Employee</th>
-            <th className='px-4 py-3'>Leave type</th>
-            <th className='px-4 py-3'>From</th>
-            <th className='px-4 py-3'>To</th>
-            <th className='px-4 py-3'>Reason</th>
-            <th className='px-4 py-3'>Status</th>
+            <th className='px-4 py-3 text-left'>Employee</th>
+            <th className='px-4 py-3 text-left'>Leave type</th>
+            <th className='px-4 py-3 text-left'>From</th>
+            <th className='px-4 py-3 text-left'>To</th>
+            <th className='px-4 py-3 text-left'>Reason</th>
+            <th className='px-4 py-3 text-left'>Status</th>
             <th className='px-4 py-3 text-right'>Actions</th>
           </tr>
         </thead>
@@ -39,7 +39,7 @@ export default function LeaveRequestsTable({
             <tr>
               <td
                 colSpan={7}
-                className='h-full px-4 py-12 text-center text-gray-500'
+                className='px-4 py-16 text-center align-middle text-sm text-gray-500 sm:py-24'
               >
                 No leave requests match your filters.
               </td>
@@ -54,8 +54,8 @@ export default function LeaveRequestsTable({
                   key={row.id}
                   className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
                 >
-                  <td className='px-4 py-3 font-medium text-gray-900'>
-                    <div className='flex flex-col'>
+                  <td className='px-4 py-3 text-left align-top font-medium text-gray-900'>
+                    <div className='flex flex-col items-start text-left'>
                       <span>{name}</span>
                       {row.user?.email ? (
                         <span className='text-xs font-normal text-gray-400'>
@@ -64,28 +64,28 @@ export default function LeaveRequestsTable({
                       ) : null}
                     </div>
                   </td>
-                  <td className='px-4 py-3'>
+                  <td className='px-4 py-3 text-left align-top'>
                     <span
                       className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold ${typeCfg.bg} ${typeCfg.text} ${typeCfg.border}`}
                     >
                       {typeCfg.label}
                     </span>
                   </td>
-                  <td className='whitespace-nowrap px-4 py-3 text-gray-700'>
+                  <td className='whitespace-nowrap px-4 py-3 text-left align-top text-gray-700'>
                     {fmt(getLeaveStart(row))}
                   </td>
-                  <td className='whitespace-nowrap px-4 py-3 text-gray-700'>
+                  <td className='whitespace-nowrap px-4 py-3 text-left align-top text-gray-700'>
                     {fmt(getLeaveEnd(row))}
                   </td>
-                  <td className='max-w-[220px] px-4 py-3 text-gray-600'>
-                    <span className='line-clamp-2' title={row.reason}>
+                  <td className='max-w-[220px] px-4 py-3 text-left align-top text-gray-600'>
+                    <span className='line-clamp-2 text-left' title={row.reason}>
                       {row.reason || '—'}
                     </span>
                   </td>
-                  <td className='px-4 py-3'>
+                  <td className='px-4 py-3 text-left align-top'>
                     <LeaveStatusBadge status={row.status} />
                   </td>
-                  <td className='px-4 py-3 text-right'>
+                  <td className='px-4 py-3 text-right align-top'>
                     {canModerate && row.status === 'PENDING' ? (
                       <div className='flex justify-end gap-2'>
                         <button

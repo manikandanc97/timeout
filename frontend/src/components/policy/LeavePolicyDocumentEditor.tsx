@@ -17,6 +17,37 @@ type Props = {
   disabled?: boolean;
 };
 
+/** One textarea for all cards: first line = title, following lines = body; blocks separated by --- on its own line. */
+function cardsSectionToPlainText(
+  cards: { title: string; body: string }[],
+): string {
+  return cards
+    .map((c) => {
+      const t = c.title ?? '';
+      const b = c.body ?? '';
+      return `${t}\n${b}`.replace(/\n+$/, '');
+    })
+    .join('\n---\n');
+}
+
+function plainTextToCardsSection(text: string): { title: string; body: string }[] {
+  const raw = text.split(/\n---\n/).map((b) => b.replace(/^\n+/, ''));
+  const blocks = raw.filter((b) => b.trim().length > 0);
+  if (blocks.length === 0) {
+    return [{ title: '', body: '' }];
+  }
+  return blocks.map((block) => {
+    const nl = block.indexOf('\n');
+    if (nl === -1) {
+      return { title: block.trim(), body: '' };
+    }
+    return {
+      title: block.slice(0, nl).trim(),
+      body: block.slice(nl + 1).replace(/^\n/, ''),
+    };
+  });
+}
+
 function updateSectionAt(
   sections: LeavePolicySection[],
   index: number,
@@ -124,95 +155,36 @@ export default function LeavePolicyDocumentEditor({
             ) : null}
 
             {section.kind === 'cards' ? (
-              <div className='mt-4 space-y-4'>
-                {section.cards.map((card, cIdx) => (
-                  <div
-                    key={`card-${sIdx}-${cIdx}`}
-                    className='rounded-lg border border-gray-100 bg-gray-50/80 p-3'
-                  >
-                    <div className='flex items-start justify-between gap-2'>
-                      <p className='text-xs font-semibold uppercase tracking-wide text-gray-500'>
-                        Card {cIdx + 1}
-                      </p>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        unstyled
-                        disabled={disabled || section.cards.length <= 1}
-                        className='rounded-md p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-30'
-                        aria-label='Remove card'
-                        onClick={() => {
-                          const nextCards = section.cards.filter((_, i) => i !== cIdx);
-                          setSections(
-                            updateSectionAt(draft.sections, sIdx, {
-                              kind: 'cards',
-                              cards: nextCards,
-                            } as LeavePolicySection),
-                          );
-                        }}
-                      >
-                        <Trash2 size={16} aria-hidden />
-                      </Button>
-                    </div>
-                    <div className='mt-2 space-y-3'>
-                      <Input
-                        id={`card-title-${sIdx}-${cIdx}`}
-                        type='text'
-                        label='Card title'
-                        value={card.title}
-                        onChange={(e) => {
-                          const nextCards = section.cards.map((c, i) =>
-                            i === cIdx ? { ...c, title: e.target.value } : c,
-                          );
-                          setSections(
-                            updateSectionAt(draft.sections, sIdx, {
-                              kind: 'cards',
-                              cards: nextCards,
-                            } as LeavePolicySection),
-                          );
-                        }}
-                        disabled={disabled}
-                      />
-                      <Input
-                        id={`card-body-${sIdx}-${cIdx}`}
-                        type='textarea'
-                        label='Card body'
-                        value={card.body}
-                        onChange={(e) => {
-                          const nextCards = section.cards.map((c, i) =>
-                            i === cIdx ? { ...c, body: e.target.value } : c,
-                          );
-                          setSections(
-                            updateSectionAt(draft.sections, sIdx, {
-                              kind: 'cards',
-                              cards: nextCards,
-                            } as LeavePolicySection),
-                          );
-                        }}
-                        rows={4}
-                        inputClassName='min-h-[96px] resize-y'
-                        disabled={disabled}
-                      />
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  type='button'
-                  variant='outline'
-                  disabled={disabled || section.cards.length >= 12}
-                  className='inline-flex items-center gap-2 text-sm'
-                  onClick={() => {
+              <div className='mt-4'>
+                <Input
+                  id={`sec-cards-plain-${sIdx}`}
+                  type='textarea'
+                  label='Content'
+                  value={cardsSectionToPlainText(section.cards)}
+                  onChange={(e) => {
+                    let nextCards = plainTextToCardsSection(e.target.value);
+                    if (nextCards.length > 12) {
+                      nextCards = nextCards.slice(0, 12);
+                    }
+                    if (nextCards.length === 0) {
+                      nextCards = [{ title: '', body: '' }];
+                    }
                     setSections(
                       updateSectionAt(draft.sections, sIdx, {
                         kind: 'cards',
-                        cards: [...section.cards, { title: '', body: '' }],
+                        cards: nextCards,
                       } as LeavePolicySection),
                     );
                   }}
-                >
-                  <Plus size={16} aria-hidden />
-                  Add card
-                </Button>
+                  rows={14}
+                  inputClassName='min-h-[280px] resize-y font-sans text-[15px] leading-relaxed'
+                  disabled={disabled}
+                />
+                <p className='mt-2 text-xs text-gray-500'>
+                  Edit like a short document: each block starts with one line for the
+                  sub-heading, then the paragraph text. Start a new block on a line that
+                  contains only <span className='font-mono'>---</span> (up to 12 blocks).
+                </p>
               </div>
             ) : null}
 

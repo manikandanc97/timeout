@@ -22,7 +22,7 @@ export default function TeamsPagination({
   if (!visible) return null;
 
   return (
-    <div className='flex shrink-0 flex-col items-stretch justify-between gap-3 border-t border-gray-100 pt-3 sm:flex-row sm:items-center'>
+    <div className='flex flex-col items-stretch justify-between gap-3 border-t border-gray-100 pt-2 sm:flex-row sm:items-center'>
       <p className='text-xs text-gray-500'>
         Showing{' '}
         <span className='font-semibold text-gray-700'>

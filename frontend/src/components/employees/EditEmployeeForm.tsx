@@ -4,22 +4,30 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import api from '@/services/api';
+import type { OrganizationEmployee } from '@/types/employee';
 import type { OrgDepartment } from '@/types/organization';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+function isoToDateInput(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const s = String(iso).slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
+
 type Props = {
-  onCreated?: () => void;
+  employee: OrganizationEmployee;
+  departments: OrgDepartment[];
+  onSaved?: () => void;
   compact?: boolean;
 };
 
-export default function AddEmployeeForm({
-  onCreated,
+export default function EditEmployeeForm({
+  employee,
+  departments,
+  onSaved,
   compact = false,
 }: Props) {
-  const [departments, setDepartments] = useState<OrgDepartment[]>([]);
-  const [loadingStructure, setLoadingStructure] = useState(true);
-
   const [departmentId, setDepartmentId] = useState('');
   const [teamId, setTeamId] = useState('');
   const [name, setName] = useState('');
@@ -37,30 +45,25 @@ export default function AddEmployeeForm({
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setLoadingStructure(true);
-      try {
-        const { data } = await api.get<{ departments: OrgDepartment[] }>(
-          '/organization/structure',
-        );
-        if (!cancelled) setDepartments(data.departments ?? []);
-      } catch {
-        if (!cancelled) {
-          setDepartments([]);
-          toast.error('Could not load departments and teams');
-        }
-      } finally {
-        if (!cancelled) setLoadingStructure(false);
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    const deptId = employee.team?.department?.id;
+    const tmId = employee.team?.id;
+    setDepartmentId(deptId != null ? String(deptId) : '');
+    setTeamId(tmId != null ? String(tmId) : '');
+    setName(employee.name);
+    setEmail(employee.email);
+    setGender(employee.gender ?? '');
+    setRole(employee.role === 'MANAGER' ? 'MANAGER' : 'EMPLOYEE');
+    setBirthDate(isoToDateInput(employee.birthDate));
+    setJoiningDate(
+      isoToDateInput(employee.joiningDate) ||
+        isoToDateInput(employee.createdAt),
+    );
+    setReportingManagerId(
+      employee.reportingManager ? String(employee.reportingManager.id) : '',
+    );
+    setPassword('');
+    setPasswordConfirm('');
+  }, [employee]);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,15 +71,19 @@ export default function AddEmployeeForm({
       try {
         const { data } = await api.get<{
           options: { id: number; name: string }[];
-        }>('/organization/reporting-manager-options');
-        if (!cancelled) {
-          setReportingManagerOptions(
-            (data.options ?? []).map((o) => ({
-              label: o.name,
-              value: String(o.id),
-            })),
-          );
+        }>(
+          `/organization/reporting-manager-options?exclude=${employee.id}`,
+        );
+        if (cancelled) return;
+        let opts = (data.options ?? []).map((o) => ({
+          label: o.name,
+          value: String(o.id),
+        }));
+        const cur = employee.reportingManager;
+        if (cur && !opts.some((o) => o.value === String(cur.id))) {
+          opts = [{ label: cur.name, value: String(cur.id) }, ...opts];
         }
+        setReportingManagerOptions(opts);
       } catch {
         if (!cancelled) setReportingManagerOptions([]);
       }
@@ -85,7 +92,7 @@ export default function AddEmployeeForm({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [employee.id, employee.reportingManager?.id, employee.reportingManager?.name]);
 
   const departmentOptions = useMemo(
     () =>
@@ -103,6 +110,7 @@ export default function AddEmployeeForm({
   }, [departments, departmentId]);
 
   useEffect(() => {
+    if (teamOptions.length === 0) return;
     if (!teamOptions.some((o) => o.value === teamId)) {
       setTeamId('');
     }
@@ -110,13 +118,17 @@ export default function AddEmployeeForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamId || !name || !email || !password || !passwordConfirm) {
-      toast.error('Fill in name, email, password, confirm password, and team');
+    if (!teamId || !name.trim() || !email.trim()) {
+      toast.error('Fill in name, email, and team');
       return;
     }
-    if (password !== passwordConfirm) {
-      toast.error('Temporary password and confirmation do not match');
-      return;
+    const pwd = password.trim();
+    const pwdC = passwordConfirm.trim();
+    if (pwd || pwdC) {
+      if (!pwd || !pwdC || pwd !== pwdC) {
+        toast.error('New password and confirmation must match');
+        return;
+      }
     }
     if (gender !== 'MALE' && gender !== 'FEMALE') {
       toast.error('Select a gender');
@@ -129,35 +141,28 @@ export default function AddEmployeeForm({
 
     setSubmitting(true);
     try {
-      await api.post('/organization/employees', {
-        name,
-        email,
-        password,
+      const body: Record<string, unknown> = {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
         teamId: Number(teamId),
         gender,
         role,
-        birthDate: birthDate.trim() || undefined,
+        birthDate: birthDate.trim() || null,
         joiningDate: joiningDate.trim(),
-        reportingManagerId: reportingManagerId.trim()
-          ? Number(reportingManagerId)
-          : undefined,
-      });
-      toast.success('Employee added');
-      setName('');
-      setEmail('');
-      setPassword('');
-      setPasswordConfirm('');
-      setGender('');
-      setRole('EMPLOYEE');
-      setReportingManagerId('');
-      setBirthDate('');
-      setJoiningDate('');
-      setTeamId('');
-      onCreated?.();
+        reportingManagerId:
+          reportingManagerId.trim() === ''
+            ? null
+            : Number(reportingManagerId),
+      };
+      if (pwd) body.password = pwd;
+
+      await api.patch(`/organization/employees/${employee.id}`, body);
+      toast.success('Employee updated');
+      onSaved?.();
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message ?? 'Could not add employee';
+          ?.data?.message ?? 'Could not update employee';
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -171,7 +176,7 @@ export default function AddEmployeeForm({
   return (
     <form onSubmit={handleSubmit} className={gridClass}>
       <Select
-        id='add-emp-department'
+        id={`edit-emp-dept-${employee.id}`}
         label='Department'
         placeholder='Select department'
         value={departmentId}
@@ -182,7 +187,7 @@ export default function AddEmployeeForm({
         }}
       />
       <Select
-        id='add-emp-team'
+        id={`edit-emp-team-${employee.id}`}
         label='Team'
         placeholder='Select team'
         value={teamId}
@@ -190,7 +195,7 @@ export default function AddEmployeeForm({
         onChange={(e) => setTeamId(e.target.value)}
       />
       <Input
-        id='add-emp-name'
+        id={`edit-emp-name-${employee.id}`}
         type='text'
         label='Full name'
         value={name}
@@ -198,7 +203,7 @@ export default function AddEmployeeForm({
         onChange={(e) => setName(e.target.value)}
       />
       <Input
-        id='add-emp-email'
+        id={`edit-emp-email-${employee.id}`}
         type='email'
         label='Work email'
         value={email}
@@ -206,23 +211,21 @@ export default function AddEmployeeForm({
         onChange={(e) => setEmail(e.target.value)}
       />
       <Input
-        id='add-emp-password'
+        id={`edit-emp-password-${employee.id}`}
         type='password'
-        label='Temporary password'
+        label='New password (optional)'
         value={password}
-        required
         onChange={(e) => setPassword(e.target.value)}
       />
       <Input
-        id='add-emp-password-confirm'
+        id={`edit-emp-password-confirm-${employee.id}`}
         type='password'
-        label='Confirm temporary password'
+        label='Confirm new password'
         value={passwordConfirm}
-        required
         onChange={(e) => setPasswordConfirm(e.target.value)}
       />
       <Select
-        id='add-emp-gender'
+        id={`edit-emp-gender-${employee.id}`}
         label='Gender'
         placeholder='Select gender'
         value={gender}
@@ -233,7 +236,7 @@ export default function AddEmployeeForm({
         onChange={(e) => setGender(e.target.value)}
       />
       <Select
-        id='add-emp-role'
+        id={`edit-emp-role-${employee.id}`}
         label='Role'
         placeholder='Select role'
         value={role}
@@ -246,7 +249,7 @@ export default function AddEmployeeForm({
         }
       />
       <Select
-        id='add-emp-reporting-manager'
+        id={`edit-emp-reporting-manager-${employee.id}`}
         label='Reporting manager (optional)'
         placeholder='None'
         value={reportingManagerId}
@@ -254,7 +257,7 @@ export default function AddEmployeeForm({
         onChange={(e) => setReportingManagerId(e.target.value)}
       />
       <Input
-        id='add-emp-joiningdate'
+        id={`edit-emp-joiningdate-${employee.id}`}
         type='date'
         label='Joining date (DOJ)'
         value={joiningDate}
@@ -262,7 +265,7 @@ export default function AddEmployeeForm({
         onChange={(e) => setJoiningDate(e.target.value)}
       />
       <Input
-        id='add-emp-birthdate'
+        id={`edit-emp-birthdate-${employee.id}`}
         type='date'
         label='Date of birth (optional)'
         value={birthDate}
@@ -276,12 +279,11 @@ export default function AddEmployeeForm({
             !departmentId ||
             !teamId ||
             !gender ||
-            !joiningDate.trim() ||
-            loadingStructure
+            !joiningDate.trim()
           }
           className='w-full sm:w-auto'
         >
-          {submitting ? 'Saving…' : 'Create employee'}
+          {submitting ? 'Saving…' : 'Save changes'}
         </Button>
       </div>
     </form>

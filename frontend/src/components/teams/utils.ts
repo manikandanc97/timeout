@@ -5,22 +5,15 @@ import { TEAMS_PAGE_SIZE } from './constants';
 export type TeamsDirectorySummary = {
   totalTeams: number;
   totalDepartments: number;
-  activeTeams: number;
-  employeesAssigned: number;
 };
 
 export function computeTeamsSummary(
   teams: OrganizationTeamRow[],
   departmentCount: number,
 ): TeamsDirectorySummary {
-  const totalTeams = teams.length;
-  const activeTeams = teams.filter((t) => t.employeeCount > 0).length;
-  const employeesAssigned = teams.reduce((sum, t) => sum + t.employeeCount, 0);
   return {
-    totalTeams,
+    totalTeams: teams.length,
     totalDepartments: departmentCount,
-    activeTeams,
-    employeesAssigned,
   };
 }
 

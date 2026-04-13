@@ -65,9 +65,9 @@ export default function DepartmentsPanel({
   return (
     <section
       aria-labelledby='departments-panel-heading'
-      className='shrink-0 rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:p-4'
+      className='flex min-h-0 min-w-0 flex-1 flex-col rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:p-4'
     >
-      <div className='mb-3 flex flex-wrap items-start justify-between gap-2'>
+      <div className='mb-3 flex shrink-0 flex-wrap items-start justify-between gap-2'>
         <div className='flex min-w-0 flex-1 items-start gap-2.5'>
           <div className='grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary'>
             <Building2 size={18} strokeWidth={2} />
@@ -80,10 +80,7 @@ export default function DepartmentsPanel({
               Departments
             </h2>
             <p className='text-xs text-gray-500'>
-              Click a department name to filter the teams table.{' '}
-              {isAdmin
-                ? 'Use edit or delete when the department has no teams.'
-                : null}
+              Click department to filter.
             </p>
           </div>
         </div>
@@ -93,7 +90,6 @@ export default function DepartmentsPanel({
             variant='outline'
             onClick={onAddDepartment}
             aria-label='Add department'
-            title='Add department'
             className='inline-flex !h-9 !w-9 shrink-0 items-center justify-center !rounded-xl !p-0 shadow-sm [&>svg]:block [&>svg]:shrink-0'
           >
             <Plus size={18} strokeWidth={2.5} className='text-primary' />
@@ -101,13 +97,17 @@ export default function DepartmentsPanel({
         ) : null}
       </div>
 
-      <div className='overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/40'>
-        <table className='w-full min-w-0 border-collapse text-left text-sm'>
-          <thead>
-            <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500'>
-              <th className='px-3 py-2.5'>Department</th>
+      <div className='flex min-h-0 max-h-[min(56vh,32rem)] flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-xl border border-gray-100 bg-gray-50/40 sm:max-h-[min(60vh,36rem)]'>
+        <table className='w-full table-fixed border-collapse text-left text-sm'>
+          <thead className='sticky top-0 z-10'>
+            <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
+              <th className='min-w-0 px-2.5 py-2.5 text-left sm:px-3'>
+                Department
+              </th>
               {isAdmin ? (
-                <th className='px-3 py-2.5 text-right'>Actions</th>
+                <th className='w-[5.5rem] px-2 py-2.5 text-right sm:w-24 sm:px-3'>
+                  Actions
+                </th>
               ) : null}
             </tr>
           </thead>
@@ -116,7 +116,7 @@ export default function DepartmentsPanel({
               <tr>
                 <td
                   colSpan={isAdmin ? 2 : 1}
-                  className='px-3 py-8 text-center text-gray-500'
+                  className='px-3 py-16 text-center align-middle text-sm text-gray-500 sm:py-20'
                 >
                   Loading departments…
                 </td>
@@ -125,7 +125,7 @@ export default function DepartmentsPanel({
               <tr>
                 <td
                   colSpan={isAdmin ? 2 : 1}
-                  className='px-3 py-8 text-center text-gray-500'
+                  className='px-3 py-16 text-center align-middle text-sm text-gray-500 sm:py-20'
                 >
                   No departments yet.
                   {isAdmin ? ' Use + to add one.' : null}
@@ -139,24 +139,24 @@ export default function DepartmentsPanel({
                     key={d.id}
                     className='border-b border-gray-100/80 last:border-0'
                   >
-                    <td className='px-3 py-2.5'>
+                    <td className='min-w-0 px-2.5 py-2.5 text-left align-top sm:px-3'>
                       <button
                         type='button'
                         onClick={() => onFilterByDepartment(String(d.id))}
-                        className={`max-w-[220px] truncate text-left font-medium transition-colors hover:text-primary ${
+                        className={`w-full min-w-0 text-left text-sm font-medium leading-snug wrap-break-word transition-colors hover:text-primary ${
                           activeFilter ? 'text-primary' : 'text-gray-800'
                         }`}
                       >
-                        {d.name}
+                        <span className='block'>{d.name}</span>
                         {activeFilter ? (
-                          <span className='ml-1.5 text-xs font-normal text-primary'>
+                          <span className='mt-0.5 block text-xs font-normal text-primary'>
                             (filtered)
                           </span>
                         ) : null}
                       </button>
                     </td>
                     {isAdmin ? (
-                      <td className='px-3 py-2.5 text-right'>
+                      <td className='whitespace-nowrap px-2 py-2.5 text-right align-top sm:px-3'>
                         <div className='flex justify-end gap-1'>
                           <Button
                             type='button'

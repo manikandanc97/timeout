@@ -1,6 +1,7 @@
 'use client';
 
 import AddEmployeeModal from '@/components/employees/AddEmployeeModal';
+import EditEmployeeModal from '@/components/employees/EditEmployeeModal';
 import EmployeesFilterBar from '@/components/employees/EmployeesFilterBar';
 import EmployeesNoAccess from '@/components/employees/EmployeesNoAccess';
 import EmployeesPageHeader from '@/components/employees/EmployeesPageHeader';
@@ -8,7 +9,12 @@ import EmployeesPagination from '@/components/employees/EmployeesPagination';
 import EmployeesSummaryCards from '@/components/employees/EmployeesSummaryCards';
 import EmployeesTable from '@/components/employees/EmployeesTable';
 import { useEmployeesDirectory } from '@/components/employees/useEmployeesDirectory';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
+import api from '@/services/api';
+import type { OrganizationEmployee } from '@/types/employee';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function EmployeesPageClient() {
   const { user } = useAuth();
@@ -19,6 +25,13 @@ export default function EmployeesPageClient() {
   const isAdmin = user?.role === 'ADMIN';
 
   const dir = useEmployeesDirectory(canView);
+
+  const [employeeToEdit, setEmployeeToEdit] =
+    useState<OrganizationEmployee | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] =
+    useState<OrganizationEmployee | null>(null);
+  const [employeeDeleteProcessing, setEmployeeDeleteProcessing] =
+    useState(false);
 
   if (!canView) {
     return <EmployeesNoAccess />;
@@ -64,6 +77,14 @@ export default function EmployeesPageClient() {
                   <EmployeesTable
                     loading={dir.loadingList}
                     rows={dir.pageSlice}
+                    isAdmin={isAdmin}
+                    currentUserId={user?.id}
+                    onEditEmployee={
+                      isAdmin ? (row) => setEmployeeToEdit(row) : undefined
+                    }
+                    onRequestDeleteEmployee={
+                      isAdmin ? (row) => setEmployeeToDelete(row) : undefined
+                    }
                   />
                 </div>
 
@@ -93,6 +114,57 @@ export default function EmployeesPageClient() {
           open={dir.addOpen}
           onClose={() => dir.setAddOpen(false)}
           onCreated={() => void dir.loadEmployees()}
+        />
+      ) : null}
+
+      {isAdmin ? (
+        <EditEmployeeModal
+          open={employeeToEdit != null}
+          employee={employeeToEdit}
+          departments={dir.departments}
+          onClose={() => setEmployeeToEdit(null)}
+          onSaved={() => void dir.loadEmployees()}
+        />
+      ) : null}
+
+      {isAdmin ? (
+        <ConfirmModal
+          open={employeeToDelete != null}
+          title='Delete employee'
+          message={
+            employeeToDelete
+              ? `Remove “${employeeToDelete.name}” from the organization? This cannot be undone.`
+              : ''
+          }
+          confirmLabel='Delete'
+          onCancel={() => {
+            if (!employeeDeleteProcessing) setEmployeeToDelete(null);
+          }}
+          isProcessing={employeeDeleteProcessing}
+          onConfirm={async () => {
+            if (!employeeToDelete || employeeDeleteProcessing) return;
+            if (employeeToDelete.id === user?.id) {
+              toast.error('You cannot delete your own account');
+              setEmployeeToDelete(null);
+              return;
+            }
+            setEmployeeDeleteProcessing(true);
+            try {
+              await api.delete(
+                `/organization/employees/${employeeToDelete.id}`,
+              );
+              toast.success('Employee removed');
+              setEmployeeToDelete(null);
+              void dir.loadEmployees();
+            } catch (err: unknown) {
+              const msg =
+                (err as { response?: { data?: { message?: string } } })
+                  ?.response?.data?.message ?? 'Could not delete employee';
+              toast.error(msg);
+            } finally {
+              setEmployeeDeleteProcessing(false);
+            }
+          }}
         />
       ) : null}
     </>

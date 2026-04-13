@@ -61,7 +61,10 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid password' });
     }
 
-    console.log('👤 Login User:', user);
+    if (!process.env.ACCESS_SECRET?.trim() || !process.env.REFRESH_SECRET?.trim()) {
+      console.error('[auth] ACCESS_SECRET and REFRESH_SECRET must be set in .env');
+      return res.status(500).json({ message: 'Server misconfiguration' });
+    }
 
     const accessToken = jwt.sign(
       { id: user.id, role: user.role, organizationId: user.organizationId },
@@ -92,7 +95,7 @@ export const login = async (req, res) => {
 
     res.json({ message: 'Login successful', accessToken });
   } catch (error) {
-    console.error(error);
+    console.error('[auth] login error:', error?.message ?? error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

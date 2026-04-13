@@ -78,8 +78,12 @@ export function filterEmployees(
   return employees.filter((row) => {
     const name = row.name.toLowerCase();
     const email = row.email.toLowerCase();
+    const rm = row.reportingManager?.name?.toLowerCase() ?? '';
     const matchesSearch =
-      q.length === 0 || name.includes(q) || email.includes(q);
+      q.length === 0 ||
+      name.includes(q) ||
+      email.includes(q) ||
+      (rm.length > 0 && rm.includes(q));
 
     const rowDeptId = row.team?.department?.id ?? null;
     const rowTeamId = row.team?.id ?? null;

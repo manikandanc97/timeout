@@ -73,7 +73,13 @@ export const getOrganizationEmployees = async (req, res) => {
           name: true,
           email: true,
           role: true,
+          gender: true,
           createdAt: true,
+          birthDate: true,
+          joiningDate: true,
+          reportingManager: {
+            select: { id: true, name: true },
+          },
           team: {
             select: {
               id: true,
@@ -103,7 +109,13 @@ export const getOrganizationEmployees = async (req, res) => {
       name: u.name,
       email: u.email,
       role: u.role,
+      gender: u.gender ?? null,
       createdAt: u.createdAt.toISOString(),
+      birthDate: u.birthDate ? u.birthDate.toISOString() : null,
+      joiningDate: u.joiningDate ? u.joiningDate.toISOString() : null,
+      reportingManager: u.reportingManager
+        ? { id: u.reportingManager.id, name: u.reportingManager.name }
+        : null,
       team: u.team
         ? {
             id: u.team.id,
@@ -123,6 +135,41 @@ export const getOrganizationEmployees = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to load employees' });
+  }
+};
+
+export const getReportingManagerOptions = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can load this list' });
+    }
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const excludeRaw = req.query.exclude;
+    const excludeId =
+      excludeRaw != null && String(excludeRaw).trim() !== ''
+        ? Number(excludeRaw)
+        : NaN;
+
+    const users = await prisma.user.findMany({
+      where: {
+        organizationId,
+        role: { in: ['MANAGER', 'ADMIN'] },
+        ...(Number.isFinite(excludeId) && !Number.isNaN(excludeId)
+          ? { NOT: { id: excludeId } }
+          : {}),
+      },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+
+    res.json({ options: users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to load reporting managers' });
   }
 };
 
@@ -409,6 +456,146 @@ export const createOrganizationTeam = async (req, res) => {
   }
 };
 
+export const updateOrganizationTeam = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can update teams' });
+    }
+
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const idParam = Number(req.params.teamId);
+    if (Number.isNaN(idParam)) {
+      return res.status(400).json({ message: 'Invalid team' });
+    }
+
+    const existing = await prisma.team.findFirst({
+      where: { id: idParam, organizationId },
+    });
+    if (!existing) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    const { name, departmentId } = req.body;
+    const data = {};
+
+    if (name != null) {
+      const trimmed = String(name).trim();
+      if (!trimmed) {
+        return res.status(400).json({ message: 'Team name is required' });
+      }
+      data.name = trimmed;
+    }
+
+    if (departmentId != null) {
+      const deptIdNum = Number(departmentId);
+      if (Number.isNaN(deptIdNum)) {
+        return res.status(400).json({ message: 'Invalid department' });
+      }
+      const dept = await prisma.department.findFirst({
+        where: { id: deptIdNum, organizationId },
+      });
+      if (!dept) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+      data.departmentId = deptIdNum;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ message: 'Nothing to update' });
+    }
+
+    const team = await prisma.team.update({
+      where: { id: idParam },
+      data,
+      include: {
+        department: { select: { id: true, name: true } },
+        _count: { select: { members: true } },
+      },
+    });
+
+    const managers =
+      team.managerId != null
+        ? await prisma.user.findMany({
+            where: { id: team.managerId, organizationId },
+            select: { id: true, name: true, email: true },
+          })
+        : [];
+    const leadUser = managers[0] ?? null;
+    const lead = leadUser
+      ? {
+          id: leadUser.id,
+          name: leadUser.name,
+          email: leadUser.email,
+        }
+      : null;
+    const employeeCount = team._count.members;
+
+    res.json({
+      team: {
+        id: team.id,
+        name: team.name,
+        departmentId: team.departmentId,
+        departmentName: team.department.name,
+        createdAt: team.createdAt.toISOString(),
+        employeeCount,
+        lead,
+        status: employeeCount > 0 ? 'ACTIVE' : 'EMPTY',
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      return res.status(400).json({
+        message: 'A team with this name already exists in that department',
+      });
+    }
+    res.status(500).json({ message: 'Failed to update team' });
+  }
+};
+
+export const deleteOrganizationTeam = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can delete teams' });
+    }
+
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const idParam = Number(req.params.teamId);
+    if (Number.isNaN(idParam)) {
+      return res.status(400).json({ message: 'Invalid team' });
+    }
+
+    const team = await prisma.team.findFirst({
+      where: { id: idParam, organizationId },
+      include: { _count: { select: { members: true } } },
+    });
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    if (team._count.members > 0) {
+      return res.status(400).json({
+        message:
+          'This team still has employees. Reassign or remove them before deleting the team.',
+      });
+    }
+
+    await prisma.team.delete({ where: { id: idParam } });
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to delete team' });
+  }
+};
+
 export const createEmployeeUser = async (req, res) => {
   try {
     const organizationId = req.user.organizationId;
@@ -416,7 +603,17 @@ export const createEmployeeUser = async (req, res) => {
       return res.status(403).json({ message: 'Only admins can add employees' });
     }
 
-    const { name, email, password, gender, teamId, birthDate } = req.body;
+    const {
+      name,
+      email,
+      password,
+      gender,
+      teamId,
+      birthDate,
+      joiningDate,
+      role,
+      reportingManagerId,
+    } = req.body;
 
     if (!name || !email || !password || teamId == null) {
       return res
@@ -426,6 +623,17 @@ export const createEmployeeUser = async (req, res) => {
 
     if (gender !== 'MALE' && gender !== 'FEMALE') {
       return res.status(400).json({ message: 'Gender is required' });
+    }
+
+    let userRole = 'EMPLOYEE';
+    if (role != null && String(role).trim() !== '') {
+      if (role === 'MANAGER' || role === 'EMPLOYEE') {
+        userRole = role;
+      } else {
+        return res
+          .status(400)
+          .json({ message: 'Role must be Employee or Manager' });
+      }
     }
 
     const teamIdNum = Number(teamId);
@@ -450,10 +658,39 @@ export const createEmployeeUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    let birthDateValue = null;
-    if (birthDate && String(birthDate).trim()) {
-      const parsed = new Date(`${String(birthDate).slice(0, 10)}T12:00:00`);
-      if (!Number.isNaN(parsed.getTime())) birthDateValue = parsed;
+    const parseCalendarDate = (raw) => {
+      if (!raw || !String(raw).trim()) return null;
+      const parsed = new Date(`${String(raw).slice(0, 10)}T12:00:00`);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const birthDateValue = parseCalendarDate(birthDate);
+    const joiningDateValue = parseCalendarDate(joiningDate);
+    if (!joiningDateValue) {
+      return res
+        .status(400)
+        .json({ message: 'Joining date (DOJ) is required' });
+    }
+
+    let reportingManagerIdValue = null;
+    if (reportingManagerId != null && String(reportingManagerId).trim() !== '') {
+      const rmId = Number(reportingManagerId);
+      if (Number.isNaN(rmId)) {
+        return res.status(400).json({ message: 'Invalid reporting manager' });
+      }
+      const rm = await prisma.user.findFirst({
+        where: {
+          id: rmId,
+          organizationId,
+          role: { in: ['MANAGER', 'ADMIN'] },
+        },
+      });
+      if (!rm) {
+        return res
+          .status(404)
+          .json({ message: 'Reporting manager not found' });
+      }
+      reportingManagerIdValue = rmId;
     }
 
     const user = await prisma.user.create({
@@ -461,10 +698,13 @@ export const createEmployeeUser = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        role: 'EMPLOYEE',
+        role: userRole,
         organizationId,
         teamId: teamIdNum,
         gender,
+        birthDate: birthDateValue,
+        joiningDate: joiningDateValue,
+        reportingManagerId: reportingManagerIdValue,
       },
       select: {
         id: true,
@@ -473,20 +713,11 @@ export const createEmployeeUser = async (req, res) => {
         role: true,
         teamId: true,
         gender: true,
+        birthDate: true,
+        joiningDate: true,
+        reportingManager: { select: { id: true, name: true } },
       },
     });
-
-    if (birthDateValue) {
-      try {
-        await prisma.$executeRaw`
-          UPDATE "User"
-          SET "birthDate" = ${birthDateValue}
-          WHERE id = ${user.id}
-        `;
-      } catch (e) {
-        console.warn('Could not set birthDate (column missing or DB error)', e);
-      }
-    }
 
     await prisma.leaveBalance.create({
       data: { userId: user.id },
@@ -496,12 +727,233 @@ export const createEmployeeUser = async (req, res) => {
       message: 'Employee created',
       user: {
         ...user,
-        birthDate: birthDateValue ? birthDateValue.toISOString() : null,
+        birthDate: user.birthDate ? user.birthDate.toISOString() : null,
+        joiningDate: user.joiningDate ? user.joiningDate.toISOString() : null,
+        reportingManager: user.reportingManager,
       },
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const updateEmployeeUser = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can update employees' });
+    }
+
+    const userId = Number(req.params.userId);
+    if (Number.isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid employee' });
+    }
+
+    const existing = await prisma.user.findFirst({
+      where: { id: userId, organizationId, role: { not: 'ADMIN' } },
+    });
+    if (!existing) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    const {
+      name,
+      email,
+      password,
+      gender,
+      teamId,
+      birthDate,
+      joiningDate,
+      role,
+      reportingManagerId,
+    } = req.body;
+
+    const data = {};
+
+    if (name !== undefined) {
+      const trimmed = String(name).trim();
+      if (!trimmed) {
+        return res.status(400).json({ message: 'Name cannot be empty' });
+      }
+      data.name = trimmed;
+    }
+    if (email !== undefined) {
+      const trimmed = String(email).trim().toLowerCase();
+      if (!trimmed) {
+        return res.status(400).json({ message: 'Email cannot be empty' });
+      }
+      const other = await prisma.user.findFirst({
+        where: { email: trimmed, NOT: { id: userId } },
+      });
+      if (other) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+      data.email = trimmed;
+    }
+    if (password !== undefined && String(password).trim() !== '') {
+      data.password = await bcrypt.hash(String(password), 10);
+    }
+    if (gender !== undefined) {
+      if (gender !== 'MALE' && gender !== 'FEMALE') {
+        return res.status(400).json({ message: 'Invalid gender' });
+      }
+      data.gender = gender;
+    }
+    if (role !== undefined) {
+      if (role !== 'MANAGER' && role !== 'EMPLOYEE') {
+        return res
+          .status(400)
+          .json({ message: 'Role must be Employee or Manager' });
+      }
+      data.role = role;
+    }
+    if (teamId !== undefined) {
+      const teamIdNum = Number(teamId);
+      if (Number.isNaN(teamIdNum)) {
+        return res.status(400).json({ message: 'Invalid team' });
+      }
+      const team = await prisma.team.findFirst({
+        where: { id: teamIdNum, organizationId },
+      });
+      if (!team) {
+        return res.status(404).json({ message: 'Team not found' });
+      }
+      data.teamId = teamIdNum;
+    }
+
+    const parseCalendarDate = (raw) => {
+      if (!raw || !String(raw).trim()) return null;
+      const parsed = new Date(`${String(raw).slice(0, 10)}T12:00:00`);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    if (birthDate !== undefined) {
+      data.birthDate = parseCalendarDate(birthDate);
+    }
+    if (joiningDate !== undefined) {
+      const jd = parseCalendarDate(joiningDate);
+      if (!jd) {
+        return res
+          .status(400)
+          .json({ message: 'Joining date (DOJ) is required' });
+      }
+      data.joiningDate = jd;
+    }
+    if (reportingManagerId !== undefined) {
+      if (
+        reportingManagerId == null ||
+        String(reportingManagerId).trim() === ''
+      ) {
+        data.reportingManagerId = null;
+      } else {
+        const rmId = Number(reportingManagerId);
+        if (Number.isNaN(rmId)) {
+          return res.status(400).json({ message: 'Invalid reporting manager' });
+        }
+        if (rmId === userId) {
+          return res.status(400).json({
+            message: 'Cannot set yourself as reporting manager',
+          });
+        }
+        const rm = await prisma.user.findFirst({
+          where: {
+            id: rmId,
+            organizationId,
+            role: { in: ['MANAGER', 'ADMIN'] },
+          },
+        });
+        if (!rm) {
+          return res
+            .status(404)
+            .json({ message: 'Reporting manager not found' });
+        }
+        data.reportingManagerId = rmId;
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ message: 'No changes provided' });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        teamId: true,
+        gender: true,
+        birthDate: true,
+        joiningDate: true,
+        reportingManager: { select: { id: true, name: true } },
+      },
+    });
+
+    res.json({
+      message: 'Employee updated',
+      user: {
+        ...user,
+        birthDate: user.birthDate ? user.birthDate.toISOString() : null,
+        joiningDate: user.joiningDate ? user.joiningDate.toISOString() : null,
+        reportingManager: user.reportingManager,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to update employee' });
+  }
+};
+
+export const deleteEmployeeUser = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can delete employees' });
+    }
+
+    const userId = Number(req.params.userId);
+    if (Number.isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid employee' });
+    }
+
+    if (req.user.id === userId) {
+      return res
+        .status(400)
+        .json({ message: 'You cannot delete your own account' });
+    }
+
+    const existing = await prisma.user.findFirst({
+      where: { id: userId, organizationId, role: { not: 'ADMIN' } },
+    });
+    if (!existing) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    await prisma.$transaction([
+      prisma.user.updateMany({
+        where: { reportingManagerId: userId },
+        data: { reportingManagerId: null },
+      }),
+      prisma.leave.updateMany({
+        where: { approvedById: userId },
+        data: { approvedById: null },
+      }),
+      prisma.leave.deleteMany({ where: { userId } }),
+      prisma.leaveBalance.deleteMany({ where: { userId } }),
+      prisma.team.updateMany({
+        where: { managerId: userId },
+        data: { managerId: null },
+      }),
+      prisma.user.delete({ where: { id: userId } }),
+    ]);
+
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to delete employee' });
   }
 };
 

@@ -58,14 +58,13 @@ function SectionBlock({ section }: { section: LeavePolicySection }) {
           </div>
         ) : null}
         {section.kind === 'cards' ? (
-          <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
+          <div className='space-y-6'>
             {section.cards.map((c, i) => (
-              <div
-                key={`${c.title}-${i}`}
-                className='rounded-xl border border-gray-100 bg-gray-50/80 p-4'
-              >
-                <h3 className='font-semibold text-gray-900'>{c.title}</h3>
-                <p className='mt-2'>{c.body}</p>
+              <div key={`${c.title}-${i}`}>
+                <h3 className='text-[15px] font-semibold text-gray-900'>{c.title}</h3>
+                <div className='mt-2'>
+                  <TextBody body={c.body} />
+                </div>
               </div>
             ))}
           </div>

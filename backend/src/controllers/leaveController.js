@@ -1,4 +1,5 @@
 import prisma from '../prismaClient.js';
+import { findHolidaysForOrgInDateRange } from '../lib/findHolidaysForOrgInDateRange.js';
 
 const getDefaultLeaveBalance = (user) => ({
   userId: user.id,
@@ -25,7 +26,7 @@ const toLocalCalendarDate = (value) => {
 
 const localDayKey = (d) => d.endDateString();
 
-const getWorkingDays = async (startDate, endDate) => {
+const getWorkingDays = async (startDate, endDate, organizationId) => {
   const start = toLocalCalendarDate(startDate);
   const end = toLocalCalendarDate(endDate);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
@@ -41,14 +42,11 @@ const getWorkingDays = async (startDate, endDate) => {
     999,
   );
 
-  const holidays = await prisma.holiday.findMany({
-    where: {
-      date: {
-        gte: start,
-        lte: endInclusive,
-      },
-    },
-  });
+  const holidays = await findHolidaysForOrgInDateRange(
+    organizationId,
+    start,
+    endInclusive,
+  );
 
   const holidayKeys = new Set(
     holidays.map((h) => localDayKey(toLocalCalendarDate(h.date))),
@@ -105,7 +103,11 @@ export const applyLeave = async (req, res) => {
     }
 
     const leaveType = type.toUpperCase();
-    const totalDays = await getWorkingDays(startDate, endDate);
+    const totalDays = await getWorkingDays(
+      startDate,
+      endDate,
+      req.user.organizationId,
+    );
 
     const existingLeave = await prisma.leave.findFirst({
       where: {
@@ -223,7 +225,11 @@ export const updateLeaveStatus = async (req, res) => {
     }
 
     const leaveType = leave.type?.toUpperCase();
-    const totalDays = await getWorkingDays(leave.startDate, leave.endDate);
+    const totalDays = await getWorkingDays(
+      leave.startDate,
+      leave.endDate,
+      leave.organizationId,
+    );
 
     if (status === 'REJECTED' && totalDays > 0) {
       let bal = await prisma.leaveBalance.findUnique({
@@ -322,7 +328,11 @@ export const cancelLeave = async (req, res) => {
       });
     }
 
-    const totalDays = await getWorkingDays(leave.startDate, leave.endDate);
+    const totalDays = await getWorkingDays(
+      leave.startDate,
+      leave.endDate,
+      leave.organizationId,
+    );
     const type = leave.type?.toUpperCase();
 
     const updates = [];
@@ -407,14 +417,11 @@ export const getDashboardStats = async (req, res) => {
             endDate: true,
           },
         }),
-        prisma.holiday.findMany({
-          where: {
-            date: {
-              gte: currentMonthStart,
-              lte: currentMonthEnd,
-            },
-          },
-        }),
+        findHolidaysForOrgInDateRange(
+          user.organizationId,
+          currentMonthStart,
+          currentMonthEnd,
+        ),
       ]);
 
     const balance =
@@ -556,26 +563,3 @@ export const getLeaveHistory = async (req, res) => {
   }
 };
 
-/** Holidays in a multi-year window (for leave math + dashboard). Client may filter to “upcoming”. */
-export const getUpcomingHolidays = async (req, res) => {
-  try {
-    const now = new Date();
-    const year = now.getFullYear();
-    const from = new Date(year - 1, 0, 1);
-    const to = new Date(year + 1, 11, 31, 23, 59, 59, 999);
-
-    const holidays = await prisma.holiday.findMany({
-      where: {
-        date: {
-          gte: from,
-          lte: to,
-        },
-      },
-      orderBy: { date: 'asc' },
-    });
-    res.json(holidays);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server Error' });
-  }
-};

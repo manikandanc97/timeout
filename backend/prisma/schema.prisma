@@ -73,9 +73,16 @@ model User {
   gender   Gender?
   /** Calendar date (time ignored) for upcoming birthdays on admin dashboard */
   birthDate DateTime?
+  /** Calendar date (time ignored) for employment start / joining */
+  joiningDate DateTime?
 
   organizationId Int
   teamId         Int?
+
+  /** Optional line manager (must be MANAGER or ADMIN in the same org). */
+  reportingManagerId Int?
+  reportingManager   User?  @relation("UserReportingManager", fields: [reportingManagerId], references: [id], onDelete: SetNull)
+  directReports      User[] @relation("UserReportingManager")
 
   createdAt DateTime @default(now())
 
@@ -84,6 +91,8 @@ model User {
 
   leaves       Leave[]
   leaveBalance LeaveBalance?
+
+  @@index([reportingManagerId])
 }
 
 enum LeaveStatus {

@@ -29,8 +29,8 @@ export default function TeamsFilterBar({
   onAddTeam,
 }: Props) {
   return (
-    <div className='flex min-w-0 shrink-0 flex-nowrap items-center gap-3 overflow-x-auto py-0.5 [scrollbar-width:thin]'>
-      <div className='relative min-w-[180px] max-w-sm flex-1'>
+    <div className='flex min-w-0 flex-nowrap items-center gap-3 overflow-x-auto py-1.5 [scrollbar-width:thin]'>
+      <div className='relative min-w-[180px] flex-1 max-w-sm'>
         <Search
           size={14}
           className='pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-gray-400'

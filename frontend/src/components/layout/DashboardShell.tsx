@@ -13,6 +13,7 @@ import TopbarSkeleton from '@/components/dashboard/skeletons/TopbarSkeleton';
 import AdminDashboardSkeleton from '@/components/dashboard/skeletons/AdminDashboardSkeleton';
 import LeaveRequestsSkeleton from '@/components/dashboard/skeletons/LeaveRequestsSkeleton';
 import EmployeesSkeleton from '@/components/dashboard/skeletons/EmployeesSkeleton';
+import TeamsPageSkeleton from '@/components/dashboard/skeletons/TeamsPageSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
 import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
 
@@ -21,7 +22,12 @@ type Props = {
 };
 
 /** Main fills viewport under topbar; page scrolls inside its own panel (not whole main). */
-const MAIN_VIEWPORT_FILL_PATHS = new Set(['/requests', '/employees', '/team']);
+const MAIN_VIEWPORT_FILL_PATHS = new Set([
+  '/requests',
+  '/employees',
+  '/team',
+  '/holidays',
+]);
 
 const DashboardShell = ({ children }: Props) => {
   const router = useRouter();
@@ -64,8 +70,10 @@ const DashboardShell = ({ children }: Props) => {
       content = <LeaveRequestsSkeleton />;
     } else if (pathname === '/employees') {
       content = <EmployeesSkeleton />;
-    } else if (pathname === '/team') {
+    } else if (pathname === '/holidays') {
       content = <LeaveRequestsSkeleton />;
+    } else if (pathname === '/team') {
+      content = <TeamsPageSkeleton />;
     }
 
     return (

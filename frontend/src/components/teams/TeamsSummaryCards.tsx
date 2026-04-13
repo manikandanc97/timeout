@@ -1,18 +1,12 @@
 import type { LucideIcon } from 'lucide-react';
-import { Building2, Layers, UserCheck, UsersRound } from 'lucide-react';
+import { Building2, UsersRound } from 'lucide-react';
 
 import type { TeamsDirectorySummary } from './utils';
 
 type SummaryCardConfig = {
   key: string;
   label: string;
-  field: keyof Pick<
-    TeamsDirectorySummary,
-    | 'totalTeams'
-    | 'totalDepartments'
-    | 'activeTeams'
-    | 'employeesAssigned'
-  >;
+  field: keyof Pick<TeamsDirectorySummary, 'totalTeams' | 'totalDepartments'>;
   accent: string;
   iconBg: string;
   iconColor: string;
@@ -38,47 +32,31 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     iconColor: 'text-violet-600',
     Icon: Building2,
   },
-  {
-    key: 'activeTeams',
-    label: 'Active teams',
-    field: 'activeTeams',
-    accent: 'border-l-emerald-400',
-    iconBg: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
-    Icon: Layers,
-  },
-  {
-    key: 'employeesAssigned',
-    label: 'Employees assigned',
-    field: 'employeesAssigned',
-    accent: 'border-l-amber-400',
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-amber-600',
-    Icon: UserCheck,
-  },
 ];
 
 function SummarySkeleton() {
   return (
     <section
       aria-label='Teams summary'
-      className='flex w-full shrink-0 flex-col gap-3.5 self-start rounded-2xl bg-white/95 sm:gap-4 lg:w-62 xl:w-56'
+      className='w-full shrink-0 self-start rounded-2xl bg-white/95'
     >
-      <h2 className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
+      <h2 className='mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
         Summary
       </h2>
-      {[1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className='animate-pulse rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-3.5 shadow-sm sm:p-4'
-        >
-          <div className='flex justify-between gap-2'>
-            <div className='h-3 w-20 rounded bg-gray-200' />
-            <div className='h-9 w-9 shrink-0 rounded-xl bg-gray-100' />
+      <div className='grid grid-cols-2 gap-2.5 sm:gap-3'>
+        {[1, 2].map((i) => (
+          <div
+            key={i}
+            className='animate-pulse rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-3 shadow-sm sm:p-3.5'
+          >
+            <div className='flex justify-between gap-1.5'>
+              <div className='h-2.5 w-12 rounded bg-gray-200 sm:h-3 sm:w-16' />
+              <div className='h-7 w-7 shrink-0 rounded-lg bg-gray-100 sm:h-8 sm:w-8' />
+            </div>
+            <div className='mt-2 h-6 w-8 rounded bg-gray-200 sm:mt-2.5 sm:h-7' />
           </div>
-          <div className='mt-3 h-8 w-12 rounded bg-gray-200' />
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }
@@ -96,35 +74,37 @@ export default function TeamsSummaryCards({ loading, summary }: Props) {
   return (
     <section
       aria-label='Teams summary'
-      className='flex w-full shrink-0 flex-col gap-3.5 self-start rounded-2xl bg-white/95 sm:gap-4 lg:w-62 xl:w-56'
+      className='w-full shrink-0 self-start rounded-2xl bg-white/95'
     >
-      <h2 className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
+      <h2 className='mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
         Summary
       </h2>
-      {SUMMARY_CARDS.map((c) => {
-        const Icon = c.Icon;
-        const value = summary[c.field];
-        return (
-          <div
-            key={c.key}
-            className={`rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3.5 shadow-sm sm:p-4`}
-          >
-            <div className='flex items-center justify-between gap-2'>
-              <span className='text-xs font-medium uppercase tracking-wider text-gray-500'>
-                {c.label}
-              </span>
-              <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${c.iconBg}`}
-              >
-                <Icon size={17} strokeWidth={2} className={c.iconColor} />
+      <div className='grid grid-cols-2 gap-2.5 sm:gap-3'>
+        {SUMMARY_CARDS.map((c) => {
+          const Icon = c.Icon;
+          const value = summary[c.field];
+          return (
+            <div
+              key={c.key}
+              className={`min-w-0 rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3 shadow-sm sm:p-3.5`}
+            >
+              <div className='flex items-start justify-between gap-1.5'>
+                <span className='min-w-0 text-[10px] font-medium uppercase leading-snug tracking-wide text-gray-500 sm:text-xs sm:tracking-wider'>
+                  {c.label}
+                </span>
+                <div
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8 sm:rounded-xl ${c.iconBg}`}
+                >
+                  <Icon size={16} strokeWidth={2} className={c.iconColor} />
+                </div>
               </div>
+              <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
+                {value}
+              </p>
             </div>
-            <p className='mt-2.5 text-2xl font-bold tabular-nums tracking-tight text-gray-900 sm:text-3xl'>
-              {value}
-            </p>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </section>
   );
 }

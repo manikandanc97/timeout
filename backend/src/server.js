@@ -9,10 +9,8 @@ import { authMiddleware } from './middleware/authMiddleware.js';
 import leaveRoutes from './routes/leaveRoutes.js';
 
 import cookieParser from 'cookie-parser';
-import {
-  getLeaveHistory,
-  getUpcomingHolidays,
-} from './controllers/leaveController.js';
+import { getLeaveHistory } from './controllers/leaveController.js';
+import holidayRoutes from './routes/holidayRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import organizationRoutes from './routes/organizationRoutes.js';
 
@@ -62,12 +60,41 @@ app.use('/api/leaves', leaveRoutes);
 
 app.get('/api/history', authMiddleware, getLeaveHistory);
 
-app.get('/api/holidays', authMiddleware, getUpcomingHolidays);
+app.use('/api/holidays', holidayRoutes);
 
 app.use('/api/dashboard', adminRoutes);
 
 app.use('/api/organization', organizationRoutes);
 
-app.listen(5000, () => {
-  console.log('Server running on port 5000');
-});
+function requireEnv(name) {
+  const v = process.env[name];
+  if (v == null || String(v).trim() === '') {
+    console.error(
+      `[config] Missing or empty environment variable: ${name}\n` +
+        `  Copy backend/.env.example to backend/.env and set all values.`,
+    );
+    process.exit(1);
+  }
+}
+
+async function start() {
+  requireEnv('DATABASE_URL');
+  requireEnv('ACCESS_SECRET');
+  requireEnv('REFRESH_SECRET');
+
+  try {
+    await prisma.$connect();
+  } catch (e) {
+    console.error(
+      '[config] Could not connect to the database:',
+      e?.message ?? e,
+    );
+    process.exit(1);
+  }
+
+  app.listen(5000, () => {
+    console.log('Server running on port 5000');
+  });
+}
+
+start();

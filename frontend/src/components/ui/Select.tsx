@@ -61,11 +61,7 @@ const Select: React.FC<SelectProps> = ({
       {label && !hideLabel && (
         <label
           htmlFor={id}
-          className={
-            value
-              ? 'pointer-events-none absolute left-3 top-3 z-10 origin-left -translate-y-4 scale-75 transform bg-white px-1 text-sm text-gray-500 duration-300'
-              : 'pointer-events-none absolute left-3 top-1/2 z-10 origin-left -translate-y-1/2 scale-100 transform bg-white px-1 text-sm text-gray-500 duration-300 peer-focus:top-3 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:text-primary'
-          }
+          className='pointer-events-none absolute left-3 top-4 z-10 origin-left -translate-y-4 scale-75 transform bg-white px-1 text-sm text-gray-500 duration-300 peer-focus:text-primary'
         >
           {label}
         </label>

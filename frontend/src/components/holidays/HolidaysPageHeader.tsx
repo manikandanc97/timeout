@@ -1,43 +1,43 @@
-import { Users, UsersRound } from 'lucide-react';
+import { CalendarRange } from 'lucide-react';
 
 type Props = {
   filteredCount: number;
-  totalCount: number;
+  totalLoaded: number;
   hasActiveFilters: boolean;
 };
 
-export default function TeamsPageHeader({
+export default function HolidaysPageHeader({
   filteredCount,
-  totalCount,
+  totalLoaded,
   hasActiveFilters,
 }: Props) {
   return (
     <div className='flex shrink-0 flex-wrap items-start justify-between gap-3'>
       <div className='flex items-start gap-3'>
         <div className='grid h-12 w-12 place-items-center rounded-2xl bg-linear-to-br from-primary/15 via-primary/10 to-primary/5 text-primary shadow-inner shadow-primary/15'>
-          <UsersRound size={20} />
+          <CalendarRange size={20} />
         </div>
         <div>
           <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400'>
-            Organization
+            Calendar
           </p>
           <h1
-            id='teams-heading'
+            id='holidays-heading'
             className='text-2xl font-bold leading-tight text-gray-900'
           >
-            Teams
+            Holidays
           </h1>
           <p className='mt-1 text-sm text-gray-500'>
-            Browse teams, leads, and staffing at a glance.
+            Organization holidays, filters, and maintenance.
           </p>
         </div>
       </div>
       <div className='inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm'>
-        <Users size={12} className='text-primary' />
+        <CalendarRange size={12} className='text-primary' />
         <span>
-          {filteredCount === totalCount && !hasActiveFilters
-            ? 'All teams visible'
-            : `${filteredCount} of ${totalCount} shown`}
+          {filteredCount === totalLoaded && !hasActiveFilters
+            ? 'All holidays visible'
+            : `${filteredCount} of ${totalLoaded} shown`}
         </span>
       </div>
     </div>

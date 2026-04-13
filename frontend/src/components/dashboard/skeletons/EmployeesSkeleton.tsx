@@ -70,12 +70,12 @@ export default function EmployeesSkeleton() {
               <div className='flex min-h-[260px] flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/40 sm:min-h-[300px]'>
                 <div className='min-h-0 flex-1 overflow-hidden'>
                   <div className='sticky top-0 z-10 border-b border-gray-100 bg-gray-50/95 px-4 py-3 backdrop-blur-sm'>
-                    <div className='flex min-w-[880px] gap-3'>
-                      <div className='h-3 w-14 animate-pulse rounded bg-gray-200/80' />
+                    <div className='flex min-w-[940px] gap-3'>
                       <div className='h-3 w-12 animate-pulse rounded bg-gray-200/80' />
                       <div className='h-3 w-14 animate-pulse rounded bg-gray-200/80' />
                       <div className='h-3 w-22 animate-pulse rounded bg-gray-200/80' />
                       <div className='h-3 w-14 animate-pulse rounded bg-gray-200/80' />
+                      <div className='h-3 w-20 animate-pulse rounded bg-gray-200/80' />
                       <div className='h-3 w-12 animate-pulse rounded bg-gray-200/80' />
                       <div className='h-3 w-14 animate-pulse rounded bg-gray-200/80' />
                       <div className='h-3 w-16 animate-pulse rounded bg-gray-200/80' />
@@ -86,19 +86,22 @@ export default function EmployeesSkeleton() {
                     {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                       <div
                         key={i}
-                        className='flex min-w-[880px] items-center gap-3 px-4 py-3.5'
+                        className='flex min-w-[940px] items-center gap-3 px-4 py-3.5'
                       >
-                        <div className='h-9 w-9 shrink-0 animate-pulse rounded-full bg-gray-200/80' />
                         <div className='w-32 shrink-0 space-y-1.5'>
                           <div className='h-3.5 w-28 animate-pulse rounded bg-gray-100' />
                         </div>
                         <div className='h-3.5 w-40 shrink-0 animate-pulse rounded bg-gray-100' />
                         <div className='h-3.5 w-24 shrink-0 animate-pulse rounded bg-gray-100' />
                         <div className='h-3.5 w-20 shrink-0 animate-pulse rounded bg-gray-100' />
+                        <div className='h-3.5 w-28 shrink-0 animate-pulse rounded bg-gray-100' />
                         <div className='h-3.5 w-16 shrink-0 animate-pulse rounded bg-gray-100' />
                         <div className='h-6 w-16 shrink-0 animate-pulse rounded-md bg-gray-100' />
                         <div className='h-3.5 w-18 shrink-0 animate-pulse rounded bg-gray-100' />
-                        <div className='ml-auto h-8 w-16 shrink-0 animate-pulse rounded-lg border border-gray-100 bg-white shadow-sm' />
+                        <div className='ml-auto flex shrink-0 gap-1'>
+                          <div className='h-8 w-8 animate-pulse rounded-lg bg-gray-100 ring-1 ring-gray-200/80' />
+                          <div className='h-8 w-8 animate-pulse rounded-lg bg-gray-100 ring-1 ring-gray-200/80' />
+                        </div>
                       </div>
                     ))}
                   </div>
