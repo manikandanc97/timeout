@@ -27,10 +27,10 @@ const PageCard = ({
   contentClassName,
 }: PageCardProps) => {
   const TitleTag = titleAs;
-  const outerClass = `w-full rounded-2xl bg-white shadow-md ${className ?? 'p-6'}`;
+  const outerClass = `w-full rounded-2xl border border-border bg-card text-card-foreground shadow-md ${className ?? 'p-6'}`;
   const titleClass =
-    titleClassName ?? 'text-2xl font-bold text-gray-900';
-  const contentClass = contentClassName ?? 'mt-2 w-full text-gray-600';
+    titleClassName ?? 'text-2xl font-bold text-card-foreground';
+  const contentClass = contentClassName ?? 'mt-2 w-full text-muted-foreground';
 
   return (
     <div className={outerClass}>

@@ -47,7 +47,7 @@ export default function LeaveCard({
 
   return (
     <div
-      className={`group relative flex md:flex-row flex-col gap-4 rounded-xl border border-gray-100 border-l-4 bg-white p-5 shadow-sm transition-all duration-200 hover:bg-gray-50/50 hover:shadow-md ${typeCfg.accentBorder}`}
+      className={`group relative flex flex-col gap-4 rounded-xl border border-border border-l-4 bg-card p-5 text-card-foreground shadow-sm transition-all duration-200 hover:bg-muted/40 hover:shadow-md md:flex-row ${typeCfg.accentBorder}`}
     >
       <div className='flex min-w-0 flex-1 items-start gap-3.5'>
         <div
@@ -63,7 +63,7 @@ export default function LeaveCard({
             </span>
             <LeaveStatusBadge status={leave.status} />
           </div>
-          <p className='mb-2 text-gray-500 text-xs'>
+          <p className='mb-2 text-xs text-muted-foreground'>
             Req #{String(leave.id).padStart(3, '0')} &bull;{' '}
             {typeCfg.description}
           </p>
@@ -74,7 +74,7 @@ export default function LeaveCard({
                 size={14}
                 className={`mt-0.5 shrink-0 ${typeCfg.text} opacity-70`}
               />
-              <p className='text-[13px] text-gray-600 line-clamp-2 leading-relaxed'>
+              <p className='line-clamp-2 text-[13px] leading-relaxed text-muted-foreground'>
                 {leave.reason}
               </p>
             </div>
@@ -85,14 +85,14 @@ export default function LeaveCard({
               <button
                 type='button'
                 onClick={() => setShowRejectionReason((prev) => !prev)}
-                className='inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 font-semibold text-[11px] text-rose-700 uppercase tracking-wide transition-colors hover:bg-rose-100'
+                className='inline-flex items-center gap-1 rounded-md border border-danger-muted-foreground/30 bg-danger-muted px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-danger-muted-foreground transition-colors hover:opacity-90'
               >
                 Rejection reason
                 {showRejectionReason ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               </button>
               {showRejectionReason ? (
-                <div className='mt-1.5 rounded-lg border border-rose-100 bg-rose-50/60 px-2.5 py-2'>
-                  <p className='text-[13px] text-rose-700 leading-relaxed'>
+                <div className='mt-1.5 rounded-lg border border-danger-muted-foreground/20 bg-danger-muted px-2.5 py-2'>
+                  <p className='text-[13px] leading-relaxed text-danger-muted-foreground'>
                     {leave.rejectionReason}
                   </p>
                 </div>
@@ -102,17 +102,17 @@ export default function LeaveCard({
         </div>
       </div>
 
-      <div className='flex flex-col justify-between md:items-end gap-3 pt-3 md:pt-0 md:pl-5 border-gray-100 border-t md:border-t-0 md:border-l shrink-0'>
+      <div className='flex shrink-0 flex-col justify-between gap-3 border-t border-border pt-3 md:border-l md:border-t-0 md:pl-5 md:pt-0 md:items-end'>
         <div className='flex flex-wrap gap-2'>
-          <div className='flex items-center gap-1.5 bg-gray-50/80 px-2.5 py-1.5 border border-gray-100 rounded-md font-medium text-gray-600 text-xs'>
-            <CalendarDays size={13} className='text-gray-400' />
+          <div className='flex items-center gap-1.5 rounded-md border border-border bg-muted/80 px-2.5 py-1.5 text-xs font-medium text-muted-foreground'>
+            <CalendarDays size={13} className='opacity-80' />
             <span>
               {fmt(start)} &rarr; {fmt(end)}
             </span>
           </div>
 
-          <div className='flex items-center gap-1.5 bg-gray-50/80 px-2.5 py-1.5 border border-gray-100 rounded-md font-medium text-gray-600 text-xs'>
-            <Clock3 size={13} className='text-gray-400' />
+          <div className='flex items-center gap-1.5 rounded-md border border-border bg-muted/80 px-2.5 py-1.5 text-xs font-medium text-muted-foreground'>
+            <Clock3 size={13} className='opacity-80' />
             <span>{durationLabel}</span>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function LeaveCard({
               type='button'
               unstyled
               onClick={() => toast.info('Leave editing is not wired up yet.')}
-              className='inline-flex justify-center items-center bg-white hover:bg-gray-50 shadow-xs p-1.5 border border-gray-200 hover:border-gray-300 rounded-lg w-8 h-8 text-gray-600 transition-colors cursor-pointer'
+              className='inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-card p-1.5 text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-card-foreground'
             >
               <Pencil size={14} />
             </Button>
@@ -133,7 +133,7 @@ export default function LeaveCard({
               unstyled
               onClick={() => setConfirmOpen(true)}
               disabled={isDeletingThis}
-              className='inline-flex justify-center items-center bg-white hover:bg-red-50 disabled:opacity-50 shadow-xs p-1.5 border border-red-100 hover:border-red-200 rounded-lg w-8 h-8 text-red-500 hover:text-red-600 transition-colors disabled:cursor-not-allowed'
+              className='inline-flex h-8 w-8 items-center justify-center rounded-lg border border-danger-muted-foreground/35 bg-card p-1.5 text-danger-muted-foreground shadow-xs transition-colors hover:bg-danger-muted disabled:cursor-not-allowed disabled:opacity-50'
             >
               {isDeletingThis ? (
                 <span className='inline-block border-2 border-red-600/30 border-t-red-600 rounded-full w-3.5 h-3.5 animate-spin' />

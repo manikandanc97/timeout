@@ -43,7 +43,7 @@ export default function LeaveRequestsFilterBar({
       <div className='relative min-w-[180px] max-w-sm flex-1'>
         <Search
           size={14}
-          className='pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-gray-400'
+          className='pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground'
           aria-hidden
         />
         <Input
@@ -123,7 +123,7 @@ export default function LeaveRequestsFilterBar({
         disabled={!hasActiveFilters}
         onClick={onClearFilters}
         aria-label='Clear all filters'
-        className='ml-auto flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400'
+        className='ml-auto flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-danger-muted hover:text-danger-muted-foreground disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground'
       >
         <RotateCcw size={14} className='shrink-0' />
         Clear filters

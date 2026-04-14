@@ -105,17 +105,17 @@ const ApplyLeavePermissionTab = ({
     !validationWarning;
 
   return (
-    <section className='bg-white/80 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
+    <section className='rounded-2xl border border-border bg-card/90 p-4 shadow-sm backdrop-blur-sm md:p-5'>
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div>
-          <h3 className='font-semibold text-gray-900 text-lg'>
+          <h3 className='text-lg font-semibold text-card-foreground'>
             Permission request
           </h3>
-          <p className='text-gray-500 text-xs'>
+          <p className='text-xs text-muted-foreground'>
             Select your in-between away time. Monthly total limit is 4 hours.
           </p>
         </div>
-        <div className='rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700'>
+        <div className='rounded-full bg-warning-muted px-3 py-1 text-xs font-semibold text-warning-muted-foreground'>
           Remaining:{' '}
           {permissionSummary
             ? `${Math.floor(permissionSummary.remainingMinutes / 60)}h ${permissionSummary.remainingMinutes % 60}m`
@@ -155,23 +155,23 @@ const ApplyLeavePermissionTab = ({
             {validationWarning}
           </p>
         ) : projectedRemaining != null ? (
-          <p className='text-xs text-gray-600 sm:col-span-2'>
+          <p className='text-xs text-muted-foreground sm:col-span-2'>
             After this request:{' '}
-            <span className='font-semibold text-gray-800'>
+            <span className='font-semibold text-card-foreground'>
               {Math.max(projectedRemaining, 0)} minutes remaining
             </span>
           </p>
         ) : null}
         {inBetweenMinutes != null ? (
-          <p className='text-gray-600 text-xs sm:col-span-2'>
+          <p className='text-xs text-muted-foreground sm:col-span-2'>
             Permission length:{' '}
-            <span className='font-semibold text-gray-800'>
+            <span className='font-semibold text-card-foreground'>
               {inBetweenMinutes} minutes
             </span>{' '}
             (counts toward your monthly limit; max 240 minutes per request)
           </p>
         ) : (
-          <p className='text-gray-500 text-xs sm:col-span-2'>
+          <p className='text-xs text-muted-foreground sm:col-span-2'>
             Same day only and end time must be after start time.
           </p>
         )}

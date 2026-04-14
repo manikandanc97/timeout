@@ -18,21 +18,21 @@ export default function LeaveRequestsPageHeader({
           <ClipboardList size={20} />
         </div>
         <div>
-          <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400'>
+          <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
             Administration
           </p>
           <h1
             id='requests-heading'
-            className='text-2xl font-bold leading-tight text-gray-900'
+            className='text-2xl font-bold leading-tight text-card-foreground'
           >
             Requests
           </h1>
-          <p className='mt-1 text-sm text-gray-500'>
+          <p className='mt-1 text-sm text-muted-foreground'>
             Review, filter, and action team leave in one place.
           </p>
         </div>
       </div>
-      <div className='inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm'>
+      <div className='inline-flex items-center gap-2 rounded-full border border-border bg-muted/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm'>
         <CalendarDays size={12} className='text-primary' />
         <span>
           {filteredCount === totalCount && !hasActiveFilters

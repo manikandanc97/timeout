@@ -17,6 +17,7 @@ import EmployeesSkeleton from '@/components/dashboard/skeletons/EmployeesSkeleto
 import TeamsPageSkeleton from '@/components/dashboard/skeletons/TeamsPageSkeleton';
 import HolidaysSkeleton from '@/components/dashboard/skeletons/HolidaysSkeleton';
 import PayrollSkeleton from '@/components/dashboard/skeletons/PayrollSkeleton';
+import ReportsSkeleton from '@/components/dashboard/skeletons/ReportsSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
 import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
 
@@ -88,10 +89,16 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
       content = <TeamsPageSkeleton />;
     } else if (pathname === '/payroll') {
       content = <PayrollSkeleton />;
+    } else if (pathname === '/reports') {
+      content = <ReportsSkeleton />;
+    } else if (pathname === '/settings') {
+      content = <ReportsSkeleton />;
+    } else if (pathname === '/payslip') {
+      content = <PayrollSkeleton />;
     }
 
     return (
-      <div className='flex h-screen overflow-hidden bg-gray-100'>
+      <div className='flex h-screen overflow-hidden bg-background'>
         <SidebarSkeleton />
         <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
           <TopbarSkeleton />

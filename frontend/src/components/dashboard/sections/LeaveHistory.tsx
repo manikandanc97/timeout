@@ -24,17 +24,17 @@ const formatDate = (dateStr: string) => {
 
 const LeaveHistory = ({ leaves = [], holidays = [] }: Props) => {
   return (
-    <div className='flex flex-col bg-white shadow-md p-5 rounded-2xl h-full'>
-      <div className='flex justify-between items-center mb-6'>
+    <div className='flex h-full flex-col rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md'>
+      <div className='mb-6 flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <div className='flex justify-center items-center bg-blue-50 rounded-lg w-8 h-8'>
-            <History size={18} className='text-blue-500' />
+          <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-icon-chip-info-bg'>
+            <History size={18} className='text-icon-chip-info-fg' />
           </div>
-          <h2 className='font-semibold text-lg'>Recent Leave History</h2>
+          <h2 className='text-lg font-semibold'>Recent Leave History</h2>
         </div>
         <Link
           href='/leaves'
-          className='flex items-center gap-1 font-medium text-blue-500 hover:text-blue-600 text-sm transition-colors'
+          className='flex items-center gap-1 text-sm font-medium text-link transition-colors hover:text-link-hover'
         >
           View All <ChevronRight size={16} />
         </Link>
@@ -46,18 +46,18 @@ const LeaveHistory = ({ leaves = [], holidays = [] }: Props) => {
             {leaves.map((leave) => (
               <div
                 key={leave.id}
-                className='flex flex-col gap-2 border-b border-dashed border-gray-200 py-4 text-left last:border-0 sm:flex-row sm:items-center sm:gap-8'
+                className='flex flex-col gap-2 border-b border-dashed border-border py-4 text-left last:border-0 sm:flex-row sm:items-center sm:gap-8'
               >
-                <span className='shrink-0 font-medium text-gray-700 text-sm'>
+                <span className='shrink-0 text-sm font-medium'>
                   {leave.type
                     ?.toLowerCase()
                     ?.replace(/\b\w/g, (c) => c.toUpperCase())}{' '}
                   Leave
                 </span>
-                <span className='min-w-0 flex-1 text-left text-gray-500 text-sm'>
+                <span className='min-w-0 flex-1 text-left text-sm text-muted-foreground'>
                   {formatDate(leave.startDate)} → {formatDate(leave.endDate)}
-                  <span className='mx-2 text-gray-300'>•</span>
-                  <span className='text-gray-400 text-xs'>
+                  <span className='mx-2 text-border'>•</span>
+                  <span className='text-xs opacity-90'>
                     {workingDaysForLeaveRange(
                       leave.startDate,
                       leave.endDate,
@@ -73,7 +73,7 @@ const LeaveHistory = ({ leaves = [], holidays = [] }: Props) => {
             ))}
           </div>
         ) : (
-          <div className='flex flex-1 flex-col items-center justify-center px-4 py-16 text-center text-gray-400'>
+          <div className='flex flex-1 flex-col items-center justify-center px-4 py-16 text-center text-muted-foreground'>
             <History size={32} className='mb-3 opacity-20' />
             <p className='text-sm'>No leave history found</p>
           </div>

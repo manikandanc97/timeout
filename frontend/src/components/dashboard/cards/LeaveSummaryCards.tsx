@@ -31,7 +31,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className='z-50 flex items-center gap-1.5 bg-gray-800 shadow-xl px-2.5 py-1.5 rounded-lg font-medium text-white text-xs whitespace-nowrap'>
+      <div className='z-50 flex items-center gap-1.5 rounded-lg border border-border bg-foreground px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-background shadow-xl'>
         <span style={{ color: payload[0].color || payload[0].fill }}>
           {data.month}
         </span>
@@ -99,8 +99,10 @@ const TrendBadge = ({
   const hasUsed = used > 0;
   return (
     <div
-      className={`flex items-center gap-1.5 mt-3 w-fit px-2 py-1 rounded-lg text-xs font-medium ${
-        hasUsed ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'
+      className={`mt-3 flex w-fit items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium ${
+        hasUsed
+          ? 'bg-danger-muted text-danger-muted-foreground'
+          : 'bg-success-muted text-success-muted-foreground'
       }`}
     >
       {hasUsed ? (
@@ -137,13 +139,13 @@ const LeaveCard = ({
   right: React.ReactNode;
   isOneTime?: boolean;
 }) => (
-  <div className='flex justify-between items-start bg-white shadow-md p-5 rounded-2xl'>
+  <div className='flex items-start justify-between rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md'>
     <div className='flex flex-col'>
-      <p className='text-gray-500 text-sm'>{label}</p>
+      <p className='text-sm text-muted-foreground'>{label}</p>
 
-      <div className='flex items-baseline gap-2 mt-4'>
-        <h2 className='font-bold text-4xl leading-none'>{count}</h2>
-        <span className='text-gray-400 text-sm'>days remaining</span>
+      <div className='mt-4 flex items-baseline gap-2'>
+        <h2 className='text-4xl leading-none font-bold'>{count}</h2>
+        <span className='text-sm text-muted-foreground'>days remaining</span>
       </div>
 
       <TrendBadge used={used} isOneTime={isOneTime} />
@@ -196,10 +198,10 @@ const LeaveSummaryCards = ({ balance, monthlyUsage, chartData }: Props) => {
               chartData?.compOff?.length ? (
                 <MiniChart color='#4F46E5' data={chartData.compOff} />
               ) : (
-                <div className='flex justify-center items-center bg-indigo-50 rounded-full w-14 h-14'>
+                <div className='flex h-14 w-14 items-center justify-center rounded-full bg-muted'>
                   <CalendarClock
                     size={28}
-                    className='text-indigo-600'
+                    className='text-primary'
                     strokeWidth={1.5}
                   />
                 </div>

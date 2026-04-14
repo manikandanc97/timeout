@@ -4,6 +4,7 @@ const VIEW_ROLES = new Set(['ADMIN', 'MANAGER', 'HR']);
 const MARK_PAID_ROLES = new Set(['ADMIN', 'MANAGER']);
 
 const toNumber = (value) => Number(value ?? 0);
+const toMoney = (value) => Math.round((toNumber(value) + Number.EPSILON) * 100) / 100;
 
 export const listPayroll = async (req, res) => {
   try {
@@ -178,7 +179,9 @@ export const listPayroll = async (req, res) => {
           email: user.email ?? null,
           department: user.team?.department?.name ?? null,
           employeeActive: Boolean(user.isActive),
+          yearlyGrossSalary: 0,
           basicSalary: 0,
+          hra: 0,
           allowance: 0,
           deductions: 0,
           bonus: 0,
@@ -208,16 +211,27 @@ export const listPayroll = async (req, res) => {
         email: row.user?.email ?? null,
         department: row.user?.team?.department?.name ?? null,
         employeeActive: Boolean(row.user?.isActive ?? true),
-        basicSalary: row.basicSalary,
-        allowance: row.allowance,
-        deductions,
-        bonus: row.bonus,
-        pf: row.pf,
-        tax: row.tax,
-        professionalTax: row.professionalTax,
+        yearlyGrossSalary: toNumber(row.yearlyGrossSalary),
+        basicSalary: toNumber(row.basicSalary),
+        hra: toNumber(row.hra),
+        allowance: toNumber(row.allowance),
+        deductions: toMoney(deductions),
+        bonus: toNumber(row.bonus),
+        pf: toNumber(row.pf),
+        tax: toNumber(row.tax),
+        professionalTax: toNumber(row.professionalTax),
         lopDays: toNumber(row.lopDays),
         lopAmount,
-        netSalary: row.netSalary,
+        netSalary: toMoney(
+          Math.max(
+            toNumber(row.basicSalary) +
+              toNumber(row.hra) +
+              toNumber(row.allowance) +
+              toNumber(row.bonus) -
+              deductions,
+            0,
+          ),
+        ),
         status: row.status,
         paidDate: row.paidDate ? row.paidDate.toISOString() : null,
         month: row.month,
@@ -230,6 +244,82 @@ export const listPayroll = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to load payroll' });
+  }
+};
+
+export const listMyPayslips = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const userId = req.user.id;
+    if (organizationId == null || userId == null) {
+      return res.status(400).json({ message: 'Missing organization or user' });
+    }
+
+    const rows = await prisma.payroll.findMany({
+      where: {
+        organizationId,
+        userId,
+        status: 'PAID',
+      },
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    const payslips = rows.map((row) => {
+      const lopAmount = toNumber(row.lopAmount);
+      const deductions =
+        toNumber(row.pf) +
+        toNumber(row.tax) +
+        toNumber(row.professionalTax) +
+        lopAmount;
+      return {
+        id: row.id,
+        userId: row.userId,
+        employeeName: row.user?.name ?? 'Employee',
+        email: row.user?.email ?? null,
+        employeeActive: Boolean(row.user?.isActive ?? true),
+        yearlyGrossSalary: toNumber(row.yearlyGrossSalary),
+        basicSalary: toNumber(row.basicSalary),
+        hra: toNumber(row.hra),
+        allowance: toNumber(row.allowance),
+        deductions: toMoney(deductions),
+        bonus: toNumber(row.bonus),
+        pf: toNumber(row.pf),
+        tax: toNumber(row.tax),
+        professionalTax: toNumber(row.professionalTax),
+        lopDays: toNumber(row.lopDays),
+        lopAmount,
+        netSalary: toMoney(
+          Math.max(
+            toNumber(row.basicSalary) +
+              toNumber(row.hra) +
+              toNumber(row.allowance) +
+              toNumber(row.bonus) -
+              deductions,
+            0,
+          ),
+        ),
+        status: row.status,
+        paidDate: row.paidDate ? row.paidDate.toISOString() : null,
+        month: row.month,
+        year: row.year,
+        payrollAdded: true,
+      };
+    });
+
+    return res.json({ payslips });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to load payslips' });
   }
 };
 
@@ -330,73 +420,3 @@ export const markPayrollPaidBulk = async (req, res) => {
   }
 };
 
-export const generatePayrollSlip = async (req, res) => {
-  try {
-    if (!VIEW_ROLES.has(String(req.user.role ?? ''))) {
-      return res.status(403).json({ message: 'Not allowed to generate payslip' });
-    }
-    const organizationId = req.user.organizationId;
-    if (organizationId == null) {
-      return res.status(400).json({ message: 'Missing organization' });
-    }
-    const payrollId = Number(req.params.payrollId);
-    if (Number.isNaN(payrollId)) {
-      return res.status(400).json({ message: 'Invalid payroll id' });
-    }
-
-    const existing = await prisma.payroll.findFirst({
-      where: { id: payrollId, organizationId },
-      include: { user: { select: { name: true } } },
-    });
-    if (!existing) {
-      return res.status(404).json({ message: 'Payroll record not found' });
-    }
-
-    res.json({
-      message: `Payslip generated for ${existing.user?.name ?? 'employee'}`,
-      payrollId: existing.id,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to generate payslip' });
-  }
-};
-
-export const generatePayrollSlipBulk = async (req, res) => {
-  try {
-    if (!VIEW_ROLES.has(String(req.user.role ?? ''))) {
-      return res.status(403).json({ message: 'Not allowed to generate payslip' });
-    }
-    const organizationId = req.user.organizationId;
-    if (organizationId == null) {
-      return res.status(400).json({ message: 'Missing organization' });
-    }
-
-    const now = new Date();
-    const month = Number(req.body?.month ?? now.getMonth() + 1);
-    const year = Number(req.body?.year ?? now.getFullYear());
-    if (!Number.isFinite(month) || !Number.isFinite(year)) {
-      return res.status(400).json({ message: 'Invalid month or year' });
-    }
-
-    const existing = await prisma.payroll.findMany({
-      where: {
-        organizationId,
-        month,
-        year,
-        user: { isActive: true },
-      },
-      select: { id: true },
-    });
-
-    return res.json({
-      message: `Payslip generated for ${existing.length} employee(s)`,
-      generatedCount: existing.length,
-      month,
-      year,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to generate payslip' });
-  }
-};

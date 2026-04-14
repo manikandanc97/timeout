@@ -65,8 +65,8 @@ const LeaveBalance = ({ balance }: Props) => {
     setTooltip((prev) => ({ ...prev, visible: false }));
 
   return (
-    <div className="flex flex-col bg-white shadow-md p-5 rounded-2xl h-full">
-      <h2 className="mb-4 font-semibold text-xl">Leave Balance</h2>
+    <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md">
+      <h2 className="mb-4 text-xl font-semibold">Leave Balance</h2>
 
       <div
         ref={containerRef}
@@ -104,10 +104,10 @@ const LeaveBalance = ({ balance }: Props) => {
         </ResponsiveContainer>
 
         <div className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none">
-          <p className="text-gray-500 text-sm">
+          <p className="text-sm text-muted-foreground">
             {tooltip.visible ? tooltip.name : "Total"}
           </p>
-          <h3 className="font-bold text-3xl">
+          <h3 className="text-3xl font-bold text-card-foreground">
             {tooltip.visible ? tooltip.value : total}
           </h3>
         </div>
@@ -115,22 +115,22 @@ const LeaveBalance = ({ balance }: Props) => {
         {tooltip.visible && (
           <div
             ref={tooltipRef}
-            className="z-50 absolute flex items-center gap-2 bg-white shadow-lg px-3 py-2 border border-gray-100 rounded-xl text-sm whitespace-nowrap pointer-events-none"
+            className="pointer-events-none absolute z-50 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm whitespace-nowrap text-muted-foreground shadow-lg"
             style={{ left: 0, top: 0 }}
           >
             <span
               className="rounded-full w-2.5 h-2.5 shrink-0"
               style={{ backgroundColor: tooltip.color }}
             />
-            <span className="font-medium text-gray-600">
+            <span className="font-medium">
               {tooltip.name}
-              <strong className="ml-2 text-gray-800">{tooltip.value}</strong>
+              <strong className="ml-2 text-card-foreground">{tooltip.value}</strong>
             </span>
           </div>
         )}
       </div>
 
-      <hr className="mt-4 mb-2 border-gray-300" />
+      <hr className="mb-2 mt-4 border-border" />
 
       <div className="flex flex-wrap justify-center gap-4 mt-4">
         {data.map((item, index) => (
@@ -139,7 +139,7 @@ const LeaveBalance = ({ balance }: Props) => {
               className="rounded-full w-3 h-3"
               style={{ backgroundColor: COLORS[index % COLORS.length] }}
             />
-            <span className="text-sm">{item.name}</span>
+            <span className="text-sm text-muted-foreground">{item.name}</span>
           </div>
         ))}
       </div>

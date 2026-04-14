@@ -64,7 +64,7 @@ export default function LeaveRequestsTable({
           <col className='w-[18%]' />
         </colgroup>
         <thead className='sticky top-0 z-10'>
-          <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
+          <tr className='border-b border-border bg-muted/90 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
             <th className='px-3 py-3.5 text-left align-middle sm:px-4'>Employee</th>
             <th className='px-3 py-3.5 text-left align-middle sm:px-4'>Leave type</th>
             <th className='px-3 py-3.5 text-left align-middle sm:px-4'>From</th>
@@ -79,7 +79,7 @@ export default function LeaveRequestsTable({
             <tr>
               <td
                 colSpan={7}
-                className='px-3 py-16 text-center align-middle text-sm text-gray-500 sm:px-4 sm:py-24'
+                className='px-3 py-16 text-center align-middle text-sm text-muted-foreground sm:px-4 sm:py-24'
               >
                 No leave requests match your filters.
               </td>
@@ -92,9 +92,9 @@ export default function LeaveRequestsTable({
               return (
                 <tr
                   key={row.id}
-                  className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
+                  className='border-b border-border/60 transition-colors hover:bg-muted/50'
                 >
-                  <td className='min-w-0 px-3 py-2.5 text-left align-middle font-medium text-gray-900 sm:px-4'>
+                  <td className='min-w-0 px-3 py-2.5 text-left align-middle text-sm font-medium text-card-foreground sm:px-4'>
                     <span className='block truncate' title={name}>
                       {name}
                     </span>
@@ -106,13 +106,13 @@ export default function LeaveRequestsTable({
                       {typeCfg.label}
                     </span>
                   </td>
-                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-gray-700 sm:px-4'>
+                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-sm text-muted-foreground sm:px-4'>
                     {fmt(getLeaveStart(row))}
                   </td>
-                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-gray-700 sm:px-4'>
+                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-sm text-muted-foreground sm:px-4'>
                     {fmt(getLeaveEnd(row))}
                   </td>
-                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-gray-700 sm:px-4'>
+                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-sm text-muted-foreground sm:px-4'>
                     {workingDaysForLeaveRange(
                       getLeaveStart(row),
                       getLeaveEnd(row),
@@ -120,7 +120,7 @@ export default function LeaveRequestsTable({
                     )}{' '}
                     day(s)
                   </td>
-                  <td className='min-w-0 px-3 py-2.5 text-left align-middle text-gray-600 sm:px-4'>
+                  <td className='min-w-0 px-3 py-2.5 text-left align-middle text-sm text-muted-foreground sm:px-4'>
                     <span className='line-clamp-2 wrap-break-word text-left' title={row.reason}>
                       {row.reason || '—'}
                     </span>
@@ -158,7 +158,7 @@ export default function LeaveRequestsTable({
           onChange={(e) => setRejectReason(e.target.value)}
           rows={4}
           placeholder='Enter rejection reason'
-          className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none transition-colors focus:border-red-300 focus:ring-2 focus:ring-red-100'
+          className='w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-card-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring'
         />
         {!rejectReason.trim() ? (
           <p className='mt-2 text-xs text-rose-600'>Rejection reason is required.</p>

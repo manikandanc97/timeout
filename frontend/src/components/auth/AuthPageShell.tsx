@@ -52,8 +52,8 @@ const AuthPageShell = ({
         <div
           className={
             compact
-              ? 'rounded-2xl border border-gray-200/90 bg-white/95 p-5 shadow-[0_25px_50px_-12px_rgba(8,131,149,0.12)] ring-1 ring-black/5 backdrop-blur-sm sm:rounded-3xl sm:p-6'
-              : 'rounded-3xl border border-gray-200/90 bg-white/95 p-8 shadow-[0_25px_50px_-12px_rgba(8,131,149,0.12)] ring-1 ring-black/5 backdrop-blur-sm sm:p-10'
+              ? 'rounded-2xl border border-border bg-card/95 p-5 shadow-[0_25px_50px_-12px_rgba(8,131,149,0.12)] ring-1 ring-border/60 backdrop-blur-sm sm:rounded-3xl sm:p-6'
+              : 'rounded-3xl border border-border bg-card/95 p-8 shadow-[0_25px_50px_-12px_rgba(8,131,149,0.12)] ring-1 ring-border/60 backdrop-blur-sm sm:p-10'
           }
         >
           <div
@@ -64,8 +64,8 @@ const AuthPageShell = ({
             <h1
               className={
                 compact
-                  ? 'text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl'
-                  : 'text-2xl font-semibold tracking-tight text-gray-900 sm:text-[1.75rem]'
+                  ? 'text-xl font-semibold tracking-tight text-card-foreground sm:text-2xl'
+                  : 'text-2xl font-semibold tracking-tight text-card-foreground sm:text-[1.75rem]'
               }
             >
               {title}
@@ -73,8 +73,8 @@ const AuthPageShell = ({
             <p
               className={
                 compact
-                  ? 'mx-auto max-w-md text-xs leading-snug text-gray-500 sm:text-sm'
-                  : 'mx-auto max-w-sm text-sm leading-relaxed text-gray-500'
+                  ? 'mx-auto max-w-md text-xs leading-snug text-muted-foreground sm:text-sm'
+                  : 'mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground'
               }
             >
               {subtitle}

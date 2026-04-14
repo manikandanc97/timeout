@@ -216,11 +216,11 @@ const recalculatePayrollForMonth = async ({
         userId,
         organizationId,
         type: { in: ['ANNUAL', 'SICK'] },
-        status: { in: ['PENDING', 'APPROVED'] },
+        status: 'APPROVED',
         startDate: { lte: monthEnd },
         endDate: { gte: monthStart },
       },
-      _sum: { lopAmount: true, lopDays: true },
+      _sum: { lopDays: true },
     }),
   ]);
 
@@ -229,8 +229,10 @@ const recalculatePayrollForMonth = async ({
   const monthlyNet = getMonthlyNetFromSalaryStructure(salaryStructure);
   if (monthlyNet == null || !Number.isFinite(monthlyNet)) return;
 
-  const lopDeduction = Number(lopAgg?._sum?.lopAmount ?? 0);
   const lopDays = Number(lopAgg?._sum?.lopDays ?? 0);
+  const monthDays = new Date(year, month, 0).getDate();
+  const dailyRate = monthDays > 0 ? monthlyNet / monthDays : 0;
+  const lopDeduction = round2(Math.max(lopDays, 0) * Math.max(dailyRate, 0));
   const netSalary = Math.max(round2(monthlyNet - lopDeduction), 0);
 
   const existing = await prisma.payroll.findUnique({

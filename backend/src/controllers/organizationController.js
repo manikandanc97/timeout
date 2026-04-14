@@ -4,6 +4,11 @@ import {
   DEFAULT_LEAVE_POLICY,
   validateLeavePolicy,
 } from '../lib/defaultLeavePolicy.js';
+import {
+  DEFAULT_ADMIN_SETTINGS,
+  DEFAULT_ORG_SETTINGS,
+  sanitizeAdminSettings,
+} from '../lib/adminSettings.js';
 
 export const getOrganizationStructure = async (req, res) => {
   try {
@@ -1078,7 +1083,8 @@ const computeNetSalary = (salary) =>
   toNumberOrZero(salary.bonus) -
   toNumberOrZero(salary.pf) -
   toNumberOrZero(salary.tax) -
-  toNumberOrZero(salary.professionalTax);
+  toNumberOrZero(salary.professionalTax) -
+  toNumberOrZero(salary.lopAmount);
 
 const startOfDay = (d) => {
   const x = new Date(d);
@@ -1286,6 +1292,8 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
       tax: toFiniteOrNull(req.body.tax) ?? derived?.tax ?? 0,
       professionalTax:
         toFiniteOrNull(req.body.professionalTax) ?? derived?.professionalTax ?? 0,
+      lopDays: Math.max(toNumberOrZero(req.body.lopDays), 0),
+      lopAmount: Math.max(toNumberOrZero(req.body.lopAmount), 0),
       effectiveFrom: resolveSalaryEffectiveDate(req.body.effectiveFrom),
     };
     if (!payload.effectiveFrom) {
@@ -1327,6 +1335,8 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
         pf: payload.pf,
         tax: payload.tax,
         professionalTax: payload.professionalTax,
+        lopDays: payload.lopDays,
+        lopAmount: payload.lopAmount,
         netSalary,
       },
       create: {
@@ -1342,6 +1352,8 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
         pf: payload.pf,
         tax: payload.tax,
         professionalTax: payload.professionalTax,
+        lopDays: payload.lopDays,
+        lopAmount: payload.lopAmount,
         netSalary,
         status: 'PENDING',
       },
@@ -1359,6 +1371,153 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to update salary structure' });
+  }
+};
+
+const serializeAdminSettingsResponse = (org) => {
+  const normalizedSettings = sanitizeAdminSettings(org.adminSettings);
+  return {
+    generalSettings: {
+      companyName: org.name ?? '',
+      companyEmail: org.email ?? '',
+      phoneNumber: org.phoneNumber ?? '',
+      officeAddress: org.officeAddress ?? '',
+      timezone: org.timezone ?? DEFAULT_ORG_SETTINGS.timezone,
+      currency: org.currency ?? DEFAULT_ORG_SETTINGS.currency,
+      dateFormat: org.dateFormat ?? DEFAULT_ORG_SETTINGS.dateFormat,
+    },
+    leavePolicySettings: normalizedSettings.leavePolicySettings,
+    payrollSettings: normalizedSettings.payrollSettings,
+    rolePermissions: normalizedSettings.rolePermissions,
+    themePreferences: normalizedSettings.themePreferences,
+  };
+};
+
+export const getAdminSettings = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        name: true,
+        email: true,
+        phoneNumber: true,
+        officeAddress: true,
+        timezone: true,
+        currency: true,
+        dateFormat: true,
+        adminSettings: true,
+      },
+    });
+    if (!org) {
+      return res.status(404).json({ message: 'Organization not found' });
+    }
+
+    return res.json(serializeAdminSettingsResponse(org));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Failed to load admin settings' });
+  }
+};
+
+export const updateAdminSettings = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const payload = req.body && typeof req.body === 'object' ? req.body : {};
+    const general = payload.generalSettings ?? {};
+    const companyName = String(general.companyName ?? '').trim();
+    const companyEmail = String(general.companyEmail ?? '').trim().toLowerCase();
+    if (!companyName) {
+      return res.status(400).json({ message: 'Company name is required' });
+    }
+    if (!companyEmail) {
+      return res.status(400).json({ message: 'Company email is required' });
+    }
+    const adminSettings = sanitizeAdminSettings({
+      leavePolicySettings: payload.leavePolicySettings,
+      payrollSettings: payload.payrollSettings,
+      rolePermissions: payload.rolePermissions,
+      themePreferences: payload.themePreferences,
+    });
+
+    const updated = await prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        name: companyName,
+        email: companyEmail,
+        phoneNumber: String(general.phoneNumber ?? '').trim(),
+        officeAddress: String(general.officeAddress ?? '').trim(),
+        timezone:
+          String(general.timezone ?? '').trim() || DEFAULT_ORG_SETTINGS.timezone,
+        currency:
+          String(general.currency ?? '').trim() || DEFAULT_ORG_SETTINGS.currency,
+        dateFormat:
+          String(general.dateFormat ?? '').trim() || DEFAULT_ORG_SETTINGS.dateFormat,
+        adminSettings,
+      },
+      select: {
+        name: true,
+        email: true,
+        phoneNumber: true,
+        officeAddress: true,
+        timezone: true,
+        currency: true,
+        dateFormat: true,
+        adminSettings: true,
+      },
+    });
+
+    return res.json(serializeAdminSettingsResponse(updated));
+  } catch (error) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      return res
+        .status(400)
+        .json({ message: 'Organization name or email already exists' });
+    }
+    return res.status(500).json({ message: 'Failed to save admin settings' });
+  }
+};
+
+export const resetAdminSettings = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const updated = await prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        timezone: DEFAULT_ORG_SETTINGS.timezone,
+        currency: DEFAULT_ORG_SETTINGS.currency,
+        dateFormat: DEFAULT_ORG_SETTINGS.dateFormat,
+        adminSettings: DEFAULT_ADMIN_SETTINGS,
+      },
+      select: {
+        name: true,
+        email: true,
+        phoneNumber: true,
+        officeAddress: true,
+        timezone: true,
+        currency: true,
+        dateFormat: true,
+        adminSettings: true,
+      },
+    });
+
+    return res.json(serializeAdminSettingsResponse(updated));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Failed to reset admin settings' });
   }
 };
 

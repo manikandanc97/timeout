@@ -12,6 +12,7 @@ import {
   Settings,
   BarChart3,
   Wallet,
+  ReceiptText,
 } from 'lucide-react';
 
 type MenuItem = {
@@ -24,6 +25,7 @@ export const employeeMenuList: MenuItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'My Leaves', href: '/leaves', icon: CalendarDays },
   { name: 'Apply Leave', href: '/apply', icon: FilePlus2 },
+  { name: 'Payslip', href: '/payslip', icon: ReceiptText },
   { name: 'Leave Policy', href: '/policy', icon: BookOpen },
 ];
 

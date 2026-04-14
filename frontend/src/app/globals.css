@@ -1,11 +1,77 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --- Brand + semantic palette (light / dark) --- */
 :root {
+  /* Brand */
   --primary-dark: #09637e;
   --primary: #088395;
   --accent: #7ab2b2;
+
+  /* App shell */
   --background: #ebf4f6;
   --foreground: #171717;
+
+  /* Surfaces */
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --muted: #eef2f6;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #088395;
+
+  /* Links */
+  --link: #2563eb;
+  --link-hover: #1d4ed8;
+
+  /* Status (badges, alerts, trend row) */
+  --success-muted: #ecfdf5;
+  --success-muted-foreground: #166534;
+  --danger-muted: #fef2f2;
+  --danger-muted-foreground: #b91c1c;
+  --warning-muted: #fff7ed;
+  --warning-muted-foreground: #c2410c;
+
+  /* Decorative icon chips (dashboard section headers) */
+  --icon-chip-info-bg: #eff6ff;
+  --icon-chip-info-fg: #2563eb;
+  --icon-chip-calendar-bg: #faf5ff;
+  --icon-chip-calendar-fg: #9333ea;
+
+  /* Skeleton placeholders */
+  --skeleton: #d1d9e0;
+}
+
+.dark {
+  --background: #0b0f12;
+  --foreground: #e8eef0;
+
+  --card: #141a20;
+  --card-foreground: #e8eef0;
+  --muted: #1a222a;
+  --muted-foreground: #94a3b8;
+  --border: #2a3540;
+  --input: #2a3540;
+  --ring: #4fd1c5;
+
+  --link: #60a5fa;
+  --link-hover: #93c5fd;
+
+  --success-muted: rgba(34, 197, 94, 0.14);
+  --success-muted-foreground: #86efac;
+  --danger-muted: rgba(248, 113, 113, 0.14);
+  --danger-muted-foreground: #fca5a5;
+  --warning-muted: rgba(251, 191, 36, 0.12);
+  --warning-muted-foreground: #fcd34d;
+
+  --icon-chip-info-bg: rgba(37, 99, 235, 0.18);
+  --icon-chip-info-fg: #93c5fd;
+  --icon-chip-calendar-bg: rgba(147, 51, 234, 0.16);
+  --icon-chip-calendar-fg: #d8b4fe;
+
+  --skeleton: #334155;
 }
 
 @theme inline {
@@ -14,6 +80,32 @@
   --color-accent: var(--accent);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+
+  --color-success-muted: var(--success-muted);
+  --color-success-muted-foreground: var(--success-muted-foreground);
+  --color-danger-muted: var(--danger-muted);
+  --color-danger-muted-foreground: var(--danger-muted-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-warning-muted-foreground: var(--warning-muted-foreground);
+
+  --color-icon-chip-info-bg: var(--icon-chip-info-bg);
+  --color-icon-chip-info-fg: var(--icon-chip-info-fg);
+  --color-icon-chip-calendar-bg: var(--icon-chip-calendar-bg);
+  --color-icon-chip-calendar-fg: var(--icon-chip-calendar-fg);
+
+  --color-skeleton: var(--skeleton);
+
   /* So Tailwind `font-sans` uses Geist from next/font (set on <body>). */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
@@ -21,7 +113,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  /* Match Next.js Geist fonts from root layout (see layout.tsx). */
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
@@ -36,17 +127,35 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: var(--border);
   border-radius: 10px;
-  opacity: 0.6;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+  background: var(--muted-foreground);
 }
 
-/* For Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--accent) transparent;
+  scrollbar-color: var(--border) transparent;
+}
+
+/** Scrollable regions that should match theme (e.g. leave lists). */
+.scroll-area-hrm {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scroll-area-hrm::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-area-hrm::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+
+.scroll-area-hrm::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
 }

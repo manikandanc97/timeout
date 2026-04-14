@@ -21,17 +21,17 @@ const getTodayDate = () => {
 
 const WelcomeCard = ({ name }: { name: string }) => {
   return (
-    <div className='relative flex h-full flex-col items-center justify-between overflow-hidden rounded-2xl border border-primary/25 bg-linear-to-r from-primary/10 via-primary/5 to-accent/10 p-8 shadow-sm md:flex-row md:p-10'>
+    <div className='relative flex h-full flex-col items-center justify-between overflow-hidden rounded-2xl border border-border bg-linear-to-r from-primary/10 via-primary/5 to-accent/10 p-8 shadow-sm md:flex-row md:p-10'>
       <div className='relative z-10 flex max-w-md flex-col items-start gap-4'>
         <div>
           <h1 className='text-lg font-semibold text-primary'>{getGreeting()}</h1>
 
-          <h2 className='text-3xl font-bold text-gray-900'>{name}</h2>
+          <h2 className='text-3xl font-bold text-card-foreground'>{name}</h2>
 
-          <p className='mt-1 text-sm text-gray-500'>{getTodayDate()}</p>
+          <p className='mt-1 text-sm text-muted-foreground'>{getTodayDate()}</p>
         </div>
 
-        <p className='mt-2 text-sm leading-relaxed text-gray-600'>
+        <p className='mt-2 text-sm leading-relaxed text-muted-foreground'>
           Manage your leaves, track your requests, and stay updated with your
           team’s availability, all in one place. Plan smart, work better
         </p>

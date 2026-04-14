@@ -88,22 +88,22 @@ function TeamBar({
   return (
     <div className='flex items-center gap-3'>
       <span
-        className='w-32 font-medium text-gray-700 text-xs truncate'
+        className='w-32 truncate text-xs font-medium text-card-foreground'
         title={teamName}
       >
         {teamName}
       </span>
       <div className='flex flex-1 items-center gap-2'>
         <div
-          className='flex-1 bg-gray-100 rounded-full overflow-hidden'
+          className='flex-1 overflow-hidden rounded-full bg-muted'
           style={{ height: 6 }}
         >
           <div
-            className='bg-teal-500 rounded-full h-full transition-all duration-700'
+            className='h-full rounded-full bg-primary transition-all duration-700'
             style={{ width: `${pct}%` }}
           />
         </div>
-        <span className='w-6 font-semibold tabular-nums text-gray-700 text-xs text-right'>
+        <span className='w-6 text-right text-xs font-semibold tabular-nums text-muted-foreground'>
           {count}
         </span>
       </div>
@@ -113,7 +113,7 @@ function TeamBar({
 
 function SectionSkeleton() {
   return (
-    <div className='bg-white shadow-sm border border-gray-100 rounded-2xl h-44 animate-pulse' />
+    <div className='h-44 animate-pulse rounded-2xl border border-border bg-card shadow-sm' />
   );
 }
 
@@ -160,7 +160,7 @@ export default function AdminHrInsights() {
 
   if (!data) {
     return (
-      <div className='bg-red-50/50 shadow-sm p-5 border border-red-100 rounded-2xl text-red-700 text-sm'>
+      <div className='rounded-2xl border border-danger-muted-foreground/25 bg-danger-muted p-5 text-sm text-danger-muted-foreground shadow-sm'>
         Could not load HR insights. Please refresh or sign in again.
       </div>
     );
@@ -178,7 +178,7 @@ export default function AdminHrInsights() {
         title='On leave today'
         subtitle={`${data.employeesOnLeaveToday.length} approved`}
         icon={Umbrella}
-        iconTileClass='bg-sky-50'
+        iconTileClass='bg-muted'
         iconClass='text-sky-600'
       >
         {data.employeesOnLeaveToday.length === 0 ? (
@@ -198,7 +198,7 @@ export default function AdminHrInsights() {
                     name={row.userName}
                     colorClass={getAvatarColor(row.userName)}
                   />
-                  <span className='font-medium text-gray-800 text-sm truncate'>
+                  <span className='truncate text-sm font-medium'>
                     {row.userName}
                   </span>
                 </div>
@@ -214,7 +214,7 @@ export default function AdminHrInsights() {
         title='Team headcount'
         subtitle='Employees by team'
         icon={UsersRound}
-        iconTileClass='bg-teal-50'
+        iconTileClass='bg-muted'
         iconClass='text-teal-600'
       >
         {data.teamEmployeeCounts.length === 0 ? (
@@ -242,7 +242,7 @@ export default function AdminHrInsights() {
         title='Upcoming birthdays'
         subtitle='Next 60 days'
         icon={Cake}
-        iconTileClass='bg-pink-50'
+        iconTileClass='bg-muted'
         iconClass='text-pink-500'
       >
         {data.upcomingBirthdays.length === 0 ? (
@@ -262,11 +262,11 @@ export default function AdminHrInsights() {
                     name={row.name}
                     colorClass={getAvatarColor(row.name)}
                   />
-                  <span className='font-medium text-gray-800 text-sm truncate'>
+                  <span className='truncate text-sm font-medium'>
                     {row.name}
                   </span>
                 </div>
-                <span className='bg-pink-50 px-2 py-0.5 rounded-lg ring-1 ring-pink-100 font-semibold tabular-nums text-[11px] text-pink-700 shrink-0'>
+                <span className='shrink-0 rounded-lg bg-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground ring-1 ring-border'>
                   {row.dateLabel}
                 </span>
               </li>
@@ -280,7 +280,7 @@ export default function AdminHrInsights() {
         title='New joiners'
         subtitle='This week (Mon–Sun)'
         icon={PartyPopper}
-        iconTileClass='bg-amber-50'
+        iconTileClass='bg-muted'
         iconClass='text-amber-600'
       >
         {data.newJoinersThisWeek.length === 0 ? (
@@ -300,11 +300,11 @@ export default function AdminHrInsights() {
                     name={row.name}
                     colorClass={getAvatarColor(row.name)}
                   />
-                  <span className='font-medium text-gray-800 text-sm truncate'>
+                  <span className='truncate text-sm font-medium'>
                     {row.name}
                   </span>
                 </div>
-                <span className='bg-amber-50 px-2 py-0.5 rounded-lg font-semibold text-[11px] text-amber-700 shrink-0'>
+                <span className='shrink-0 rounded-lg bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground ring-1 ring-border'>
                   {row.teamName}
                 </span>
               </li>

@@ -9,12 +9,12 @@ type Props = {
 
 const UpcomingHolidays = ({ holidays = [] }: Props) => {
   return (
-    <div className="flex flex-col bg-white shadow-md p-5 rounded-2xl h-full">
-      <div className="flex items-center gap-2 mb-6">
-        <div className="flex justify-center items-center bg-purple-50 rounded-lg w-8 h-8">
-          <CalendarDays size={18} className="text-purple-500" />
+    <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md">
+      <div className="mb-6 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-icon-chip-calendar-bg">
+          <CalendarDays size={18} className="text-icon-chip-calendar-fg" />
         </div>
-        <h2 className="font-semibold text-lg">Upcoming Holidays</h2>
+        <h2 className="text-lg font-semibold">Upcoming Holidays</h2>
       </div>
 
       <div className="flex flex-1 flex-col text-left">
@@ -23,12 +23,12 @@ const UpcomingHolidays = ({ holidays = [] }: Props) => {
             {holidays.map((holiday) => (
               <div
                 key={holiday.id}
-                className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-dashed border-gray-200 py-4 text-left last:border-0"
+                className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-dashed border-border py-4 text-left last:border-0"
               >
-                <span className="min-w-0 flex-1 font-medium text-gray-700 text-sm">
+                <span className="min-w-0 flex-1 text-sm font-medium">
                   {holiday.name}
                 </span>
-                <span className="shrink-0 text-gray-500 text-sm">
+                <span className="shrink-0 text-sm text-muted-foreground">
                   {new Date(holiday.date).toLocaleDateString("en-US", {
                     day: "numeric",
                     month: "short",
@@ -39,7 +39,7 @@ const UpcomingHolidays = ({ holidays = [] }: Props) => {
             ))}
           </div>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center text-gray-400">
+          <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center text-muted-foreground">
             <CalendarDays size={32} className="mb-3 opacity-20" />
             <p className="text-sm">No upcoming holidays</p>
           </div>

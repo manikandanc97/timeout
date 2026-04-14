@@ -1,10 +1,11 @@
 'use client';
 
 import Button from '@/components/ui/Button';
+import PayslipPreviewModal from '@/components/payroll/PayslipPreviewModal';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import type { PayrollRow } from '@/types/payroll';
-import { Download, Eye, ReceiptText, WalletCards } from 'lucide-react';
+import { Download, Eye, RotateCcw, WalletCards } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -44,15 +45,19 @@ export default function PayrollPageClient() {
   const canMarkPaid = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   const [rows, setRows] = useState<PayrollRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generatedPayslips, setGeneratedPayslips] = useState<Set<number>>(new Set());
   const [activePayslip, setActivePayslip] = useState<PayrollRow | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   const [editRow, setEditRow] = useState<PayrollRow | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
-  const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkMarkingPaid, setBulkMarkingPaid] = useState(false);
+  const [showAmounts, setShowAmounts] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAID' | 'UNPAID'>('ALL');
+  const [sortBy, setSortBy] = useState<
+    'NAME_ASC' | 'NAME_DESC' | 'STATUS' | 'MONTH_NEWEST' | 'MONTH_OLDEST'
+  >('NAME_ASC');
   const [autoCalc, setAutoCalc] = useState(true);
   const [editForm, setEditForm] = useState({
     yearlyGrossSalary: '',
@@ -63,6 +68,8 @@ export default function PayrollPageClient() {
     pf: '',
     tax: '',
     professionalTax: '',
+    lopDays: '',
+    lopAmount: '',
   });
 
   const loadPayroll = () => {
@@ -110,11 +117,6 @@ export default function PayrollPageClient() {
     };
   }, [rows]);
 
-  const bulkGenerateEligibleCount = useMemo(
-    () => rows.filter((row) => row.payrollAdded !== false && row.employeeActive !== false).length,
-    [rows],
-  );
-
   const bulkMarkPaidEligibleCount = useMemo(
     () =>
       rows.filter(
@@ -126,6 +128,35 @@ export default function PayrollPageClient() {
       ).length,
     [rows],
   );
+
+  const visibleRows = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    const filtered = rows.filter((row) => {
+      const matchesSearch =
+        query.length === 0 || row.employeeName.toLowerCase().includes(query);
+      const matchesStatus =
+        statusFilter === 'ALL'
+          ? true
+          : statusFilter === 'PAID'
+            ? row.status === 'PAID'
+            : row.status !== 'PAID';
+      return matchesSearch && matchesStatus;
+    });
+
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      if (sortBy === 'NAME_ASC') return a.employeeName.localeCompare(b.employeeName);
+      if (sortBy === 'NAME_DESC') return b.employeeName.localeCompare(a.employeeName);
+      if (sortBy === 'STATUS') return a.status.localeCompare(b.status);
+      const aMonthKey = a.year * 100 + a.month;
+      const bMonthKey = b.year * 100 + b.month;
+      if (sortBy === 'MONTH_OLDEST') return aMonthKey - bMonthKey;
+      return bMonthKey - aMonthKey;
+    });
+    return sorted;
+  }, [rows, searchTerm, statusFilter, sortBy]);
+  const hasActiveFilters =
+    searchTerm.trim().length > 0 || statusFilter !== 'ALL' || sortBy !== 'NAME_ASC';
 
   const markAsPaid = async (row: PayrollRow) => {
     if (row.payrollAdded === false) {
@@ -147,61 +178,6 @@ export default function PayrollPageClient() {
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message ?? 'Failed to mark payroll paid';
       toast.error(msg);
-    }
-  };
-
-  const generatePayslip = async (row: PayrollRow) => {
-    if (row.payrollAdded === false) {
-      toast.info('Payroll not added yet. Add salary in employee payroll details first.');
-      return;
-    }
-    try {
-      await api.post(`/payroll/${row.id}/generate-slip`);
-      setGeneratedPayslips((prev) => {
-        const next = new Set(prev);
-        next.add(row.id);
-        return next;
-      });
-      toast.success(`Payslip generated for ${row.employeeName}`);
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? 'Failed to generate payslip';
-      toast.error(msg);
-    }
-  };
-
-  const generateAllPayslips = async () => {
-    const eligibleRows = rows.filter(
-      (row) => row.payrollAdded !== false && row.employeeActive !== false,
-    );
-    if (eligibleRows.length === 0) {
-      toast.info('No eligible payroll records available for payslip generation');
-      return;
-    }
-    setBulkGenerating(true);
-    try {
-      const res = await api.post<{ generatedCount?: number; message?: string }>(
-        '/payroll/generate-slip/bulk',
-        {
-          month: selectedMonth,
-          year: selectedYear,
-        },
-      );
-      const generatedCount = Number(res.data?.generatedCount ?? eligibleRows.length);
-      setGeneratedPayslips((prev) => {
-        const next = new Set(prev);
-        eligibleRows.forEach((row) => next.add(row.id));
-        return next;
-      });
-      toast.success(res.data?.message ?? `Payslip generated for ${generatedCount} employee(s)`);
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Failed to generate payslips';
-      toast.error(msg);
-    } finally {
-      setBulkGenerating(false);
     }
   };
 
@@ -324,6 +300,8 @@ export default function PayrollPageClient() {
       pf: String((row as { pf?: number }).pf ?? 0),
       tax: String((row as { tax?: number }).tax ?? 0),
       professionalTax: String((row as { professionalTax?: number }).professionalTax ?? 0),
+      lopDays: String((row as { lopDays?: number }).lopDays ?? 0),
+      lopAmount: String((row as { lopAmount?: number }).lopAmount ?? 0),
     });
     setEditRow(row);
     setAutoCalc(true);
@@ -343,7 +321,9 @@ export default function PayrollPageClient() {
         }>;
       }>(`/organization/employees/${row.userId}/details`);
       const active = (res.data.salaryStructures ?? []).find((x) => x.isActive);
-      const source = active ?? row;
+      // For existing monthly payroll rows, always prefer that month's snapshot values.
+      // Only use active salary structure when payroll is not yet added for selected month.
+      const source = row.payrollAdded === false ? (active ?? row) : row;
       setEditForm({
         yearlyGrossSalary: String(
           (source as { yearlyGrossSalary?: number | null }).yearlyGrossSalary ?? '',
@@ -355,6 +335,8 @@ export default function PayrollPageClient() {
         pf: String((source as { pf?: number }).pf ?? 0),
         tax: String((source as { tax?: number }).tax ?? 0),
         professionalTax: String((source as { professionalTax?: number }).professionalTax ?? 0),
+        lopDays: String((source as { lopDays?: number }).lopDays ?? 0),
+        lopAmount: String((source as { lopAmount?: number }).lopAmount ?? 0),
       });
     } catch {
       setEditForm({
@@ -366,6 +348,8 @@ export default function PayrollPageClient() {
         pf: '0',
         tax: '0',
         professionalTax: '0',
+        lopDays: String(row.lopDays ?? 0),
+        lopAmount: String(row.lopAmount ?? 0),
       });
     } finally {
       setEditLoading(false);
@@ -399,6 +383,8 @@ export default function PayrollPageClient() {
       pf: String(Math.round(pf)),
       tax: String(Math.round(tax)),
       professionalTax: String(Math.round(professionalTax)),
+      lopDays: prev.lopDays,
+      lopAmount: prev.lopAmount,
     }));
   };
 
@@ -421,6 +407,8 @@ export default function PayrollPageClient() {
         pf: toNum(editForm.pf),
         tax: toNum(editForm.tax),
         professionalTax: toNum(editForm.professionalTax),
+        lopDays: toNum(editForm.lopDays),
+        lopAmount: toNum(editForm.lopAmount),
         effectiveFrom: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`,
       });
       toast.success('Payroll details updated');
@@ -440,6 +428,22 @@ export default function PayrollPageClient() {
     const n = Number(v);
     return Number.isFinite(n) ? n : 0;
   };
+  const computeLopAmountFromDays = (lopDaysRaw: string, form = editForm) => {
+    const lopDays = Math.max(toNum(lopDaysRaw), 0);
+    const monthlyNetBeforeLop =
+      toNum(form.basicSalary) +
+      toNum(form.hra) +
+      toNum(form.allowance) +
+      toNum(form.bonus) -
+      toNum(form.pf) -
+      toNum(form.tax) -
+      toNum(form.professionalTax);
+    const monthDays = new Date(selectedYear, selectedMonth, 0).getDate();
+    if (lopDays <= 0 || monthDays <= 0 || monthlyNetBeforeLop <= 0) return '0';
+    const dailyRate = monthlyNetBeforeLop / monthDays;
+    return String(Math.round((lopDays * dailyRate + Number.EPSILON) * 100) / 100);
+  };
+  const formatTableAmount = (value: number) => (showAmounts ? rupee.format(value) : '₹******');
   const computedEditNetSalary =
     toNum(editForm.basicSalary) +
     toNum(editForm.hra) +
@@ -447,7 +451,8 @@ export default function PayrollPageClient() {
     toNum(editForm.bonus) -
     toNum(editForm.pf) -
     toNum(editForm.tax) -
-    toNum(editForm.professionalTax);
+    toNum(editForm.professionalTax) -
+    toNum(editForm.lopAmount);
   const editPayoutDate = new Date(selectedYear, selectedMonth, 0);
 
   if (!canView) {
@@ -455,9 +460,9 @@ export default function PayrollPageClient() {
   }
 
   return (
-    <section className='relative flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white/90 shadow-xl'>
-      <div className='absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
-      <div className='absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-indigo-100 blur-3xl' />
+    <section className='relative isolate flex flex-col overflow-hidden rounded-3xl border border-border bg-card text-card-foreground shadow-xl'>
+      <div className='pointer-events-none absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl' />
+      <div className='pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl' />
 
       <div className='relative z-10 flex flex-col gap-3 p-4 sm:gap-4 sm:p-5'>
         <div className='flex shrink-0 flex-wrap items-start justify-between gap-3'>
@@ -466,13 +471,13 @@ export default function PayrollPageClient() {
               <WalletCards size={20} />
             </div>
             <div>
-              <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400'>
+              <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
                 Finance
               </p>
-              <h1 id='payroll-heading' className='text-2xl font-bold leading-tight text-gray-900'>
+              <h1 id='payroll-heading' className='text-2xl font-bold leading-tight'>
                 Payroll
               </h1>
-              <p className='mt-1 text-sm text-gray-500'>
+              <p className='mt-1 text-sm text-muted-foreground'>
                 Salary processing and payslip actions in one place.
               </p>
             </div>
@@ -481,7 +486,7 @@ export default function PayrollPageClient() {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className='rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm'
+              className='rounded-lg border border-input bg-card px-3 py-2 text-sm text-card-foreground'
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                 <option key={month} value={month}>
@@ -493,7 +498,7 @@ export default function PayrollPageClient() {
               type='number'
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className='w-24 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm'
+              className='w-24 rounded-lg border border-input bg-card px-3 py-2 text-sm text-card-foreground'
             />
           </div>
         </div>
@@ -502,31 +507,83 @@ export default function PayrollPageClient() {
           {CARD_CONFIG.map((card) => (
             <div
               key={card.key}
-              className={`rounded-2xl border border-gray-100 border-l-4 ${card.accent} bg-white p-3 shadow-sm sm:p-3.5`}
+              className={`rounded-2xl border border-border border-l-4 ${card.accent} bg-card p-3 shadow-sm sm:p-3.5`}
             >
-              <p className='text-[11px] font-medium uppercase tracking-wider text-gray-500 sm:text-xs'>
+              <p className='text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-xs'>
                 {card.label}
               </p>
-              <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
+              <p className='mt-2 text-xl font-bold tabular-nums tracking-tight sm:mt-2.5 sm:text-2xl'>
                 {summary[card.key]}
               </p>
             </div>
           ))}
         </section>
 
-        <section className='flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:gap-3.5 sm:p-4'>
-          <div className='flex items-center justify-end gap-2'>
+        <section className='flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-muted/25 p-3 shadow-sm sm:gap-3.5 sm:p-4'>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <input
+              type='text'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder='Search employee'
+              className='h-10 w-52 rounded-xl border border-input bg-card px-3 py-2 text-sm text-card-foreground outline-none placeholder:text-muted-foreground focus:border-primary'
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'ALL' | 'PAID' | 'UNPAID')}
+              className='h-10 rounded-xl border border-input bg-card px-3 py-2 text-sm text-card-foreground outline-none focus:border-primary'
+            >
+              <option value='ALL'>All</option>
+              <option value='PAID'>Paid</option>
+              <option value='UNPAID'>Unpaid</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) =>
+                setSortBy(
+                  e.target.value as
+                    | 'NAME_ASC'
+                    | 'NAME_DESC'
+                    | 'STATUS'
+                    | 'MONTH_NEWEST'
+                    | 'MONTH_OLDEST',
+                )
+              }
+              className='h-10 rounded-xl border border-input bg-card px-3 py-2 text-sm text-card-foreground outline-none focus:border-primary'
+            >
+              <option value='NAME_ASC'>Name (A-Z)</option>
+              <option value='NAME_DESC'>Name (Z-A)</option>
+              <option value='STATUS'>Status</option>
+              <option value='MONTH_NEWEST'>Month (Newest)</option>
+              <option value='MONTH_OLDEST'>Month (Oldest)</option>
+            </select>
+            <button
+              type='button'
+              aria-label='Clear all filters'
+              disabled={!hasActiveFilters}
+              onClick={() => {
+                if (!hasActiveFilters) return;
+                setSearchTerm('');
+                setStatusFilter('ALL');
+                setSortBy('NAME_ASC');
+              }}
+              className='inline-flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-danger-muted hover:text-danger-muted-foreground disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent disabled:hover:text-muted-foreground'
+            >
+              <RotateCcw size={14} />
+              Clear
+            </button>
             <Button
               type='button'
               variant='outline'
-              disabled={bulkGenerating || loading || bulkGenerateEligibleCount === 0}
-              onClick={() => void generateAllPayslips()}
+              className='h-10 rounded-xl! px-3! text-sm!'
+              onClick={() => setShowAmounts((prev) => !prev)}
             >
-              {bulkGenerating ? 'Generating...' : 'Generate All'}
+              {showAmounts ? 'Hide Amounts' : 'Show Amounts'}
             </Button>
             <Button
               type='button'
               variant='primary'
+              className='h-10 rounded-xl! px-3! text-sm!'
               disabled={
                 bulkMarkingPaid || loading || bulkMarkPaidEligibleCount === 0 || !canMarkPaid
               }
@@ -535,11 +592,11 @@ export default function PayrollPageClient() {
               {bulkMarkingPaid ? 'Marking...' : 'Mark Paid All'}
             </Button>
           </div>
-          <div className='flex w-full min-w-0 min-h-124 flex-col overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/40'>
+          <div className='flex min-h-124 w-full min-w-0 flex-col overflow-x-auto rounded-xl border border-border bg-muted/35'>
             <div className='w-full min-w-0 overflow-x-auto'>
               <table className='w-full min-w-[980px] border-collapse text-left text-sm'>
                 <thead className='sticky top-0 z-10'>
-                  <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
+                  <tr className='border-b border-border bg-muted/90 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
                     <th className='px-4 py-3.5 text-left'>Employee Name</th>
                     <th className='px-4 py-3.5 text-left'>Basic</th>
                     <th className='px-4 py-3.5 text-left'>Allowance</th>
@@ -553,18 +610,18 @@ export default function PayrollPageClient() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={8} className='px-4 py-16 text-center text-sm text-gray-500'>
+                      <td colSpan={8} className='px-4 py-16 text-center text-sm text-muted-foreground'>
                         Loading payroll...
                       </td>
                     </tr>
-                  ) : rows.length === 0 ? (
+                  ) : visibleRows.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className='px-4 py-16 text-center text-sm text-gray-500'>
-                        No payroll records found for selected month.
+                      <td colSpan={8} className='px-4 py-16 text-center text-sm text-muted-foreground'>
+                        No employees match the selected filters.
                       </td>
                     </tr>
                   ) : (
-                    rows.map((row) => {
+                    visibleRows.map((row) => {
                     const isDeactivated = row.employeeActive === false;
                     const statusClass =
                       isDeactivated
@@ -577,39 +634,25 @@ export default function PayrollPageClient() {
                     return (
                       <tr
                         key={row.id}
-                        className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
+                        className='border-b border-border/60 transition-colors hover:bg-muted/50'
                       >
-                        <td className='px-4 py-2 text-left align-top font-medium text-gray-900'>
+                        <td className='px-4 py-2 text-left align-top font-medium text-card-foreground'>
                           {row.employeeName}
                         </td>
-                        <td className='px-4 py-2 text-left align-top text-gray-700'>
-                          {rupee.format(row.basicSalary)}
+                        <td className='px-4 py-2 text-left align-top text-muted-foreground'>
+                          {formatTableAmount(row.basicSalary)}
                         </td>
-                        <td className='px-4 py-2 text-left align-top text-gray-700'>
-                          {rupee.format(row.allowance)}
+                        <td className='px-4 py-2 text-left align-top text-muted-foreground'>
+                          {formatTableAmount(row.allowance)}
                         </td>
                         <td className='px-4 py-2 text-left align-top text-rose-700'>
-                          <div className='flex flex-col gap-0.5'>
-                            <span>{row.lopDays ?? 0} day(s)</span>
-                            {row.lopAmount && row.lopAmount > 0 ? (
-                              <span className='text-[10px] text-rose-600'>
-                                - {rupee.format(row.lopAmount)}
-                              </span>
-                            ) : null}
-                          </div>
+                          <span>{row.lopDays ?? 0} day(s)</span>
                         </td>
-                        <td className='px-4 py-2 text-left align-top text-gray-700'>
-                          <div className='flex flex-col gap-0.5'>
-                            <span>{rupee.format(row.deductions)}</span>
-                            {row.lopAmount && row.lopAmount > 0 ? (
-                              <span className='text-[10px] text-gray-500'>
-                                Includes LOP deduction
-                              </span>
-                            ) : null}
-                          </div>
+                        <td className='px-4 py-2 text-left align-top text-muted-foreground'>
+                          <span>{formatTableAmount(row.deductions)}</span>
                         </td>
-                        <td className='px-4 py-2 text-left align-top font-semibold text-gray-900'>
-                          {rupee.format(row.netSalary)}
+                        <td className='px-4 py-2 text-left align-top font-semibold text-card-foreground'>
+                          {formatTableAmount(row.netSalary)}
                         </td>
                         <td className='px-4 py-2 text-left align-top'>
                           {isDeactivated ? (
@@ -670,18 +713,6 @@ export default function PayrollPageClient() {
                               type='button'
                               variant='outline'
                               className='rounded-md! px-2! py-1.5! text-xs!'
-                              disabled={row.payrollAdded === false || isDeactivated}
-                              onClick={() => generatePayslip(row)}
-                            >
-                              <span className='flex items-center gap-1'>
-                                <ReceiptText size={14} />
-                                {generatedPayslips.has(row.id) ? 'Generated' : 'Generate'}
-                              </span>
-                            </Button>
-                            <Button
-                              type='button'
-                              variant='outline'
-                              className='rounded-md! px-2! py-1.5! text-xs!'
                               disabled={
                                 row.status === 'PAID' ||
                                 !canMarkPaid ||
@@ -717,122 +748,12 @@ export default function PayrollPageClient() {
       </div>
 
       {activePayslip ? (
-        <div className='fixed inset-0 z-100 flex items-center justify-center p-4'>
-          <button
-            type='button'
-            aria-label='Close payslip preview'
-            className='absolute inset-0 bg-black/40 backdrop-blur-[2px]'
-            onClick={() => setActivePayslip(null)}
-          />
-          <div className='relative z-10 w-full max-w-3xl rounded-2xl border border-gray-100 bg-white p-5 shadow-xl'>
-            <h2 className='text-lg font-bold text-gray-900'>Payslip preview</h2>
-            <p className='mt-1 text-sm text-gray-500'>
-              {activePayslip.employeeName} - {summary.currentMonth}
-            </p>
-            <div className='mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2'>
-              <div className='rounded-lg bg-indigo-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-indigo-700'>Net salary</p>
-                <p className='mt-1 font-semibold text-indigo-900'>
-                  {rupee.format(activePayslip.netSalary)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-rose-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-rose-700'>LOP details</p>
-                <p className='mt-1 text-sm text-rose-800'>
-                  Days: <span className='font-semibold'>{activePayslip.lopDays ?? 0}</span>
-                </p>
-                <p className='mt-1 text-sm text-rose-800'>
-                  Deduction:{' '}
-                  <span className='font-semibold'>- {rupee.format(activePayslip.lopAmount ?? 0)}</span>
-                </p>
-              </div>
-            </div>
-            <div className='mt-4 grid grid-cols-2 gap-3 text-sm'>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>Basic</p>
-                <p className='mt-1 font-semibold text-gray-900'>
-                  {rupee.format(activePayslip.basicSalary)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>HRA</p>
-                <p className='mt-1 font-semibold text-gray-900'>
-                  {rupee.format(activePayslip.hra ?? 0)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>Allowance</p>
-                <p className='mt-1 font-semibold text-gray-900'>
-                  {rupee.format(activePayslip.allowance)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>Bonus</p>
-                <p className='mt-1 font-semibold text-gray-900'>
-                  {rupee.format(activePayslip.bonus ?? 0)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>PF</p>
-                <p className='mt-1 font-semibold text-gray-900'>
-                  {rupee.format(activePayslip.pf ?? 0)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>Tax</p>
-                <p className='mt-1 font-semibold text-gray-900'>
-                  {rupee.format(activePayslip.tax ?? 0)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>Professional tax</p>
-                <p className='mt-1 font-semibold text-gray-900'>
-                  {rupee.format(activePayslip.professionalTax ?? 0)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>LOP deduction</p>
-                <p className='mt-1 font-semibold text-rose-700'>
-                  - {rupee.format(activePayslip.lopAmount ?? 0)}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>Deductions</p>
-                <p className='mt-1 font-semibold text-gray-900'>
-                  {rupee.format(
-                    (activePayslip.pf ?? 0) +
-                      (activePayslip.tax ?? 0) +
-                      (activePayslip.professionalTax ?? 0) +
-                      (activePayslip.lopAmount ?? 0),
-                  )}
-                </p>
-              </div>
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>Gross salary</p>
-                <p className='mt-1 font-bold text-gray-900'>
-                  {rupee.format(
-                    activePayslip.basicSalary +
-                      (activePayslip.hra ?? 0) +
-                      activePayslip.allowance +
-                      (activePayslip.bonus ?? 0),
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className='mt-5 flex justify-end gap-2'>
-              <Button type='button' variant='outline' onClick={() => setActivePayslip(null)}>
-                Close
-              </Button>
-              <Button
-                type='button'
-                variant='primary'
-                onClick={() => downloadPayslipPdf(activePayslip)}
-              >
-                Download PDF
-              </Button>
-            </div>
-          </div>
-        </div>
+        <PayslipPreviewModal
+          row={activePayslip}
+          monthLabel={summary.currentMonth}
+          onClose={() => setActivePayslip(null)}
+          onDownload={downloadPayslipPdf}
+        />
       ) : null}
 
       {editRow ? (
@@ -845,14 +766,14 @@ export default function PayrollPageClient() {
               if (!editSaving) setEditRow(null);
             }}
           />
-          <div className='relative z-10 w-full max-w-2xl rounded-2xl border border-gray-100 bg-white p-5 shadow-xl'>
-            <h3 className='text-lg font-bold text-gray-900'>
+          <div className='relative z-10 w-full max-w-2xl rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-xl'>
+            <h3 className='text-lg font-bold'>
               {editRow.payrollAdded === false ? 'Add payroll details' : 'Edit payroll details'}
             </h3>
-            <p className='mt-1 text-sm text-gray-500'>{editRow.employeeName}</p>
+            <p className='mt-1 text-sm text-muted-foreground'>{editRow.employeeName}</p>
             <div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2'>
               <label className='text-sm sm:col-span-2'>
-                <span className='mb-1 block text-xs uppercase text-gray-500'>
+                <span className='mb-1 block text-xs uppercase text-muted-foreground'>
                   Yearly Gross Salary
                 </span>
                 <input
@@ -867,7 +788,7 @@ export default function PayrollPageClient() {
                     }
                   }}
                   disabled={editLoading}
-                  className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary'
+                  className='w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-card-foreground outline-none focus:border-primary'
                 />
               </label>
               {(
@@ -879,18 +800,29 @@ export default function PayrollPageClient() {
                   ['pf', 'PF'],
                   ['tax', 'Tax'],
                   ['professionalTax', 'Professional Tax'],
+                  ['lopDays', 'LOP Days'],
+                  ['lopAmount', 'LOP Amount'],
                 ] as const
               ).map(([key, label]) => (
                 <label key={key} className='text-sm'>
-                  <span className='mb-1 block text-xs uppercase text-gray-500'>{label}</span>
+                  <span className='mb-1 block text-xs uppercase text-muted-foreground'>{label}</span>
                   <input
                     type='number'
                     value={editForm[key]}
-                    onChange={(e) =>
-                      setEditForm((prev) => ({ ...prev, [key]: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      if (key === 'lopDays') {
+                        setEditForm((prev) => ({
+                          ...prev,
+                          lopDays: next,
+                          lopAmount: computeLopAmountFromDays(next, prev),
+                        }));
+                        return;
+                      }
+                      setEditForm((prev) => ({ ...prev, [key]: next }));
+                    }}
                     disabled={editLoading}
-                    className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary'
+                    className='w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-card-foreground outline-none focus:border-primary'
                   />
                 </label>
               ))}
@@ -903,7 +835,7 @@ export default function PayrollPageClient() {
                 onChange={(e) => setAutoCalc(e.target.checked)}
                 disabled={editLoading}
               />
-              <label htmlFor='autoCalc' className='text-xs text-gray-600'>
+              <label htmlFor='autoCalc' className='text-xs text-muted-foreground'>
                 Auto-calculate deduction and salary breakup from yearly gross
               </label>
             </div>

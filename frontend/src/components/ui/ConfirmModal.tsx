@@ -68,12 +68,14 @@ export default function ConfirmModal({
         role='dialog'
         aria-modal='true'
         aria-labelledby={titleId}
-        className='relative z-10 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-xl'
+        className='relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-xl'
       >
-        <h2 id={titleId} className='font-bold text-gray-900 text-lg'>
+        <h2 id={titleId} className='text-lg font-bold'>
           {title}
         </h2>
-        <p className='mt-3 text-gray-600 text-sm leading-relaxed'>{message}</p>
+        <p className='mt-3 text-sm leading-relaxed text-muted-foreground'>
+          {message}
+        </p>
         {children ? <div className='mt-4'>{children}</div> : null}
 
         <div className='flex flex-wrap justify-end gap-2 mt-6'>

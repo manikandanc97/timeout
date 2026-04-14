@@ -204,9 +204,9 @@ export default function LeaveRequestsPageClient({
   };
 
   return (
-    <section className='relative flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white/90 shadow-xl'>
-      <div className='absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
-      <div className='absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-indigo-100 blur-3xl' />
+    <section className='relative isolate flex flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xl'>
+      <div className='pointer-events-none absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl' />
+      <div className='pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl' />
 
       <div className='relative z-10 flex flex-col gap-3 p-4 sm:gap-4 sm:p-5'>
         <div className='flex min-w-0 flex-col gap-3'>
@@ -220,7 +220,7 @@ export default function LeaveRequestsPageClient({
 
           <section
             aria-labelledby='requests-heading'
-            className='flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:gap-3.5 sm:p-4'
+            className='flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-muted/25 p-3 shadow-sm sm:gap-3.5 sm:p-4'
           >
               <RequestCategoryTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -241,7 +241,7 @@ export default function LeaveRequestsPageClient({
                     onClearFilters={req.clearFilters}
                   />
 
-                  <div className='flex w-full min-w-0 min-h-124 flex-col overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/40'>
+                  <div className='flex min-h-124 w-full min-w-0 flex-col overflow-x-auto rounded-xl border border-border bg-muted/35'>
                     <LeaveRequestsTable
                       rows={req.pageSlice}
                       holidays={holidays}
@@ -317,13 +317,13 @@ export default function LeaveRequestsPageClient({
                       unstyled
                       disabled={!hasOtherFilters}
                       onClick={clearOtherFilters}
-                      className='ml-auto flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400'
+                      className='ml-auto flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-danger-muted hover:text-danger-muted-foreground disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground'
                     >
                       Clear filters
                     </Button>
                   </div>
 
-                  <div className='min-h-124 w-full min-w-0 overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/40'>
+                  <div className='min-h-124 w-full min-w-0 overflow-x-auto rounded-xl border border-border bg-muted/35'>
                     <table className='w-full min-w-xl table-fixed border-collapse text-left text-sm'>
                       {activeTab === 'PERMISSION' ? (
                         <colgroup>
@@ -342,7 +342,7 @@ export default function LeaveRequestsPageClient({
                         </colgroup>
                       )}
                       <thead className='sticky top-0 z-10'>
-                        <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
+                        <tr className='border-b border-border bg-muted/90 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
                           <th className='px-3 py-3.5 text-left sm:px-4'>Employee</th>
                           {activeTab === 'PERMISSION' ? (
                             <>
@@ -365,7 +365,7 @@ export default function LeaveRequestsPageClient({
                           <tr>
                             <td
                               colSpan={activeTab === 'PERMISSION' ? 5 : 5}
-                              className='px-3 py-16 text-center align-middle text-sm text-gray-500 sm:px-4 sm:py-24'
+                              className='px-3 py-16 text-center align-middle text-sm text-muted-foreground sm:px-4 sm:py-24'
                             >
                               No requests match your filters.
                             </td>
@@ -374,22 +374,22 @@ export default function LeaveRequestsPageClient({
                           (otherSlice as PermissionRequestWithEmployee[]).map((row) => (
                             <tr
                               key={row.id}
-                              className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
+                              className='border-b border-border/60 transition-colors hover:bg-muted/50'
                             >
-                              <td className='min-w-0 px-3 py-2 align-top font-medium text-gray-900 sm:px-4'>
+                              <td className='min-w-0 px-3 py-2 align-top text-sm font-medium text-card-foreground sm:px-4'>
                                 <span className='block truncate' title={row.user?.name ?? undefined}>
                                   {row.user?.name ?? '—'}
                                 </span>
                               </td>
-                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-gray-700 sm:px-4'>
+                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>
                                 {formatDate(row.date)}
                               </td>
-                              <td className='min-w-0 px-3 py-2 align-top text-gray-700 sm:px-4'>
+                              <td className='min-w-0 px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>
                                 {row.startTimeMinutes != null && row.endTimeMinutes != null
                                   ? `${formatTimeFromMinutes(row.startTimeMinutes)} - ${formatTimeFromMinutes(row.endTimeMinutes)}`
                                   : '—'}
                               </td>
-                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-gray-700 sm:px-4'>
+                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>
                                 {formatMinutes(row.durationMinutes)}
                               </td>
                               <td className='min-w-0 px-3 py-2 pr-5 align-top sm:pl-4 sm:pr-6'>
@@ -413,17 +413,17 @@ export default function LeaveRequestsPageClient({
                           (otherSlice as CompOffRequestWithEmployee[]).map((row) => (
                             <tr
                               key={row.id}
-                              className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
+                              className='border-b border-border/60 transition-colors hover:bg-muted/50'
                             >
-                              <td className='min-w-0 px-3 py-2 align-top font-medium text-gray-900 sm:px-4'>
+                              <td className='min-w-0 px-3 py-2 align-top text-sm font-medium text-card-foreground sm:px-4'>
                                 <span className='block truncate' title={row.user?.name ?? undefined}>
                                   {row.user?.name ?? '—'}
                                 </span>
                               </td>
-                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-gray-700 sm:px-4'>
+                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>
                                 {formatDate(row.workDate)}
                               </td>
-                              <td className='min-w-0 px-3 py-2 align-top text-gray-600 sm:px-4'>
+                              <td className='min-w-0 px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>
                                 <span className='line-clamp-2 wrap-break-word' title={row.reason}>
                                   {row.reason || '—'}
                                 </span>

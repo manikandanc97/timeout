@@ -40,9 +40,9 @@ export default function EmployeesPageClient() {
 
   return (
     <>
-      <section className='relative flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white/90 shadow-xl'>
-        <div className='absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
-        <div className='absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-indigo-100 blur-3xl' />
+      <section className='relative isolate flex flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xl'>
+        <div className='pointer-events-none absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl' />
+        <div className='pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl' />
 
         <div className='relative z-10 flex flex-col gap-3 p-4 sm:gap-4 sm:p-5'>
           <div className='flex min-w-0 flex-col gap-3'>
@@ -59,7 +59,7 @@ export default function EmployeesPageClient() {
 
             <section
               aria-labelledby='employees-heading'
-              className='flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:gap-3.5 sm:p-4'
+              className='flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-muted/25 p-3 shadow-sm sm:gap-3.5 sm:p-4'
             >
               <EmployeesFilterBar
                 searchTerm={dir.searchTerm}
@@ -78,7 +78,7 @@ export default function EmployeesPageClient() {
                 onAddEmployee={() => dir.setAddOpen(true)}
               />
 
-              <div className='flex w-full min-w-0 min-h-124 flex-col overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/40'>
+              <div className='flex min-h-124 w-full min-w-0 flex-col overflow-x-auto rounded-xl border border-border bg-muted/35'>
                 <EmployeesTable
                   loading={dir.loadingList}
                   rows={dir.pageSlice}

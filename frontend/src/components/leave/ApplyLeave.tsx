@@ -319,27 +319,27 @@ const ApplyLeave = ({
   };
 
   return (
-    <div className='relative bg-white/90 shadow-xl border border-gray-100 rounded-3xl overflow-hidden'>
-      <div className='-top-24 -left-32 absolute bg-primary/10 blur-3xl rounded-full w-64 h-64' />
-      <div className='-right-20 -bottom-24 absolute bg-indigo-100 blur-3xl rounded-full w-64 h-64' />
-      <div className='z-10 relative flex flex-col gap-6 p-6'>
-        <div className='flex flex-wrap justify-between items-start gap-4 border-gray-100 border-b'>
+    <div className='relative isolate overflow-hidden rounded-3xl border border-border bg-card text-card-foreground shadow-xl'>
+      <div className='pointer-events-none absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl' />
+      <div className='pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl' />
+      <div className='relative z-10 flex flex-col gap-6 p-6'>
+        <div className='flex flex-wrap items-start justify-between gap-4 border-b border-border'>
           <div className='flex items-start gap-3'>
-            <div className='place-items-center grid bg-linear-to-br from-primary/15 via-primary/10 to-primary/5 shadow-inner shadow-primary/15 rounded-2xl w-12 h-12 text-primary'>
+            <div className='grid h-12 w-12 place-items-center rounded-2xl bg-linear-to-br from-primary/15 via-primary/10 to-primary/5 text-primary shadow-inner shadow-primary/15'>
               <CalendarClock size={20} />
             </div>
             <div>
-              <p className='font-semibold text-[11px] text-gray-400 uppercase tracking-[0.14em]'>
+              <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
                 Leave desk
               </p>
-              <h2 className='font-bold text-gray-900 text-2xl leading-tight'>
+              <h2 className='text-2xl font-bold leading-tight'>
                 Apply for leave
               </h2>
             </div>
           </div>
         </div>
 
-        <div className='flex items-center gap-2 rounded-xl border border-gray-100 bg-white/80 p-1'>
+        <div className='flex items-center gap-2 rounded-xl border border-border bg-muted/50 p-1'>
           <Button
             type='button'
             unstyled
@@ -347,7 +347,7 @@ const ApplyLeave = ({
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === 'LEAVE_APPLY'
                 ? 'bg-primary text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-muted-foreground hover:bg-muted'
             }`}
           >
             Leave apply
@@ -359,7 +359,7 @@ const ApplyLeave = ({
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === 'PERMISSION'
                 ? 'bg-primary text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-muted-foreground hover:bg-muted'
             }`}
           >
             Permission
@@ -371,7 +371,7 @@ const ApplyLeave = ({
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === 'COMP_OFF'
                 ? 'bg-primary text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-muted-foreground hover:bg-muted'
             }`}
           >
             Comp off

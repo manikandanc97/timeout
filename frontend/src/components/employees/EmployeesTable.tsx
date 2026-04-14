@@ -108,29 +108,25 @@ export default function EmployeesTable({
                     <td className='px-4 py-2 text-right align-top'>
                       {isAdmin && onEditEmployee && onRequestDeleteEmployee ? (
                         <div className='flex shrink-0 justify-end gap-0.5'>
-                          {isAdmin && onEditEmployee && onRequestDeleteEmployee ? (
-                            <>
-                              <Button
-                                type='button'
-                                variant='ghost'
-                                aria-label={`Edit ${row.name}`}
-                                onClick={() => onEditEmployee(row)}
-                                className='rounded-lg! p-2! text-gray-600 hover:bg-gray-200!'
-                              >
-                                <Pencil size={16} />
-                              </Button>
-                              <Button
-                                type='button'
-                                variant='ghost'
-                                aria-label={`Delete ${row.name}`}
-                                disabled={row.id === currentUserId}
-                                onClick={() => onRequestDeleteEmployee(row)}
-                                className='rounded-lg! p-2! text-gray-600 hover:bg-rose-50! hover:text-rose-700!'
-                              >
-                                <Trash2 size={16} />
-                              </Button>
-                            </>
-                          ) : null}
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            aria-label={`Edit ${row.name}`}
+                            onClick={() => onEditEmployee(row)}
+                            className='rounded-lg! p-2! text-gray-600 hover:bg-gray-200!'
+                          >
+                            <Pencil size={16} />
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            aria-label={`Delete ${row.name}`}
+                            disabled={row.id === currentUserId}
+                            onClick={() => onRequestDeleteEmployee(row)}
+                            className='rounded-lg! p-2! text-gray-600 hover:bg-rose-50! hover:text-rose-700!'
+                          >
+                            <Trash2 size={16} />
+                          </Button>
                         </div>
                       ) : (
                         <span className='text-xs text-gray-400'>—</span>

@@ -22,6 +22,12 @@ model Organization {
   id           Int          @id @default(autoincrement())
   name         String       @unique
   email        String       @unique
+  phoneNumber  String?
+  officeAddress String?
+  timezone     String       @default("Asia/Kolkata")
+  currency     String       @default("INR")
+  dateFormat   String       @default("DD/MM/YYYY")
+  adminSettings Json?
   /** Custom leave policy document (JSON); null = use built-in default. */
   leavePolicy  Json?
   createdAt    DateTime     @default(now())
@@ -253,7 +259,7 @@ model Payroll {
   organizationId Int
   month          Int
   year           Int
-  yearlyGrossSalary Float?
+  yearlyGrossSalary Float
   basicSalary    Float
   hra            Float         @default(0)
   allowance      Float         @default(0)

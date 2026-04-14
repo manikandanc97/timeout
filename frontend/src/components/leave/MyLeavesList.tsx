@@ -117,7 +117,7 @@ const MyLeavesList = ({
     ).length;
 
     return [
-      { label: 'Total', value: dedupedLeaves.length, color: 'text-slate-800' },
+      { label: 'Total', value: dedupedLeaves.length, color: 'text-card-foreground' },
       { label: 'Approved', value: approved, color: 'text-emerald-600' },
       { label: 'Pending', value: pending, color: 'text-amber-600' },
       { label: 'Rejected', value: rejected, color: 'text-rose-600' },
@@ -163,29 +163,29 @@ const MyLeavesList = ({
   }
 
   return (
-    <section className='relative bg-white/90 shadow-xl border border-gray-100 rounded-3xl h-full overflow-hidden'>
-      <div className='-top-24 -left-32 absolute bg-primary/10 blur-3xl rounded-full w-64 h-64' />
-      <div className='-right-20 -bottom-24 absolute bg-indigo-100 blur-3xl rounded-full w-64 h-64' />
+    <section className='relative isolate h-full overflow-hidden rounded-3xl border border-border bg-card shadow-xl'>
+      <div className='pointer-events-none absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl' />
+      <div className='pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl' />
 
-      <div className='z-10 relative flex flex-col gap-6 p-6'>
+      <div className='relative z-10 flex flex-col gap-6 p-6'>
         {/* Header section identical to ApplyLeave */}
-        <div className='flex flex-wrap justify-between items-start gap-4 border-gray-100 border-b'>
+        <div className='flex flex-wrap items-start justify-between gap-4 border-b border-border'>
           <div className='flex items-start gap-3'>
-            <div className='place-items-center grid bg-linear-to-br from-primary/15 via-primary/10 to-primary/5 shadow-inner shadow-primary/15 rounded-2xl w-12 h-12 text-primary'>
+            <div className='grid h-12 w-12 place-items-center rounded-2xl bg-linear-to-br from-primary/15 via-primary/10 to-primary/5 text-primary shadow-inner shadow-primary/15'>
               <CalendarDays size={20} />
             </div>
             <div>
-              <p className='font-semibold text-[11px] text-gray-400 uppercase tracking-[0.14em]'>
+              <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
                 Leave history
               </p>
-              <h2 className='font-bold text-gray-900 text-2xl leading-tight'>
+              <h2 className='text-2xl font-bold leading-tight text-card-foreground'>
                 Your requests at a glance
               </h2>
             </div>
           </div>
 
-          <div className='flex flex-wrap xl:justify-end items-center gap-2'>
-            <div className='inline-flex items-center gap-2 bg-white/80 shadow-sm px-3 py-1.5 border border-gray-200 rounded-full font-medium text-gray-600 text-xs'>
+          <div className='flex flex-wrap items-center gap-2 xl:justify-end'>
+            <div className='inline-flex items-center gap-2 rounded-full border border-border bg-muted/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm'>
               <Sparkles size={12} className='text-primary' />
               <span>
                 {filteredLeaves.length === dedupedLeaves.length &&
@@ -202,9 +202,9 @@ const MyLeavesList = ({
             {summaryCards.map((s) => (
               <div
                 key={s.label}
-                className='flex items-center gap-1.5 bg-white shadow-sm px-3 py-1.5 border border-gray-100 rounded-lg'
+                className='flex items-center gap-1.5 rounded-lg border border-border bg-muted/60 px-3 py-1.5 shadow-sm'
               >
-                <span className='font-medium text-gray-500 text-xs uppercase tracking-wider'>
+                <span className='text-xs font-medium uppercase tracking-wider text-muted-foreground'>
                   {s.label}
                 </span>
                 <span className={`text-sm font-bold ${s.color}`}>
@@ -220,7 +220,7 @@ const MyLeavesList = ({
                 type='button'
                 variant='ghost'
                 onClick={clearFilters}
-                className='flex items-center gap-1.5 hover:!bg-rose-50 px-3 rounded-xl font-medium hover:!text-rose-600 text-sm'
+                className='flex items-center gap-1.5 rounded-xl px-3 font-medium text-sm hover:!bg-danger-muted hover:!text-danger-muted-foreground'
               >
                 <RotateCcw size={14} />
                 Clear
@@ -229,7 +229,7 @@ const MyLeavesList = ({
             <div className='relative w-full sm:w-[260px]'>
               <Search
                 size={14}
-                className='top-1/2 left-3 z-10 absolute text-gray-400 -translate-y-1/2 pointer-events-none'
+                className='pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground'
               />
               <Input
                 id='search-leaves'
@@ -239,7 +239,7 @@ const MyLeavesList = ({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 hideLabel={true}
                 placeholder='Search requests...'
-                inputClassName='pl-9 h-10 py-0 bg-white hover:bg-gray-50'
+                inputClassName='h-10 py-0 pl-9'
               />
             </div>
 
@@ -256,7 +256,7 @@ const MyLeavesList = ({
                   { label: 'All Status', value: 'ALL' },
                   ...STATUS_FILTER_OPTIONS.filter((o) => o.value !== 'ALL'),
                 ]}
-                selectClassName='h-10 bg-white hover:bg-gray-50'
+                selectClassName='h-10'
               />
             </div>
 
@@ -276,13 +276,13 @@ const MyLeavesList = ({
                     value: String(o.value),
                   })),
                 ]}
-                selectClassName='h-10 bg-white hover:bg-gray-50'
+                selectClassName='h-10'
               />
             </div>
           </div>
         </div>
 
-        <div className='mt-2 pr-2 max-h-[calc(100vh-310px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'>
+        <div className='scroll-area-hrm mt-2 max-h-[calc(100vh-310px)] pr-2'>
           {filteredLeaves.length > 0 ? (
             <div className='flex flex-col gap-3'>
               {filteredLeaves.map((leave) => (

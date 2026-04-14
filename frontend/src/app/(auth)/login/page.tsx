@@ -7,45 +7,62 @@ import { setAccessToken } from '@/lib/token';
 import api from '@/services/api';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
+
+const LOGIN_TOAST_ID = 'auth-login-feedback';
 
 const Login = () => {
   const router = useRouter();
+  const submitLock = useRef(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email && !password) {
-      toast.error('Please fill in all fields');
+      toast.error('Please fill in all fields', { id: LOGIN_TOAST_ID });
       return;
     }
 
     if (!email) {
-      toast.error('Please enter your email');
+      toast.error('Please enter your email', { id: LOGIN_TOAST_ID });
       return;
     }
 
     if (!password) {
-      toast.error('Please enter your password');
+      toast.error('Please enter your password', { id: LOGIN_TOAST_ID });
       return;
     }
+
+    if (submitLock.current) return;
+    submitLock.current = true;
+    setIsSubmitting(true);
 
     try {
       const res = await api.post('/auth/login', { email, password });
       setAccessToken(res.data.accessToken);
-      toast.success('Login successful!');
+      const message =
+        typeof res.data?.message === 'string' && res.data.message.trim()
+          ? res.data.message
+          : 'Login successful';
+      toast.success(message, { id: LOGIN_TOAST_ID });
 
       router.push('/dashboard');
     } catch (error: unknown) {
       const axiosLike = error as {
         response?: { data?: { message?: string } };
       };
-      toast.error(axiosLike.response?.data?.message ?? 'Login failed');
+      toast.error(axiosLike.response?.data?.message ?? 'Login failed', {
+        id: LOGIN_TOAST_ID,
+      });
+    } finally {
+      submitLock.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -90,8 +107,12 @@ const Login = () => {
             </Button>
           }
         />
-        <Button type='submit' className='mt-1 w-full py-2.5 text-[15px]'>
-          Sign in
+        <Button
+          type='submit'
+          disabled={isSubmitting}
+          className='mt-1 w-full py-2.5 text-[15px]'
+        >
+          {isSubmitting ? 'Signing in…' : 'Sign in'}
         </Button>
         <p className='pt-1 text-center text-sm text-gray-500'>
           New here?{' '}

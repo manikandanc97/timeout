@@ -5,18 +5,18 @@ import type { LeaveStatus } from '@/types/leave';
 const STATUS_BADGE_CONFIG = {
   APPROVED: {
     label: 'Approved',
-    bg: 'bg-green-100',
-    text: 'text-emerald-700',
+    bg: 'bg-success-muted',
+    text: 'text-success-muted-foreground',
   },
   REJECTED: {
     label: 'Rejected',
-    bg: 'bg-red-100',
-    text: 'text-rose-700',
+    bg: 'bg-danger-muted',
+    text: 'text-danger-muted-foreground',
   },
   PENDING: {
     label: 'Pending',
-    bg: 'bg-orange-100',
-    text: 'text-amber-700',
+    bg: 'bg-warning-muted',
+    text: 'text-warning-muted-foreground',
   },
 } as const;
 

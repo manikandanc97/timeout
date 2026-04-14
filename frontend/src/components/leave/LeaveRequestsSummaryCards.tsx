@@ -21,7 +21,7 @@ const SUMMARY_CARDS: CardDef[] = [
     key: 'pending',
     label: 'Pending',
     accent: 'border-l-amber-400',
-    iconBg: 'bg-amber-50',
+    iconBg: 'bg-muted',
     iconColor: 'text-amber-600',
     Icon: Clock3,
   },
@@ -29,7 +29,7 @@ const SUMMARY_CARDS: CardDef[] = [
     key: 'approved',
     label: 'Approved',
     accent: 'border-l-emerald-400',
-    iconBg: 'bg-emerald-50',
+    iconBg: 'bg-muted',
     iconColor: 'text-emerald-600',
     Icon: CheckCircle2,
   },
@@ -37,7 +37,7 @@ const SUMMARY_CARDS: CardDef[] = [
     key: 'rejected',
     label: 'Rejected',
     accent: 'border-l-rose-400',
-    iconBg: 'bg-rose-50',
+    iconBg: 'bg-muted',
     iconColor: 'text-rose-600',
     Icon: XCircle,
   },
@@ -45,7 +45,7 @@ const SUMMARY_CARDS: CardDef[] = [
     key: 'total',
     label: 'Total',
     accent: 'border-l-slate-400',
-    iconBg: 'bg-slate-50',
+    iconBg: 'bg-muted',
     iconColor: 'text-slate-600',
     Icon: ListChecks,
   },
@@ -67,10 +67,10 @@ export default function LeaveRequestsSummaryCards({ summary }: Props) {
         return (
           <div
             key={c.key}
-            className={`rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3 shadow-sm sm:p-3.5`}
+            className={`rounded-2xl border border-border border-l-4 ${c.accent} bg-card p-3 text-card-foreground shadow-sm sm:p-3.5`}
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-[11px] font-medium uppercase tracking-wider text-gray-500 sm:text-xs'>
+              <span className='text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-xs'>
                 {c.label}
               </span>
               <div
@@ -79,7 +79,7 @@ export default function LeaveRequestsSummaryCards({ summary }: Props) {
                 <Icon size={17} strokeWidth={2} className={c.iconColor} />
               </div>
             </div>
-            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
+            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight sm:mt-2.5 sm:text-2xl'>
               {value}
             </p>
           </div>

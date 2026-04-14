@@ -199,33 +199,33 @@ const LeaveCalendarPanel = ({
       };
     if (isHoliday)
       return {
-        cell: `bg-amber-100 text-amber-700 font-semibold ${isHovered ? 'bg-amber-200' : ''}`,
+        cell: `bg-warning-muted font-semibold text-warning-muted-foreground ${isHovered ? 'opacity-90' : ''}`,
         dot: 'bg-amber-400',
       };
     if (showLeaveDays) {
       if (isRejected)
         return {
-          cell: `bg-red-50 text-red-700 font-semibold ${isHovered ? 'bg-red-100' : ''}`,
+          cell: `bg-danger-muted font-semibold text-danger-muted-foreground ${isHovered ? 'opacity-90' : ''}`,
           dot: 'bg-red-400',
         };
       if (isPending)
         return {
-          cell: `bg-blue-50 text-blue-700 font-semibold ${isHovered ? 'bg-blue-100' : ''}`,
+          cell: `bg-blue-500/15 font-semibold text-blue-800 ${isHovered ? 'bg-blue-500/25' : ''}`,
           dot: 'bg-blue-400',
         };
       if (isApproved)
         return {
-          cell: `bg-emerald-100 text-emerald-700 font-semibold ${isHovered ? 'bg-emerald-200' : ''}`,
+          cell: `bg-success-muted font-semibold text-success-muted-foreground ${isHovered ? 'opacity-90' : ''}`,
           dot: 'bg-emerald-400',
         };
     }
     if (isWeekend)
       return {
-        cell: `text-gray-300 ${isHovered ? 'bg-gray-100' : ''}`,
+        cell: `text-muted-foreground/50 ${isHovered ? 'bg-muted' : ''}`,
         dot: '',
       };
     return {
-      cell: `text-gray-700 ${isHovered ? 'bg-gray-100' : ''} hover:bg-gray-100`,
+      cell: `text-card-foreground ${isHovered ? 'bg-muted' : ''} hover:bg-muted`,
       dot: '',
     };
   };
@@ -256,7 +256,7 @@ const LeaveCalendarPanel = ({
 
   return (
     <div
-      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md ${rootClassName}`.trim()}
+      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-md ${rootClassName}`.trim()}
     >
       {/* Top banner */}
       <div className='shrink-0 bg-linear-to-br from-primary-dark via-primary to-accent px-5 pt-5 pb-6'>
@@ -302,13 +302,13 @@ const LeaveCalendarPanel = ({
         <div className='flex justify-between items-center mb-4'>
           <Button
             onClick={prevMonth}
-            className='flex justify-center items-center !bg-transparent hover:!bg-gray-100 !p-0 !rounded-lg w-8 h-8 !text-gray-500 hover:!text-primary transition-colors'
+            className='flex h-8 w-8 items-center justify-center !rounded-lg !bg-transparent !p-0 !text-muted-foreground transition-colors hover:!bg-muted hover:!text-primary'
           >
             <ChevronLeft size={18} />
           </Button>
 
           <div className='flex flex-col items-center'>
-            <span className='font-bold text-gray-800 text-base'>
+            <span className='text-base font-bold text-card-foreground'>
               {MONTHS[viewMonth]} {viewYear}
             </span>
             {!isCurrentMonth && (
@@ -324,7 +324,7 @@ const LeaveCalendarPanel = ({
 
           <Button
             onClick={nextMonth}
-            className='flex justify-center items-center !bg-transparent hover:!bg-gray-100 !p-0 !rounded-lg w-8 h-8 !text-gray-500 hover:!text-primary transition-colors'
+            className='flex h-8 w-8 items-center justify-center !rounded-lg !bg-transparent !p-0 !text-muted-foreground transition-colors hover:!bg-muted hover:!text-primary'
           >
             <ChevronRight size={18} />
           </Button>
@@ -338,7 +338,9 @@ const LeaveCalendarPanel = ({
               <div
                 key={d}
                 className={`text-center text-[11px] font-semibold py-1 ${
-                  d === 'Su' || d === 'Sa' ? 'text-gray-300' : 'text-gray-400'
+                  d === 'Su' || d === 'Sa'
+                    ? 'text-muted-foreground/45'
+                    : 'text-muted-foreground'
                 }`}
               >
                 {d}
@@ -367,7 +369,7 @@ const LeaveCalendarPanel = ({
           {/* Tooltip */}
           {tooltip && (
             <div
-              className='z-50 absolute bg-gray-800 shadow-lg px-2.5 py-1.5 rounded-lg text-white text-xs whitespace-nowrap pointer-events-none'
+              className='pointer-events-none absolute z-50 rounded-lg border border-border bg-foreground px-2.5 py-1.5 text-xs whitespace-nowrap text-background shadow-lg'
               style={{
                 left: tooltip.x,
                 top: tooltip.y,
@@ -376,7 +378,7 @@ const LeaveCalendarPanel = ({
             >
               {tooltip.text}
               <div
-                className='absolute bg-gray-800 w-2 h-2 rotate-45'
+                className='absolute h-2 w-2 rotate-45 bg-foreground'
                 style={{
                   left: '50%',
                   bottom: '-4px',
@@ -388,7 +390,7 @@ const LeaveCalendarPanel = ({
         </div>
 
         {/* Legend */}
-        <div className='mt-4 pt-3 border-gray-100 border-t'>
+        <div className='mt-4 border-t border-border pt-3'>
           <div
             className={
               showLeaveDays
@@ -403,19 +405,19 @@ const LeaveCalendarPanel = ({
                   { color: 'bg-blue-400', label: 'Pending leave' },
                   { color: 'bg-emerald-400', label: 'Approved leave' },
                   { color: 'bg-red-400', label: 'Rejected leave' },
-                  { color: 'bg-gray-200', label: 'Weekend' },
+                  { color: 'bg-border', label: 'Weekend' },
                 ]
               : [
                   { color: 'bg-primary', label: 'Today' },
                   { color: 'bg-amber-400', label: 'Holiday' },
-                  { color: 'bg-gray-200', label: 'Weekend' },
+                  { color: 'bg-border', label: 'Weekend' },
                 ]
             ).map((item) => (
               <div key={item.label} className='flex shrink-0 items-center gap-2'>
                 <span
                   className={`h-2.5 w-2.5 shrink-0 rounded-full ${item.color}`}
                 />
-                <span className='text-gray-500 text-xs'>{item.label}</span>
+                <span className='text-xs text-muted-foreground'>{item.label}</span>
               </div>
             ))}
           </div>

@@ -45,7 +45,7 @@ const Select: React.FC<SelectProps> = ({
         id={id}
         value={value}
         onChange={onChange}
-        className={`peer block w-full appearance-none rounded-md border border-gray-300 bg-transparent ${spacingClass} text-sm text-gray-900 outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 ${selectClassName}`}
+        className={`peer block w-full appearance-none rounded-md border border-input bg-card ${spacingClass} text-sm text-card-foreground outline-none transition-all duration-150 ease-out focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-0 ${selectClassName}`}
         aria-label={ariaLabel}
       >
         <option value=''>
@@ -61,7 +61,7 @@ const Select: React.FC<SelectProps> = ({
       {label && !hideLabel && (
         <label
           htmlFor={id}
-          className='pointer-events-none absolute left-3 top-4 z-10 origin-left -translate-y-4 scale-75 transform bg-white px-1 text-sm text-gray-500 duration-300 peer-focus:text-primary'
+          className='pointer-events-none absolute left-3 top-4 z-10 origin-left -translate-y-4 scale-75 transform bg-card px-1 text-sm text-muted-foreground duration-300 peer-focus:text-primary'
         >
           {label}
         </label>

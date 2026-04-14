@@ -37,8 +37,8 @@ const STAT_CARDS: StatConfig[] = [
     title: 'Total employees',
     icon: Users,
     colorScheme: {
-      bg: 'bg-white',
-      iconBg: 'bg-sky-50',
+      bg: 'bg-card',
+      iconBg: 'bg-muted',
       iconColor: 'text-sky-600',
       accent: 'border-l-sky-400',
     },
@@ -48,8 +48,8 @@ const STAT_CARDS: StatConfig[] = [
     title: 'Present today',
     icon: UserCheck,
     colorScheme: {
-      bg: 'bg-white',
-      iconBg: 'bg-emerald-50',
+      bg: 'bg-card',
+      iconBg: 'bg-muted',
       iconColor: 'text-emerald-600',
       accent: 'border-l-emerald-400',
     },
@@ -59,8 +59,8 @@ const STAT_CARDS: StatConfig[] = [
     title: 'On leave today',
     icon: Umbrella,
     colorScheme: {
-      bg: 'bg-white',
-      iconBg: 'bg-amber-50',
+      bg: 'bg-card',
+      iconBg: 'bg-muted',
       iconColor: 'text-amber-600',
       accent: 'border-l-amber-400',
     },
@@ -70,8 +70,8 @@ const STAT_CARDS: StatConfig[] = [
     title: 'Departments',
     icon: Building2,
     colorScheme: {
-      bg: 'bg-white',
-      iconBg: 'bg-rose-50',
+      bg: 'bg-card',
+      iconBg: 'bg-muted',
       iconColor: 'text-rose-500',
       accent: 'border-l-rose-400',
     },
@@ -88,12 +88,12 @@ const KPI_SKELETON_ACCENTS = [
 function SkeletonCard({ accentClass }: { accentClass: string }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl border border-gray-100 border-l-4 bg-white px-4 py-3.5 shadow-sm animate-pulse ${accentClass}`}
+      className={`flex items-center gap-3 rounded-2xl border border-border border-l-4 bg-card px-4 py-3.5 shadow-sm animate-pulse ${accentClass}`}
     >
-      <div className='h-10 w-10 shrink-0 rounded-xl bg-gray-200' />
+      <div className='h-10 w-10 shrink-0 rounded-xl bg-skeleton' />
       <div className='min-w-0 flex-1 space-y-1.5'>
-        <div className='h-7 w-12 rounded-md bg-gray-200' />
-        <div className='h-3 max-w-44 rounded bg-gray-100' />
+        <div className='h-7 w-12 rounded-md bg-skeleton' />
+        <div className='h-3 max-w-44 rounded bg-skeleton/70' />
       </div>
     </div>
   );
@@ -145,7 +145,7 @@ const AdminSummaryCards = () => {
         return (
           <div
             key={card.field}
-            className={`group relative overflow-hidden rounded-2xl border border-gray-100 border-l-4 ${cs.accent} ${cs.bg} px-4 py-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`}
+            className={`group relative overflow-hidden rounded-2xl border border-border border-l-4 ${cs.accent} ${cs.bg} px-4 py-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`}
           >
             <div className='pointer-events-none absolute -right-5 -top-6 h-20 w-20 rounded-full opacity-5 ring-1 ring-current' />
 
@@ -156,10 +156,10 @@ const AdminSummaryCards = () => {
                 <Icon size={19} strokeWidth={2} className={cs.iconColor} />
               </div>
               <div className='min-w-0 flex-1'>
-                <p className='text-2xl font-bold tabular-nums tracking-tight text-gray-900'>
+                <p className='text-2xl font-bold tabular-nums tracking-tight text-card-foreground'>
                   {value}
                 </p>
-                <p className='mt-0.5 text-xs font-medium leading-snug text-gray-500'>
+                <p className='mt-0.5 text-xs font-medium leading-snug text-muted-foreground'>
                   {card.title}
                 </p>
               </div>

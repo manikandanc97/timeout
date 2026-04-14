@@ -26,10 +26,10 @@ export function AdminDashboardPanel({
 }: AdminDashboardPanelProps) {
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md ${accentClass}`}
+      className={`flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition-shadow duration-200 hover:shadow-md ${accentClass}`}
     >
       {/* Panel Header */}
-      <div className='flex justify-between items-center px-5 py-4 border-gray-50 border-b'>
+      <div className='flex items-center justify-between border-b border-border px-5 py-4'>
         <div className='flex items-center gap-3'>
           <div
             className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconTileClass}`}
@@ -37,9 +37,9 @@ export function AdminDashboardPanel({
             <Icon size={18} strokeWidth={2} className={iconClass} aria-hidden />
           </div>
           <div>
-            <h2 className='font-semibold text-gray-900 text-sm'>{title}</h2>
+            <h2 className='text-sm font-semibold'>{title}</h2>
             {subtitle && (
-              <p className='font-medium text-[11px] text-gray-400 uppercase tracking-wide'>
+              <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
                 {subtitle}
               </p>
             )}
@@ -64,16 +64,16 @@ export function AdminDashboardEmpty({
   message,
 }: AdminDashboardEmptyProps) {
   return (
-    <div className='flex flex-col justify-center items-center bg-gray-50/70 px-6 py-10 rounded-xl text-center'>
-      <div className='flex justify-center items-center bg-white mb-3 rounded-xl ring-1 ring-gray-100 w-10 h-10'>
+    <div className='flex flex-col items-center justify-center rounded-xl bg-muted/70 px-6 py-10 text-center'>
+      <div className='mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-card ring-1 ring-border'>
         <Icon
           size={18}
           strokeWidth={1.5}
-          className='text-gray-300'
+          className='text-muted-foreground'
           aria-hidden
         />
       </div>
-      <p className='max-w-xs text-gray-400 text-sm leading-relaxed'>
+      <p className='max-w-xs text-sm leading-relaxed text-muted-foreground'>
         {message}
       </p>
     </div>

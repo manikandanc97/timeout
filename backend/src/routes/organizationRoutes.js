@@ -20,6 +20,9 @@ import {
   getLeavePolicy,
   updateLeavePolicy,
   resetLeavePolicy,
+  getAdminSettings,
+  updateAdminSettings,
+  resetAdminSettings,
 } from '../controllers/organizationController.js';
 
 const router = express.Router();
@@ -29,6 +32,9 @@ router.use(authMiddleware);
 router.get('/leave-policy', getLeavePolicy);
 router.put('/leave-policy', roleMiddleware('ADMIN'), updateLeavePolicy);
 router.post('/leave-policy/reset', roleMiddleware('ADMIN'), resetLeavePolicy);
+router.get('/admin-settings', roleMiddleware('ADMIN'), getAdminSettings);
+router.put('/admin-settings', roleMiddleware('ADMIN'), updateAdminSettings);
+router.post('/admin-settings/reset', roleMiddleware('ADMIN'), resetAdminSettings);
 
 router.get(
   '/structure',

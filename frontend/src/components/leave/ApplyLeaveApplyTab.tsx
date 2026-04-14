@@ -87,10 +87,10 @@ const ApplyLeaveApplyTab = ({
   >
     <div className='min-w-0 space-y-5'>
       <div className='gap-4 grid'>
-        <section className='overflow-hidden bg-white/80 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
+        <section className='overflow-hidden rounded-2xl border border-border bg-card/90 p-4 shadow-sm backdrop-blur-sm md:p-5'>
           <div className='flex justify-between items-center gap-3'>
             <div>
-              <h3 className='font-semibold text-gray-900 text-lg'>
+              <h3 className='text-lg font-semibold text-card-foreground'>
                 Choose leave type
               </h3>
             </div>
@@ -102,8 +102,8 @@ const ApplyLeaveApplyTab = ({
                   disabled={!canGoPrev}
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
                     canGoPrev
-                      ? 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                      : 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300'
+                      ? 'border-border bg-card text-muted-foreground hover:bg-muted'
+                      : 'cursor-not-allowed border-border bg-muted text-muted-foreground/40'
                   }`}
                   aria-label='Show previous leave types'
                 >
@@ -119,15 +119,15 @@ const ApplyLeaveApplyTab = ({
                   disabled={!canGoNext}
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
                     canGoNext
-                      ? 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                      : 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300'
+                      ? 'border-border bg-card text-muted-foreground hover:bg-muted'
+                      : 'cursor-not-allowed border-border bg-muted text-muted-foreground/40'
                   }`}
                   aria-label='Show next leave types'
                 >
                   <ChevronRight size={16} />
                 </button>
               </div>
-              <div className='flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full font-medium text-[11px] text-gray-600'>
+              <div className='flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-[11px] font-medium text-muted-foreground'>
                 <ShieldCheck size={12} className='text-primary' />
                 <span>
                   {LEAVE_BALANCE_LABELS[type as LeaveType] ?? 'Balance aware'}
@@ -161,48 +161,48 @@ const ApplyLeaveApplyTab = ({
                         type='button'
                         unstyled
                         onClick={() => setValue('type', key)}
-                        className={`group relative flex w-[calc((100%-1.5rem)/3)] shrink-0 flex-col gap-3 rounded-xl border px-4 py-4 text-left !h-auto !bg-transparent !text-gray-800 transition-all duration-150 ${
+                        className={`group relative flex w-[calc((100%-1.5rem)/3)] shrink-0 flex-col gap-3 rounded-xl border px-4 py-4 text-left !h-auto !text-card-foreground transition-all duration-150 ${
                           isSelected
                             ? `${cfg.bg} ${cfg.border} border-2`
-                            : 'border-gray-200 !bg-gray-50'
+                            : 'border-border !bg-muted/70'
                         }`}
                       >
                         {isSelected ? (
                           <div
-                            className={`absolute right-3 top-3 z-10 inline-flex h-5 w-5 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white ${cfg.color} ${cfg.bg}`}
+                            className={`absolute right-3 top-3 z-10 inline-flex h-5 w-5 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-card ${cfg.color} ${cfg.bg}`}
                           >
                             <Check size={12} strokeWidth={3} />
                           </div>
                         ) : null}
                         <div className='flex items-start gap-3'>
                           <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-lg border bg-white shadow-sm ${
-                              isSelected ? cfg.border : 'border-gray-200'
+                            className={`flex h-10 w-10 items-center justify-center rounded-lg border bg-card shadow-sm ${
+                              isSelected ? cfg.border : 'border-border'
                             }`}
                           >
                             <Icon
                               size={18}
                               className={
-                                isSelected ? cfg.color : 'text-gray-500'
+                                isSelected ? cfg.color : 'text-muted-foreground'
                               }
                             />
                           </div>
                           <div className='space-y-1'>
                             <p
                               className={`text-sm font-semibold leading-tight ${
-                                isSelected ? cfg.color : 'text-gray-800'
+                                isSelected ? cfg.color : 'text-card-foreground'
                               }`}
                             >
                               {cfg.label}
                             </p>
-                            <p className='text-gray-500 text-xs'>{cfg.desc}</p>
+                            <p className='text-xs text-muted-foreground'>{cfg.desc}</p>
                           </div>
                           {balanceLabel !== null ? (
                             <div
                               className={`ml-auto items-center justify-center px-2 py-1 text-xs font-semibold ${
                                 isSelected
                                   ? `${cfg.border} ${cfg.color}`
-                                  : 'border-gray-200 text-gray-600'
+                                  : 'border-border text-muted-foreground'
                               }`}
                             >
                               {balanceLabel}d
@@ -224,11 +224,11 @@ const ApplyLeaveApplyTab = ({
           ) : null}
         </section>
 
-        <section className='bg-white/80 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
+        <section className='rounded-2xl border border-border bg-card/90 p-4 shadow-sm backdrop-blur-sm md:p-5'>
           <div className='flex justify-between items-start gap-3'>
             <div>
-              <h3 className='font-semibold text-gray-900 text-lg'>Duration</h3>
-              <p className='text-gray-500 text-xs'>
+              <h3 className='text-lg font-semibold text-card-foreground'>Duration</h3>
+              <p className='text-xs text-muted-foreground'>
                 Weekends are excluded automatically from working days.
               </p>
             </div>
@@ -303,7 +303,7 @@ const ApplyLeaveApplyTab = ({
                 {
                   label: 'Calendar days',
                   value: dateStats.totalCalendar,
-                  tone: 'text-gray-800',
+                  tone: 'text-card-foreground',
                 },
                 {
                   label: 'Weekends skipped',
@@ -323,9 +323,9 @@ const ApplyLeaveApplyTab = ({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className='bg-gray-50 px-3 py-2 border border-gray-100 rounded-xl text-center'
+                  className='rounded-xl border border-border bg-muted/60 px-3 py-2 text-center'
                 >
-                  <p className='font-medium text-[11px] text-gray-500 uppercase tracking-wide'>
+                  <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
                     {item.label}
                   </p>
                   <p className={`text-lg font-bold ${item.tone}`}>
@@ -337,7 +337,7 @@ const ApplyLeaveApplyTab = ({
           ) : null}
 
           {hasDateRange && lopDays > 0 ? (
-            <div className='mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800'>
+            <div className='mt-3 rounded-xl border border-warning-muted-foreground/25 bg-warning-muted px-3 py-2 text-xs text-warning-muted-foreground'>
               <p className='font-semibold'>
                 Leave balance exceeded: {lopDays} day(s) will be treated as Loss of
                 Pay (LOP).
@@ -350,11 +350,11 @@ const ApplyLeaveApplyTab = ({
         </section>
       </div>
 
-      <section className='bg-white/80 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
+      <section className='rounded-2xl border border-border bg-card/90 p-4 shadow-sm backdrop-blur-sm md:p-5'>
         <div className='flex justify-between items-center gap-3'>
           <div>
-            <h3 className='font-semibold text-gray-900 text-lg'>Reason</h3>
-            <p className='text-gray-500 text-xs'>
+            <h3 className='text-lg font-semibold text-card-foreground'>Reason</h3>
+            <p className='text-xs text-muted-foreground'>
               Keep it short. Your manager will see this note.
             </p>
           </div>
@@ -384,13 +384,13 @@ const ApplyLeaveApplyTab = ({
         </div>
       </section>
 
-      <section className='flex md:flex-row flex-col md:items-center gap-4 bg-white/90 shadow-sm backdrop-blur-sm p-4 md:p-5 border border-gray-100 rounded-2xl'>
-        <div className='flex flex-col flex-1 gap-1 text-gray-500 text-xs'>
-          <div className='flex items-center gap-2 text-gray-600'>
+      <section className='flex flex-col gap-4 rounded-2xl border border-border bg-card/95 p-4 shadow-sm backdrop-blur-sm md:flex-row md:items-center md:p-5'>
+        <div className='flex flex-1 flex-col gap-1 text-xs text-muted-foreground'>
+          <div className='flex items-center gap-2'>
             <AlertTriangle size={12} className='text-amber-500' />
             <span>Requests route to your manager for approval.</span>
           </div>
-          <div className='flex items-center gap-2 text-gray-600'>
+          <div className='flex items-center gap-2'>
             <ShieldCheck size={12} className='text-primary' />
             <span>Typical review time: 1-2 business days.</span>
           </div>
