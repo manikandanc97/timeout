@@ -178,6 +178,130 @@ const getWorkingDays = async (startDate, endDate, organizationId) => {
   return count;
 };
 
+const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+const getMonthlyNetFromSalaryStructure = (salary) => {
+  if (!salary) return null;
+  const basic = Number(salary.basicSalary ?? 0);
+  const hra = Number(salary.hra ?? 0);
+  const allowance = Number(salary.allowance ?? 0);
+  const bonus = Number(salary.bonus ?? 0);
+  const pf = Number(salary.pf ?? 0);
+  const tax = Number(salary.tax ?? 0);
+  const professionalTax = Number(salary.professionalTax ?? 0);
+  return basic + hra + allowance + bonus - pf - tax - professionalTax;
+};
+
+const recalculatePayrollForMonth = async ({
+  userId,
+  organizationId,
+  year,
+  month,
+}) => {
+  const monthStart = new Date(year, month - 1, 1, 0, 0, 0, 0);
+  const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+
+  const [salaryStructure, lopAgg] = await Promise.all([
+    prisma.salaryStructure.findFirst({
+      where: {
+        userId,
+        organizationId,
+        isActive: true,
+        effectiveFrom: { lte: monthEnd },
+      },
+      orderBy: [{ effectiveFrom: 'desc' }],
+    }),
+    prisma.leave.aggregate({
+      where: {
+        userId,
+        organizationId,
+        type: { in: ['ANNUAL', 'SICK'] },
+        status: { in: ['PENDING', 'APPROVED'] },
+        startDate: { lte: monthEnd },
+        endDate: { gte: monthStart },
+      },
+      _sum: { lopAmount: true, lopDays: true },
+    }),
+  ]);
+
+  if (!salaryStructure) return;
+
+  const monthlyNet = getMonthlyNetFromSalaryStructure(salaryStructure);
+  if (monthlyNet == null || !Number.isFinite(monthlyNet)) return;
+
+  const lopDeduction = Number(lopAgg?._sum?.lopAmount ?? 0);
+  const lopDays = Number(lopAgg?._sum?.lopDays ?? 0);
+  const netSalary = Math.max(round2(monthlyNet - lopDeduction), 0);
+
+  const existing = await prisma.payroll.findUnique({
+    where: { userId_month_year: { userId, month, year } },
+    select: { status: true, paidDate: true },
+  });
+
+  await prisma.payroll.upsert({
+    where: { userId_month_year: { userId, month, year } },
+    update: {
+      basicSalary: Number(salaryStructure.basicSalary ?? 0),
+      yearlyGrossSalary: salaryStructure.yearlyGrossSalary ?? null,
+      hra: Number(salaryStructure.hra ?? 0),
+      allowance: Number(salaryStructure.allowance ?? 0),
+      bonus: Number(salaryStructure.bonus ?? 0),
+      pf: Number(salaryStructure.pf ?? 0),
+      tax: Number(salaryStructure.tax ?? 0),
+      professionalTax: Number(salaryStructure.professionalTax ?? 0),
+      lopDays,
+      lopAmount: lopDeduction,
+      netSalary,
+      status: existing?.status ?? 'PENDING',
+      paidDate: existing?.status === 'PAID' ? existing.paidDate : null,
+    },
+    create: {
+      userId,
+      organizationId,
+      month,
+      year,
+      basicSalary: Number(salaryStructure.basicSalary ?? 0),
+      yearlyGrossSalary: salaryStructure.yearlyGrossSalary ?? null,
+      hra: Number(salaryStructure.hra ?? 0),
+      allowance: Number(salaryStructure.allowance ?? 0),
+      bonus: Number(salaryStructure.bonus ?? 0),
+      pf: Number(salaryStructure.pf ?? 0),
+      tax: Number(salaryStructure.tax ?? 0),
+      professionalTax: Number(salaryStructure.professionalTax ?? 0),
+      lopDays,
+      lopAmount: lopDeduction,
+      netSalary,
+      status: 'PENDING',
+    },
+  });
+};
+
+const eachMonthBetween = (startDateValue, endDateValue) => {
+  const start = toLocalCalendarDate(startDateValue);
+  const end = toLocalCalendarDate(endDateValue);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+  const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+  const last = new Date(end.getFullYear(), end.getMonth(), 1);
+  const months = [];
+  while (cursor <= last) {
+    months.push({ year: cursor.getFullYear(), month: cursor.getMonth() + 1 });
+    cursor.setMonth(cursor.getMonth() + 1, 1);
+  }
+  return months;
+};
+
+const recalculatePayrollForLeaveRange = async (leave) => {
+  const months = eachMonthBetween(leave.startDate, leave.endDate);
+  for (const item of months) {
+    await recalculatePayrollForMonth({
+      userId: leave.userId,
+      organizationId: leave.organizationId,
+      year: item.year,
+      month: item.month,
+    });
+  }
+};
+
 export const applyLeave = async (req, res) => {
   try {
     const { type, startDate, endDate, reason } = req.body;
@@ -254,16 +378,51 @@ export const applyLeave = async (req, res) => {
       });
     }
 
-    if (leaveType === 'SICK' && balance.sick < totalDays) {
-      return res.status(400).json({ message: 'No sick leave left' });
+    const isBalanceManagedType = leaveType === 'SICK' || leaveType === 'ANNUAL';
+    let balanceAvailable = 0;
+    let balanceDeductedDays = 0;
+    let lopDays = 0;
+    let lopAmount = 0;
+    let activeSalaryStructureId = null;
+
+    if (leaveType === 'SICK') {
+      balanceAvailable = Number(balance.sick ?? 0);
+      balanceDeductedDays = Math.min(balanceAvailable, totalDays);
+      lopDays = Math.max(totalDays - balanceDeductedDays, 0);
     }
 
-    if (leaveType === 'ANNUAL' && balance.annual < totalDays) {
-      return res.status(400).json({ message: 'No annual leave left' });
+    if (leaveType === 'ANNUAL') {
+      balanceAvailable = Number(balance.annual ?? 0);
+      balanceDeductedDays = Math.min(balanceAvailable, totalDays);
+      lopDays = Math.max(totalDays - balanceDeductedDays, 0);
     }
 
     if (leaveType === 'COMP_OFF' && (balance.compOff ?? 0) < totalDays) {
       return res.status(400).json({ message: 'No comp off balance left' });
+    }
+
+    if (isBalanceManagedType && lopDays > 0) {
+      const monthDays = new Date(
+        normalizedstartDate.getFullYear(),
+        normalizedstartDate.getMonth() + 1,
+        0,
+      ).getDate();
+      const salaryStructure = await prisma.salaryStructure.findFirst({
+        where: {
+          userId,
+          organizationId: applicant.organizationId,
+          isActive: true,
+          effectiveFrom: { lte: normalizedstartDate },
+        },
+        orderBy: [{ effectiveFrom: 'desc' }],
+      });
+
+      const monthlyNet = getMonthlyNetFromSalaryStructure(salaryStructure);
+      activeSalaryStructureId = salaryStructure?.id ?? null;
+      if (monthlyNet != null && Number.isFinite(monthlyNet) && monthDays > 0) {
+        const dailyRate = monthlyNet / monthDays;
+        lopAmount = round2(lopDays * dailyRate);
+      }
     }
 
     const leave = await prisma.leave.create({
@@ -272,23 +431,26 @@ export const applyLeave = async (req, res) => {
         startDate: normalizedstartDate,
         endDate: normalizedendDate,
         reason,
+        balanceDeductedDays: isBalanceManagedType ? balanceDeductedDays : totalDays,
+        lopDays: isBalanceManagedType ? lopDays : 0,
+        lopAmount: isBalanceManagedType ? lopAmount : 0,
         userId,
         organizationId: applicant.organizationId,
         teamId: applicant.teamId ?? undefined,
       },
     });
 
-    if (leaveType === 'SICK') {
+    if (leaveType === 'SICK' && balanceDeductedDays > 0) {
       await prisma.leaveBalance.update({
         where: { userId },
-        data: { sick: { decrement: totalDays } },
+        data: { sick: { decrement: balanceDeductedDays } },
       });
     }
 
-    if (leaveType === 'ANNUAL') {
+    if (leaveType === 'ANNUAL' && balanceDeductedDays > 0) {
       await prisma.leaveBalance.update({
         where: { userId },
-        data: { annual: { decrement: totalDays } },
+        data: { annual: { decrement: balanceDeductedDays } },
       });
     }
 
@@ -299,9 +461,40 @@ export const applyLeave = async (req, res) => {
       });
     }
 
+    if (isBalanceManagedType && lopDays > 0 && activeSalaryStructureId != null) {
+      await prisma.salaryStructure.update({
+        where: { id: activeSalaryStructureId },
+        data: {
+          lopDays: { increment: lopDays },
+          lopAmount: { increment: lopAmount },
+        },
+      });
+    }
+
+    if (leaveType === 'SICK' || leaveType === 'ANNUAL') {
+      await recalculatePayrollForLeaveRange({
+        userId,
+        organizationId: applicant.organizationId,
+        startDate: normalizedstartDate,
+        endDate: normalizedendDate,
+      });
+    }
+
     console.log('Leave applied:', totalDays, leave);
 
-    res.status(201).json({ message: 'Leave applied successfully', leave });
+    res.status(201).json({
+      message:
+        isBalanceManagedType && lopDays > 0
+          ? `Leave applied. ${lopDays} day(s) will be treated as Loss of Pay.`
+          : 'Leave applied successfully',
+      leave,
+      leaveImpact: {
+        totalDays,
+        balanceDeductedDays: isBalanceManagedType ? balanceDeductedDays : totalDays,
+        lopDays: isBalanceManagedType ? lopDays : 0,
+        lopAmount: isBalanceManagedType ? lopAmount : 0,
+      },
+    });
   } catch (error) {
     console.error('ERROR:', error);
     res.status(500).json({ message: 'Server Error' });
@@ -400,12 +593,12 @@ export const applyPermissionRequest = async (req, res) => {
     const endM = parseTimeToMinutes(endTime);
     if (Number.isNaN(startM) || Number.isNaN(endM)) {
       return res.status(400).json({
-        message: 'Valid from and to times are required',
+        message: 'Valid start and end times are required',
       });
     }
     if (endM <= startM) {
       return res.status(400).json({
-        message: 'To time must be after from time on the same day',
+        message: 'End time must be after start time on the same day',
       });
     }
     parsedDuration = endM - startM;
@@ -720,7 +913,19 @@ export const updateCompOffRequestStatus = async (req, res) => {
       return next;
     });
 
-    return res.json({ message: 'Comp off request updated', request: updated });
+    const leaveBalance = await prisma.leaveBalance.findUnique({
+      where: { userId: row.userId },
+      select: { compOff: true },
+    });
+
+    return res.json({
+      message: 'Comp off request updated',
+      request: updated,
+      leaveBalance:
+        leaveBalance != null
+          ? { compOff: leaveBalance.compOff ?? 0 }
+          : undefined,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Server Error' });
@@ -880,12 +1085,17 @@ export const updateLeaveStatus = async (req, res) => {
       }),
     ];
 
-    if (status === 'REJECTED' && totalDays > 0) {
+    const deductedDays =
+      typeof leave.balanceDeductedDays === 'number'
+        ? leave.balanceDeductedDays
+        : totalDays;
+
+    if (status === 'REJECTED' && deductedDays > 0) {
       if (leaveType === 'SICK') {
         ops.push(
           prisma.leaveBalance.update({
             where: { userId: leave.userId },
-            data: { sick: { increment: totalDays } },
+            data: { sick: { increment: deductedDays } },
           }),
         );
       }
@@ -893,7 +1103,7 @@ export const updateLeaveStatus = async (req, res) => {
         ops.push(
           prisma.leaveBalance.update({
             where: { userId: leave.userId },
-            data: { annual: { increment: totalDays } },
+            data: { annual: { increment: deductedDays } },
           }),
         );
       }
@@ -909,6 +1119,36 @@ export const updateLeaveStatus = async (req, res) => {
 
     const results = await prisma.$transaction(ops);
     const updated = results[0];
+
+    if (
+      status === 'REJECTED' &&
+      (leaveType === 'SICK' || leaveType === 'ANNUAL') &&
+      Number(leave.lopDays ?? 0) > 0
+    ) {
+      const salaryStructure = await prisma.salaryStructure.findFirst({
+        where: {
+          userId: leave.userId,
+          organizationId: leave.organizationId,
+          isActive: true,
+          effectiveFrom: { lte: new Date(leave.startDate) },
+        },
+        orderBy: [{ effectiveFrom: 'desc' }],
+        select: { id: true },
+      });
+      if (salaryStructure) {
+        await prisma.salaryStructure.update({
+          where: { id: salaryStructure.id },
+          data: {
+            lopDays: { decrement: Number(leave.lopDays ?? 0) },
+            lopAmount: { decrement: Number(leave.lopAmount ?? 0) },
+          },
+        });
+      }
+    }
+
+    if (leaveType === 'SICK' || leaveType === 'ANNUAL') {
+      await recalculatePayrollForLeaveRange(leave);
+    }
 
     res.json({ message: 'Leave status updated', leave: updated });
   } catch (error) {
@@ -995,20 +1235,25 @@ export const cancelLeave = async (req, res) => {
 
     const updates = [];
 
-    if (type === 'SICK') {
+    const deductedDays =
+      typeof leave.balanceDeductedDays === 'number'
+        ? leave.balanceDeductedDays
+        : totalDays;
+
+    if (type === 'SICK' && deductedDays > 0) {
       updates.push(
         prisma.leaveBalance.update({
           where: { userId: leave.userId },
-          data: { sick: { increment: totalDays } },
+          data: { sick: { increment: deductedDays } },
         }),
       );
     }
 
-    if (type === 'ANNUAL') {
+    if (type === 'ANNUAL' && deductedDays > 0) {
       updates.push(
         prisma.leaveBalance.update({
           where: { userId: leave.userId },
-          data: { annual: { increment: totalDays } },
+          data: { annual: { increment: deductedDays } },
         }),
       );
     }
@@ -1025,6 +1270,35 @@ export const cancelLeave = async (req, res) => {
     updates.push(prisma.leave.delete({ where: { id: leaveId } }));
 
     await prisma.$transaction(updates);
+
+    if (
+      (type === 'SICK' || type === 'ANNUAL') &&
+      Number(leave.lopDays ?? 0) > 0
+    ) {
+      const salaryStructure = await prisma.salaryStructure.findFirst({
+        where: {
+          userId: leave.userId,
+          organizationId: leave.organizationId,
+          isActive: true,
+          effectiveFrom: { lte: new Date(leave.startDate) },
+        },
+        orderBy: [{ effectiveFrom: 'desc' }],
+        select: { id: true },
+      });
+      if (salaryStructure) {
+        await prisma.salaryStructure.update({
+          where: { id: salaryStructure.id },
+          data: {
+            lopDays: { decrement: Number(leave.lopDays ?? 0) },
+            lopAmount: { decrement: Number(leave.lopAmount ?? 0) },
+          },
+        });
+      }
+    }
+
+    if (type === 'SICK' || type === 'ANNUAL') {
+      await recalculatePayrollForLeaveRange(leave);
+    }
 
     res.json({ message: 'Leave cancelled successfully' });
   } catch (error) {

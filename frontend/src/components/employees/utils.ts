@@ -11,6 +11,7 @@ export type EmployeeDirectorySummary = {
   total: number;
   active: number;
   onLeave: number;
+  deactivated: number;
   newJoiners: number;
 };
 
@@ -54,10 +55,15 @@ export function computeEmployeeSummary(
   employees: OrganizationEmployee[],
 ): EmployeeDirectorySummary {
   const total = employees.length;
-  const onLeave = employees.filter((e) => e.onLeaveToday).length;
-  const active = Math.max(0, total - onLeave);
+  const deactivated = employees.filter((e) => e.isActive === false).length;
+  const onLeave = employees.filter(
+    (e) => e.isActive !== false && e.onLeaveToday,
+  ).length;
+  const active = employees.filter(
+    (e) => e.isActive !== false && !e.onLeaveToday,
+  ).length;
   const newJoiners = employees.filter((e) => isNewJoiner(e.createdAt)).length;
-  return { total, active, onLeave, newJoiners };
+  return { total, active, onLeave, deactivated, newJoiners };
 }
 
 export function filterEmployees(
@@ -90,10 +96,15 @@ export function filterEmployees(
     const matchesDept = deptId == null || rowDeptId === deptId;
     const matchesTeam = tmId == null || rowTeamId === tmId;
 
+    const isDeactivated = row.isActive === false;
+    const isOnLeave = !isDeactivated && row.onLeaveToday;
+    const isActive = !isDeactivated && !row.onLeaveToday;
+
     const matchesStatus =
       params.statusFilter === 'ALL' ||
-      (params.statusFilter === 'ACTIVE' && !row.onLeaveToday) ||
-      (params.statusFilter === 'ON_LEAVE' && row.onLeaveToday);
+      (params.statusFilter === 'ACTIVE' && isActive) ||
+      (params.statusFilter === 'ON_LEAVE' && isOnLeave) ||
+      (params.statusFilter === 'DEACTIVATED' && isDeactivated);
 
     return matchesSearch && matchesDept && matchesTeam && matchesStatus;
   });

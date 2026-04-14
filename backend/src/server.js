@@ -13,6 +13,7 @@ import { getLeaveHistory } from './controllers/leaveController.js';
 import holidayRoutes from './routes/holidayRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import organizationRoutes from './routes/organizationRoutes.js';
+import payrollRoutes from './routes/payrollRoutes.js';
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/api/holidays', holidayRoutes);
 app.use('/api/dashboard', adminRoutes);
 
 app.use('/api/organization', organizationRoutes);
+app.use('/api/payroll', payrollRoutes);
 
 function requireEnv(name) {
   const v = process.env[name];

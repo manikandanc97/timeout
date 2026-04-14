@@ -46,6 +46,33 @@ type Props = {
   thisMonth: number;
 };
 
+function SummarySkeleton() {
+  const accents = [
+    'border-l-violet-400',
+    'border-l-emerald-400',
+    'border-l-sky-400',
+  ];
+  return (
+    <section
+      aria-label='Holiday summary'
+      className='grid w-full shrink-0 grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5'
+    >
+      {accents.map((accent, i) => (
+        <div
+          key={i}
+          className={`animate-pulse rounded-2xl border border-gray-100 border-l-4 ${accent} bg-white p-3 shadow-sm sm:p-3.5`}
+        >
+          <div className='flex items-center justify-between gap-2'>
+            <div className='h-3 w-20 rounded bg-gray-200 sm:w-24' />
+            <div className='h-8 w-8 shrink-0 rounded-lg bg-gray-100 sm:h-9 sm:w-9 sm:rounded-xl' />
+          </div>
+          <div className='mt-2 h-7 w-10 rounded bg-gray-200 sm:mt-2.5 sm:h-8' />
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export default function HolidaysSummaryCards({
   loading,
   total,
@@ -58,34 +85,35 @@ export default function HolidaysSummaryCards({
     total,
   };
 
+  if (loading) {
+    return <SummarySkeleton />;
+  }
+
   return (
     <section
       aria-label='Holiday summary'
-      className='flex w-full shrink-0 flex-col gap-3.5 self-start rounded-2xl bg-white/95 sm:gap-4 lg:w-62 xl:w-56'
+      className='grid w-full shrink-0 grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5'
     >
-      <h2 className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
-        Summary
-      </h2>
       {SUMMARY_CARDS.map((c) => {
         const Icon = c.Icon;
         const value = values[c.key];
         return (
           <div
             key={c.key}
-            className={`rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3.5 shadow-sm sm:p-4`}
+            className={`rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3 shadow-sm sm:p-3.5`}
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-xs font-medium uppercase tracking-wider text-gray-500'>
+              <span className='text-[11px] font-medium uppercase tracking-wider text-gray-500 sm:text-xs'>
                 {c.label}
               </span>
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${c.iconBg}`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl ${c.iconBg}`}
               >
                 <Icon size={17} strokeWidth={2} className={c.iconColor} />
               </div>
             </div>
-            <p className='mt-2.5 text-2xl font-bold tabular-nums tracking-tight text-gray-900 sm:text-3xl'>
-              {loading ? '—' : value}
+            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
+              {value}
             </p>
           </div>
         );

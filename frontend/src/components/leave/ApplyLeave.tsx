@@ -116,8 +116,14 @@ const ApplyLeave = ({
   }, [type, balance]);
 
   const daysToDeduct = dateStats.workingDays;
+  const isAnnualOrSick = type === 'ANNUAL' || type === 'SICK';
+  const lopDays =
+    selectedBalance !== null && isAnnualOrSick
+      ? Math.max(daysToDeduct - selectedBalance, 0)
+      : 0;
+  const balanceDeductedDays = Math.max(daysToDeduct - lopDays, 0);
   const balanceAfter =
-    selectedBalance !== null ? selectedBalance - daysToDeduct : null;
+    selectedBalance !== null ? selectedBalance - balanceDeductedDays : null;
   const isOverdrawn = balanceAfter !== null && balanceAfter < 0;
   const hasDateRange = Boolean(startDate && endDate);
   const hasOverlap = useMemo(() => {
@@ -154,16 +160,28 @@ const ApplyLeave = ({
         toast.error('You already have a leave for these dates.');
         return;
       }
-      const response = await api.post('/leaves', {
+      const response = await api.post<{
+        leave?: Leave;
+        leaveImpact?: {
+          lopDays?: number;
+          lopAmount?: number;
+        };
+      }>('/leaves', {
         type: data.type,
         startDate: data.startDate,
         endDate: data.endDate,
         reason: data.reason,
       });
-      toast.success('Leave request submitted successfully');
+      const lopDaysFromApi = Number(response.data?.leaveImpact?.lopDays ?? 0);
+      if (lopDaysFromApi > 0) {
+        toast.success(
+          `Leave applied with LOP: ${lopDaysFromApi} day(s)`,
+        );
+      } else {
+        toast.success('Leave request submitted successfully');
+      }
       reset();
-      const created = response.data as { leave?: Leave } | undefined;
-      onSuccess?.(created?.leave);
+      onSuccess?.(response.data?.leave);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string; error?: string } } })
@@ -239,17 +257,17 @@ const ApplyLeave = ({
     }
 
     if (!permissionStartTime || !permissionEndTime) {
-      toast.error('From and to times are required');
+      toast.error('Start time and end time are required');
       return;
     }
     const startMinutes = parseTimeToMinutes(permissionStartTime);
     const endMinutes = parseTimeToMinutes(permissionEndTime);
     if (startMinutes == null || endMinutes == null) {
-      toast.error('Please select valid from and to times');
+      toast.error('Please select valid start and end times');
       return;
     }
     if (endMinutes <= startMinutes) {
-      toast.error('To time must be after from time');
+      toast.error('End time must be after start time');
       return;
     }
     if (endMinutes - startMinutes > 240) {
@@ -382,6 +400,8 @@ const ApplyLeave = ({
             balance={balance}
             dateStats={dateStats}
             daysToDeduct={daysToDeduct}
+            lopDays={lopDays}
+            balanceDeductedDays={balanceDeductedDays}
             hasDateRange={hasDateRange}
             hasOverlap={hasOverlap}
             isOverdrawn={isOverdrawn}

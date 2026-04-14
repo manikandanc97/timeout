@@ -11,11 +11,12 @@ const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/leaves': 'My Leaves',
   '/apply': 'Apply Leave',
-  '/requests': 'Leave Requests',
+  '/requests': 'Requests',
   '/employees': 'Employees',
   '/holidays': 'Holidays',
   '/team': 'Team Leaves',
   '/policy': 'Leave Policy',
+  '/payroll': 'Payroll',
 };
 
 const resolvePageTitle = (pathname: string) => {

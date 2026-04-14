@@ -7,10 +7,14 @@ import api from '@/services/api';
 import type { Holiday } from '@/types/holiday';
 import { startOfLocalCalendarDay } from '@/utils/leave/leaveHelpers';
 
+import { HOLIDAYS_PAGE_SIZE } from './constants';
+import { holidaysPageCount, holidaysPageSlice } from './holidaysPageUtils';
+
 export function useHolidaysPage() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -34,6 +38,22 @@ export function useHolidaysPage() {
     if (!q) return holidays;
     return holidays.filter((h) => h.name.toLowerCase().includes(q));
   }, [holidays, searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  const pageCount = holidaysPageCount(filteredRows.length);
+
+  useEffect(() => {
+    setPage((p) => Math.min(p, pageCount));
+  }, [pageCount]);
+
+  const safePage = Math.min(page, pageCount);
+  const pageSlice = useMemo(
+    () => holidaysPageSlice(filteredRows, safePage, HOLIDAYS_PAGE_SIZE),
+    [filteredRows, safePage],
+  );
 
   const summary = useMemo(() => {
     const todayStart = startOfLocalCalendarDay(new Date());
@@ -65,6 +85,12 @@ export function useHolidaysPage() {
     searchTerm,
     setSearchTerm,
     filteredRows,
+    pageSlice,
+    page,
+    setPage,
+    pageCount,
+    safePage,
+    pageSize: HOLIDAYS_PAGE_SIZE,
     summary,
     hasActiveFilters,
     clearFilters,

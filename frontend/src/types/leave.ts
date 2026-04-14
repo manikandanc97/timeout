@@ -16,6 +16,9 @@ export interface Leave {
   reason: string;
   rejectionReason?: string | null;
   status: LeaveStatus;
+  balanceDeductedDays?: number;
+  lopDays?: number;
+  lopAmount?: number;
   userId?: number;
   createdAt?: string;
 }

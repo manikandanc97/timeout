@@ -15,6 +15,8 @@ import {
   createEmployeeUser,
   updateEmployeeUser,
   deleteEmployeeUser,
+  getEmployeeDetails,
+  upsertEmployeeSalaryStructure,
   getLeavePolicy,
   updateLeavePolicy,
   resetLeavePolicy,
@@ -79,6 +81,16 @@ router.patch(
   '/employees/:userId',
   roleMiddleware('ADMIN'),
   updateEmployeeUser,
+);
+router.get(
+  '/employees/:userId/details',
+  roleMiddleware('ADMIN', 'MANAGER', 'HR'),
+  getEmployeeDetails,
+);
+router.post(
+  '/employees/:userId/salary-structure',
+  roleMiddleware('ADMIN'),
+  upsertEmployeeSalaryStructure,
 );
 router.delete(
   '/employees/:userId',

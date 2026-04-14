@@ -15,6 +15,8 @@ import DashboardContentSkeleton from '@/components/dashboard/skeletons/Dashboard
 import LeaveRequestsSkeleton from '@/components/dashboard/skeletons/LeaveRequestsSkeleton';
 import EmployeesSkeleton from '@/components/dashboard/skeletons/EmployeesSkeleton';
 import TeamsPageSkeleton from '@/components/dashboard/skeletons/TeamsPageSkeleton';
+import HolidaysSkeleton from '@/components/dashboard/skeletons/HolidaysSkeleton';
+import PayrollSkeleton from '@/components/dashboard/skeletons/PayrollSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
 import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
 
@@ -23,13 +25,8 @@ type Props = {
   initialRole?: string | null;
 };
 
-/** Main fills viewport under topbar; page scrolls inside its own panel (not whole main). */
-const MAIN_VIEWPORT_FILL_PATHS = new Set([
-  '/requests',
-  '/employees',
-  '/team',
-  '/holidays',
-]);
+/** Main fills viewport under topbar; inner routes manage their own scroll regions. */
+const MAIN_VIEWPORT_FILL_PATHS = new Set(['/team']);
 
 const DashboardShell = ({ children, initialRole = null }: Props) => {
   const router = useRouter();
@@ -62,7 +59,10 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+    // Session is validated once on mount. Re-running on every pathname change
+    // remounted the shell in a loading state and made every navigation look
+    // like a full dashboard reload.
+  }, [router]);
 
   if (loading) {
     let content: React.ReactNode = null;
@@ -83,9 +83,11 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
     } else if (pathname === '/employees') {
       content = <EmployeesSkeleton />;
     } else if (pathname === '/holidays') {
-      content = <LeaveRequestsSkeleton />;
+      content = <HolidaysSkeleton />;
     } else if (pathname === '/team') {
       content = <TeamsPageSkeleton />;
+    } else if (pathname === '/payroll') {
+      content = <PayrollSkeleton />;
     }
 
     return (

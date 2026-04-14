@@ -1,11 +1,19 @@
 'use client';
 
+import { TEAMS_PAGE_SIZE } from '@/components/teams/constants';
 import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import api from '@/services/api';
 import type { OrgDepartment } from '@/types/organization';
-import { Building2, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import {
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type Props = {
@@ -31,6 +39,23 @@ export default function DepartmentsPanel({
 }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<OrgDepartment | null>(null);
   const [deleteProcessing, setDeleteProcessing] = useState(false);
+  const [deptPage, setDeptPage] = useState(1);
+
+  useEffect(() => {
+    setDeptPage(1);
+  }, [departments]);
+
+  const deptPageCount = Math.max(
+    1,
+    Math.ceil(departments.length / TEAMS_PAGE_SIZE),
+  );
+  const safeDeptPage = Math.min(deptPage, deptPageCount);
+  const departmentsSlice = useMemo(() => {
+    const start = (safeDeptPage - 1) * TEAMS_PAGE_SIZE;
+    return departments.slice(start, start + TEAMS_PAGE_SIZE);
+  }, [departments, safeDeptPage]);
+
+  const showDeptPagination = departments.length > TEAMS_PAGE_SIZE;
 
   function requestDelete(d: OrgDepartment) {
     if (d.teams.length > 0) {
@@ -132,7 +157,7 @@ export default function DepartmentsPanel({
                 </td>
               </tr>
             ) : (
-              departments.map((d) => {
+              departmentsSlice.map((d) => {
                 const activeFilter = departmentFilter === String(d.id);
                 return (
                   <tr
@@ -186,6 +211,50 @@ export default function DepartmentsPanel({
           </tbody>
         </table>
       </div>
+
+      {showDeptPagination ? (
+        <div className='mt-2 flex shrink-0 flex-col items-stretch justify-between gap-2 border-t border-gray-100 pt-2 sm:flex-row sm:items-center'>
+          <p className='text-[11px] text-gray-500'>
+            Showing{' '}
+            <span className='font-semibold text-gray-700'>
+              {(safeDeptPage - 1) * TEAMS_PAGE_SIZE + 1}
+            </span>
+            –
+            <span className='font-semibold text-gray-700'>
+              {Math.min(safeDeptPage * TEAMS_PAGE_SIZE, departments.length)}
+            </span>{' '}
+            of{' '}
+            <span className='font-semibold text-gray-700'>
+              {departments.length}
+            </span>
+          </p>
+          <div className='flex items-center justify-center gap-1.5 sm:justify-end'>
+            <button
+              type='button'
+              disabled={safeDeptPage <= 1}
+              onClick={() => setDeptPage((p) => Math.max(1, p - 1))}
+              className='inline-flex items-center gap-0.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40'
+            >
+              <ChevronLeft size={12} />
+              Prev
+            </button>
+            <span className='text-[11px] font-medium text-gray-600'>
+              {safeDeptPage} / {deptPageCount}
+            </span>
+            <button
+              type='button'
+              disabled={safeDeptPage >= deptPageCount}
+              onClick={() =>
+                setDeptPage((p) => Math.min(deptPageCount, p + 1))
+              }
+              className='inline-flex items-center gap-0.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40'
+            >
+              Next
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <ConfirmModal
         open={deleteTarget != null}

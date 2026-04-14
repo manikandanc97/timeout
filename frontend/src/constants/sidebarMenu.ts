@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   Settings,
   BarChart3,
+  Wallet,
 } from 'lucide-react';
 
 type MenuItem = {
@@ -28,11 +29,12 @@ export const employeeMenuList: MenuItem[] = [
 
 export const adminMenuList: MenuItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Leave Requests', href: '/requests', icon: ClipboardCheck },
+  { name: 'Requests', href: '/requests', icon: ClipboardCheck },
   { name: 'Employees', href: '/employees', icon: Users },
   { name: 'Teams', href: '/team', icon: Users },
   { name: 'Holidays', href: '/holidays', icon: CalendarRange },
   { name: 'Leave Policy', href: '/policy', icon: BookOpen },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Payroll', href: '/payroll', icon: Wallet },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];

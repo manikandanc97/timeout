@@ -23,7 +23,7 @@ export default function EmployeesTable({
   onRequestDeleteEmployee,
 }: Props) {
   return (
-    <div className='min-h-0 flex-1 overflow-auto'>
+    <div className='w-full min-w-0 overflow-x-auto'>
       <table className='w-full min-w-[940px] border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
           <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
@@ -61,10 +61,17 @@ export default function EmployeesTable({
               rows.map((row) => {
                 const dept = row.team?.department?.name ?? '—';
                 const team = row.team?.name ?? '—';
-                const statusLabel = row.onLeaveToday ? 'On leave' : 'Active';
-                const statusClass = row.onLeaveToday
-                  ? 'bg-amber-50 text-amber-800 ring-amber-200'
-                  : 'bg-emerald-50 text-emerald-800 ring-emerald-200';
+                const isDeactivated = row.isActive === false;
+                const statusLabel = isDeactivated
+                  ? 'Deactivated'
+                  : row.onLeaveToday
+                    ? 'On leave'
+                    : 'Active';
+                const statusClass = isDeactivated
+                  ? 'bg-gray-100 text-gray-700 ring-gray-300'
+                  : row.onLeaveToday
+                    ? 'bg-amber-50 text-amber-800 ring-amber-200'
+                    : 'bg-emerald-50 text-emerald-800 ring-emerald-200';
                 return (
                   <tr
                     key={row.id}
@@ -99,29 +106,31 @@ export default function EmployeesTable({
                       {formatJoined(row.joiningDate ?? row.createdAt)}
                     </td>
                     <td className='px-4 py-2 text-right align-top'>
-                      {isAdmin &&
-                      onEditEmployee &&
-                      onRequestDeleteEmployee ? (
+                      {isAdmin && onEditEmployee && onRequestDeleteEmployee ? (
                         <div className='flex shrink-0 justify-end gap-0.5'>
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            aria-label={`Edit ${row.name}`}
-                            onClick={() => onEditEmployee(row)}
-                            className='rounded-lg! p-2! text-gray-600 hover:bg-gray-200!'
-                          >
-                            <Pencil size={16} />
-                          </Button>
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            aria-label={`Delete ${row.name}`}
-                            disabled={row.id === currentUserId}
-                            onClick={() => onRequestDeleteEmployee(row)}
-                            className='rounded-lg! p-2! text-gray-600 hover:bg-rose-50! hover:text-rose-700!'
-                          >
-                            <Trash2 size={16} />
-                          </Button>
+                          {isAdmin && onEditEmployee && onRequestDeleteEmployee ? (
+                            <>
+                              <Button
+                                type='button'
+                                variant='ghost'
+                                aria-label={`Edit ${row.name}`}
+                                onClick={() => onEditEmployee(row)}
+                                className='rounded-lg! p-2! text-gray-600 hover:bg-gray-200!'
+                              >
+                                <Pencil size={16} />
+                              </Button>
+                              <Button
+                                type='button'
+                                variant='ghost'
+                                aria-label={`Delete ${row.name}`}
+                                disabled={row.id === currentUserId}
+                                onClick={() => onRequestDeleteEmployee(row)}
+                                className='rounded-lg! p-2! text-gray-600 hover:bg-rose-50! hover:text-rose-700!'
+                              >
+                                <Trash2 size={16} />
+                              </Button>
+                            </>
+                          ) : null}
                         </div>
                       ) : (
                         <span className='text-xs text-gray-400'>—</span>

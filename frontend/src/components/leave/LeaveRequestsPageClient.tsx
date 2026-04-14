@@ -3,8 +3,15 @@
 import LeaveRequestsFilterBar from '@/components/leave/LeaveRequestsFilterBar';
 import LeaveRequestsPageHeader from '@/components/leave/LeaveRequestsPageHeader';
 import LeaveRequestsPagination from '@/components/leave/LeaveRequestsPagination';
+import ApproveRejectButtonGroup from '@/components/leave/ApproveRejectButtonGroup';
+import RequestCategoryTabs from '@/components/leave/RequestCategoryTabs';
 import LeaveRequestsSummaryCards from '@/components/leave/LeaveRequestsSummaryCards';
+import LeaveStatusBadge from '@/components/leave/LeaveStatusBadge';
 import LeaveRequestsTable from '@/components/leave/LeaveRequestsTable';
+import {
+  computeRequestStatusSummary,
+  LEAVE_REQUESTS_PAGE_SIZE,
+} from '@/components/leave/leaveRequestsPageUtils';
 import { useLeaveRequestsPage } from '@/components/leave/useLeaveRequestsPage';
 import type { Holiday } from '@/types/holiday';
 import type {
@@ -45,8 +52,6 @@ export default function LeaveRequestsPageClient({
   const [otherDateTo, setOtherDateTo] = useState('');
   const [otherPage, setOtherPage] = useState(1);
 
-  const OTHER_PAGE_SIZE = 15;
-
   const permissionFiltered = useMemo(() => {
     const q = otherSearch.trim().toLowerCase();
     return permissionRows.filter((row) => {
@@ -83,14 +88,33 @@ export default function LeaveRequestsPageClient({
   }, [compOffRows, otherDateFrom, otherDateTo, otherSearch]);
 
   const otherFiltered = activeTab === 'PERMISSION' ? permissionFiltered : compOffFiltered;
-  const otherPageCount = Math.max(1, Math.ceil(otherFiltered.length / OTHER_PAGE_SIZE));
+  const otherPageCount = Math.max(
+    1,
+    Math.ceil(otherFiltered.length / LEAVE_REQUESTS_PAGE_SIZE),
+  );
   const safeOtherPage = Math.min(otherPage, otherPageCount);
   const otherSlice = otherFiltered.slice(
-    (safeOtherPage - 1) * OTHER_PAGE_SIZE,
-    safeOtherPage * OTHER_PAGE_SIZE,
+    (safeOtherPage - 1) * LEAVE_REQUESTS_PAGE_SIZE,
+    safeOtherPage * LEAVE_REQUESTS_PAGE_SIZE,
   );
   const hasOtherFilters =
     otherSearch.trim().length > 0 || otherDateFrom.length > 0 || otherDateTo.length > 0;
+
+  const permissionSummary = useMemo(
+    () => computeRequestStatusSummary(permissionRows),
+    [permissionRows],
+  );
+  const compOffSummary = useMemo(
+    () => computeRequestStatusSummary(compOffRows),
+    [compOffRows],
+  );
+
+  const tabSummary =
+    activeTab === 'LEAVE'
+      ? req.summary
+      : activeTab === 'PERMISSION'
+        ? permissionSummary
+        : compOffSummary;
 
   const clearOtherFilters = () => {
     setOtherSearch('');
@@ -155,15 +179,23 @@ export default function LeaveRequestsPageClient({
     const key = `compoff-${requestId}`;
     setOtherBusyKey(key);
     try {
-      await api.put(`/leaves/comp-off-requests/${requestId}`, { status });
+      const { data } = await api.put<{
+        leaveBalance?: { compOff: number };
+      }>(`/leaves/comp-off-requests/${requestId}`, { status });
       setCompOffRows((prev) =>
         prev.map((row) => (row.id === requestId ? { ...row, status } : row)),
       );
-      toast.success(
-        status === 'APPROVED'
-          ? 'Comp off request approved.'
-          : 'Comp off request rejected.',
-      );
+      if (status === 'APPROVED' && data?.leaveBalance != null) {
+        toast.success(
+          `Comp off approved. Employee comp off balance is now ${data.leaveBalance.compOff} day(s).`,
+        );
+      } else {
+        toast.success(
+          status === 'APPROVED'
+            ? 'Comp off request approved.'
+            : 'Comp off request rejected.',
+        );
+      }
     } catch {
       toast.error('Could not update comp off request.');
     } finally {
@@ -172,61 +204,25 @@ export default function LeaveRequestsPageClient({
   };
 
   return (
-    <section className='relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white/90 shadow-xl'>
+    <section className='relative flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white/90 shadow-xl'>
       <div className='absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
       <div className='absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-indigo-100 blur-3xl' />
 
-      <div className='relative z-10 flex min-h-0 flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5'>
-        <div className='flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4'>
-          <div className='flex min-h-0 min-w-0 flex-1 flex-col gap-3'>
-            <LeaveRequestsPageHeader
-              filteredCount={req.filtered.length}
-              totalCount={req.rows.length}
-              hasActiveFilters={req.hasActiveFilters}
-            />
+      <div className='relative z-10 flex flex-col gap-3 p-4 sm:gap-4 sm:p-5'>
+        <div className='flex min-w-0 flex-col gap-3'>
+          <LeaveRequestsPageHeader
+            filteredCount={req.filtered.length}
+            totalCount={req.rows.length}
+            hasActiveFilters={req.hasActiveFilters}
+          />
 
-            <section
-              aria-labelledby='leave-requests-heading'
-              className='flex min-h-0 min-w-0 flex-1 flex-col gap-3 rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:gap-3.5 sm:p-4'
-            >
-              <div className='flex items-center gap-2 rounded-xl border border-gray-100 bg-white/80 p-1'>
-                <Button
-                  type='button'
-                  unstyled
-                  onClick={() => setActiveTab('LEAVE')}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                    activeTab === 'LEAVE'
-                      ? 'bg-primary text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  Leave requests
-                </Button>
-                <Button
-                  type='button'
-                  unstyled
-                  onClick={() => setActiveTab('PERMISSION')}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                    activeTab === 'PERMISSION'
-                      ? 'bg-primary text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  Permission requests
-                </Button>
-                <Button
-                  type='button'
-                  unstyled
-                  onClick={() => setActiveTab('COMP_OFF')}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                    activeTab === 'COMP_OFF'
-                      ? 'bg-primary text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  Comp off requests
-                </Button>
-              </div>
+          <LeaveRequestsSummaryCards summary={tabSummary} />
+
+          <section
+            aria-labelledby='requests-heading'
+            className='flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:gap-3.5 sm:p-4'
+          >
+              <RequestCategoryTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
               {activeTab === 'LEAVE' ? (
                 <>
@@ -245,7 +241,7 @@ export default function LeaveRequestsPageClient({
                     onClearFilters={req.clearFilters}
                   />
 
-                  <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/40'>
+                  <div className='flex w-full min-w-0 min-h-124 flex-col overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/40'>
                     <LeaveRequestsTable
                       rows={req.pageSlice}
                       holidays={holidays}
@@ -256,7 +252,7 @@ export default function LeaveRequestsPageClient({
                   </div>
 
                   <LeaveRequestsPagination
-                    visible={req.filtered.length > 0}
+                    visible={req.filtered.length > req.pageSize}
                     safePage={req.safePage}
                     pageCount={req.pageCount}
                     filteredLength={req.filtered.length}
@@ -291,6 +287,7 @@ export default function LeaveRequestsPageClient({
                         type='date'
                         label='From'
                         hideLabel
+                        placeholder='From'
                         value={otherDateFrom}
                         onChange={(e) => {
                           setOtherDateFrom(e.target.value);
@@ -305,6 +302,7 @@ export default function LeaveRequestsPageClient({
                         type='date'
                         label='To'
                         hideLabel
+                        placeholder='To'
                         value={otherDateTo}
                         min={otherDateFrom || undefined}
                         onChange={(e) => {
@@ -325,23 +323,39 @@ export default function LeaveRequestsPageClient({
                     </Button>
                   </div>
 
-                  <div className='min-h-0 flex-1 overflow-auto rounded-xl border border-gray-100 bg-gray-50/40'>
-                    <table className='w-full min-w-[720px] border-collapse text-left text-sm'>
+                  <div className='min-h-124 w-full min-w-0 overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/40'>
+                    <table className='w-full min-w-xl table-fixed border-collapse text-left text-sm'>
+                      {activeTab === 'PERMISSION' ? (
+                        <colgroup>
+                          <col className='w-[18%]' />
+                          <col className='w-[14%]' />
+                          <col className='w-[20%]' />
+                          <col className='w-[12%]' />
+                          <col className='w-[36%]' />
+                        </colgroup>
+                      ) : (
+                        <colgroup>
+                          <col className='w-[20%]' />
+                          <col className='w-[14%]' />
+                          <col className='w-[46%]' />
+                          <col className='w-[20%]' />
+                        </colgroup>
+                      )}
                       <thead className='sticky top-0 z-10'>
                         <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
-                          <th className='px-4 py-3.5 text-left'>Employee</th>
+                          <th className='px-3 py-3.5 text-left sm:px-4'>Employee</th>
                           {activeTab === 'PERMISSION' ? (
                             <>
-                              <th className='px-4 py-3.5 text-left'>Date</th>
-                              <th className='px-4 py-3.5 text-left'>Time</th>
-                              <th className='px-4 py-3.5 text-left'>Duration</th>
-                              <th className='px-4 py-3.5 text-left'>Action</th>
+                              <th className='px-3 py-3.5 text-left sm:px-4'>Date</th>
+                              <th className='px-3 py-3.5 text-left sm:px-4'>Time</th>
+                              <th className='px-3 py-3.5 text-left sm:px-4'>Duration</th>
+                              <th className='px-3 py-3.5 pr-5 text-left sm:pl-4 sm:pr-6'>Action</th>
                             </>
                           ) : (
                             <>
-                              <th className='px-4 py-3.5 text-left'>Work date</th>
-                              <th className='px-4 py-3.5 text-left'>Reason</th>
-                              <th className='px-4 py-3.5 text-left'>Action</th>
+                              <th className='px-3 py-3.5 text-left sm:px-4'>Work date</th>
+                              <th className='px-3 py-3.5 text-left sm:px-4'>Reason</th>
+                              <th className='px-3 py-3.5 pr-5 text-left sm:pl-4 sm:pr-6'>Action</th>
                             </>
                           )}
                         </tr>
@@ -351,7 +365,7 @@ export default function LeaveRequestsPageClient({
                           <tr>
                             <td
                               colSpan={activeTab === 'PERMISSION' ? 5 : 5}
-                              className='px-4 py-16 text-center align-middle text-sm text-gray-500 sm:py-24'
+                              className='px-3 py-16 text-center align-middle text-sm text-gray-500 sm:px-4 sm:py-24'
                             >
                               No requests match your filters.
                             </td>
@@ -362,46 +376,35 @@ export default function LeaveRequestsPageClient({
                               key={row.id}
                               className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
                             >
-                              <td className='px-4 py-2 align-top font-medium text-gray-900'>
-                                {row.user?.name ?? '—'}
+                              <td className='min-w-0 px-3 py-2 align-top font-medium text-gray-900 sm:px-4'>
+                                <span className='block truncate' title={row.user?.name ?? undefined}>
+                                  {row.user?.name ?? '—'}
+                                </span>
                               </td>
-                              <td className='px-4 py-2 align-top text-gray-700'>
+                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-gray-700 sm:px-4'>
                                 {formatDate(row.date)}
                               </td>
-                              <td className='px-4 py-2 align-top text-gray-700'>
+                              <td className='min-w-0 px-3 py-2 align-top text-gray-700 sm:px-4'>
                                 {row.startTimeMinutes != null && row.endTimeMinutes != null
                                   ? `${formatTimeFromMinutes(row.startTimeMinutes)} - ${formatTimeFromMinutes(row.endTimeMinutes)}`
                                   : '—'}
                               </td>
-                              <td className='px-4 py-2 align-top text-gray-700'>
+                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-gray-700 sm:px-4'>
                                 {formatMinutes(row.durationMinutes)}
                               </td>
-                              <td className='px-4 py-2 align-top'>
+                              <td className='min-w-0 px-3 py-2 pr-5 align-top sm:pl-4 sm:pr-6'>
                                 {canModerate && row.status === 'PENDING' ? (
-                                  <div className='flex gap-2'>
-                                    <button
-                                      type='button'
-                                      disabled={otherBusyKey === `permission-${row.id}`}
-                                      onClick={() =>
-                                        void updatePermissionStatus(row.id, 'APPROVED')
-                                      }
-                                      className='inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50'
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      type='button'
-                                      disabled={otherBusyKey === `permission-${row.id}`}
-                                      onClick={() =>
-                                        void updatePermissionStatus(row.id, 'REJECTED')
-                                      }
-                                      className='inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50'
-                                    >
-                                      Reject
-                                    </button>
-                                  </div>
+                                  <ApproveRejectButtonGroup
+                                    disabled={otherBusyKey === `permission-${row.id}`}
+                                    onApprove={() =>
+                                      void updatePermissionStatus(row.id, 'APPROVED')
+                                    }
+                                    onReject={() =>
+                                      void updatePermissionStatus(row.id, 'REJECTED')
+                                    }
+                                  />
                                 ) : (
-                                  <span className='text-xs text-gray-500'>{row.status}</span>
+                                  <LeaveStatusBadge status={row.status} className='shrink-0' />
                                 )}
                               </td>
                             </tr>
@@ -412,41 +415,32 @@ export default function LeaveRequestsPageClient({
                               key={row.id}
                               className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
                             >
-                              <td className='px-4 py-2 align-top font-medium text-gray-900'>
-                                {row.user?.name ?? '—'}
+                              <td className='min-w-0 px-3 py-2 align-top font-medium text-gray-900 sm:px-4'>
+                                <span className='block truncate' title={row.user?.name ?? undefined}>
+                                  {row.user?.name ?? '—'}
+                                </span>
                               </td>
-                              <td className='px-4 py-2 align-top text-gray-700'>
+                              <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-gray-700 sm:px-4'>
                                 {formatDate(row.workDate)}
                               </td>
-                              <td className='max-w-[320px] px-4 py-2 align-top text-gray-600'>
-                                <span className='line-clamp-2'>{row.reason || '—'}</span>
+                              <td className='min-w-0 px-3 py-2 align-top text-gray-600 sm:px-4'>
+                                <span className='line-clamp-2 wrap-break-word' title={row.reason}>
+                                  {row.reason || '—'}
+                                </span>
                               </td>
-                              <td className='px-4 py-2 align-top'>
+                              <td className='min-w-0 px-3 py-2 pr-5 align-top sm:pl-4 sm:pr-6'>
                                 {canModerate && row.status === 'PENDING' ? (
-                                  <div className='flex gap-2'>
-                                    <button
-                                      type='button'
-                                      disabled={otherBusyKey === `compoff-${row.id}`}
-                                      onClick={() =>
-                                        void updateCompOffStatus(row.id, 'APPROVED')
-                                      }
-                                      className='inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50'
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      type='button'
-                                      disabled={otherBusyKey === `compoff-${row.id}`}
-                                      onClick={() =>
-                                        void updateCompOffStatus(row.id, 'REJECTED')
-                                      }
-                                      className='inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50'
-                                    >
-                                      Reject
-                                    </button>
-                                  </div>
+                                  <ApproveRejectButtonGroup
+                                    disabled={otherBusyKey === `compoff-${row.id}`}
+                                    onApprove={() =>
+                                      void updateCompOffStatus(row.id, 'APPROVED')
+                                    }
+                                    onReject={() =>
+                                      void updateCompOffStatus(row.id, 'REJECTED')
+                                    }
+                                  />
                                 ) : (
-                                  <span className='text-xs text-gray-500'>{row.status}</span>
+                                  <LeaveStatusBadge status={row.status} className='shrink-0' />
                                 )}
                               </td>
                             </tr>
@@ -457,11 +451,11 @@ export default function LeaveRequestsPageClient({
                   </div>
 
                   <LeaveRequestsPagination
-                    visible={otherFiltered.length > 0}
+                    visible={otherFiltered.length > LEAVE_REQUESTS_PAGE_SIZE}
                     safePage={safeOtherPage}
                     pageCount={otherPageCount}
                     filteredLength={otherFiltered.length}
-                    pageSize={OTHER_PAGE_SIZE}
+                    pageSize={LEAVE_REQUESTS_PAGE_SIZE}
                     onPrev={() => setOtherPage((p) => Math.max(1, p - 1))}
                     onNext={() =>
                       setOtherPage((p) => Math.min(otherPageCount, p + 1))
@@ -470,11 +464,6 @@ export default function LeaveRequestsPageClient({
                 </>
               )}
             </section>
-          </div>
-
-          {activeTab === 'LEAVE' ? (
-            <LeaveRequestsSummaryCards summary={req.summary} />
-          ) : null}
         </div>
       </div>
     </section>

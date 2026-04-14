@@ -1,26 +1,22 @@
 'use client';
 
+import ApproveRejectButtonGroup from '@/components/leave/ApproveRejectButtonGroup';
 import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import api from '@/services/api';
 import {
   BriefcaseBusiness,
-  CheckCircle2,
   ClipboardList,
   Clock3,
-  XCircle,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { LeaveWithEmployee } from '@/types/leave';
 import type { Holiday } from '@/types/holiday';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
-import {
-  AdminDashboardEmpty,
-  AdminDashboardPanel,
-} from './AdminDashboardPanel';
+import { AdminDashboardPanel } from './AdminDashboardPanel';
 
-const MAX_VISIBLE = 5;
-const MAX_OTHER_VISIBLE = 8;
+/** Fixed number of row slots so empty / partial tabs keep the same card height */
+const SLOT_COUNT = 3;
 
 const LEAVE_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   ANNUAL: { bg: 'bg-sky-50', text: 'text-sky-700' },
@@ -42,15 +38,20 @@ function formatDate(dateString: string) {
   });
 }
 
-function pickLatestPending(rows: LeaveWithEmployee[]) {
+function sortPendingLeaves(rows: LeaveWithEmployee[]) {
   return rows
     .filter((row) => row.status === 'PENDING')
     .sort(
       (a, b) =>
         new Date(b.createdAt ?? 0).getTime() -
         new Date(a.createdAt ?? 0).getTime(),
-    )
-    .slice(0, MAX_VISIBLE);
+    );
+}
+
+function withSlotPadding<T>(items: T[], count: number): (T | null)[] {
+  const slots: (T | null)[] = items.slice(0, count);
+  while (slots.length < count) slots.push(null);
+  return slots;
 }
 
 type PermissionRow = {
@@ -66,8 +67,22 @@ type CompOffRow = {
   workDate: string;
   reason: string;
   createdAt: string;
+  status?: string;
   user?: { name?: string | null } | null;
 };
+
+type BusyAction = { kind: 'leave'; id: number } | { kind: 'compOff'; id: number };
+
+type RejectModalTarget = { kind: 'leave'; id: number } | { kind: 'compOff'; id: number };
+
+function sortPendingCompOff(rows: CompOffRow[]) {
+  return rows
+    .filter((r) => r.status == null || r.status === 'PENDING')
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
+    );
+}
 
 function formatMinutes(total: number) {
   const h = Math.floor(total / 60);
@@ -91,63 +106,95 @@ function InitialsAvatar({ name }: { name: string }) {
   );
 }
 
+const SLOT_MIN_H = 'min-h-[5.75rem] sm:min-h-[5.25rem]';
+
+function RequestRowPlaceholder({
+  children,
+  'aria-label': ariaLabel = 'Empty slot',
+}: {
+  children?: ReactNode;
+  'aria-label'?: string;
+}) {
+  return (
+    <li
+      aria-label={ariaLabel}
+      className={`flex items-stretch justify-center px-3 py-3 ${SLOT_MIN_H} rounded-xl border border-dashed border-gray-200/90 bg-gray-50/50`}
+    >
+      {children ?? <span className='text-gray-300 text-xs' aria-hidden> </span>}
+    </li>
+  );
+}
+
 export default function PendingLeaveRequests() {
   const [activeTab, setActiveTab] = useState<'LEAVE' | 'PERMISSION' | 'COMP_OFF'>(
     'LEAVE',
   );
   const [pendingList, setPendingList] = useState<LeaveWithEmployee[]>([]);
+  const [pendingLeaveTotal, setPendingLeaveTotal] = useState(0);
   const [permissionRows, setPermissionRows] = useState<PermissionRow[]>([]);
+  const [permissionTotal, setPermissionTotal] = useState(0);
   const [compOffRows, setCompOffRows] = useState<CompOffRow[]>([]);
+  const [compOffTotal, setCompOffTotal] = useState(0);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<number | null>(null);
-  const [rejectLeaveId, setRejectLeaveId] = useState<number | null>(null);
+  const [busyAction, setBusyAction] = useState<BusyAction | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<RejectModalTarget | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+
+  const reloadLists = useCallback(async () => {
+    const [leaveRes, holidayRes, permissionRes, compOffRes] = await Promise.all([
+      api.get<LeaveWithEmployee[]>('/leaves'),
+      api.get<Holiday[]>('/holidays').catch(() => ({ data: [] as Holiday[] })),
+      api
+        .get<PermissionRow[]>('/leaves/permissions/requests')
+        .catch(() => ({ data: [] as PermissionRow[] })),
+      api
+        .get<CompOffRow[]>('/leaves/comp-off-requests')
+        .catch(() => ({ data: [] as CompOffRow[] })),
+    ]);
+
+    const sortedLeaves = sortPendingLeaves(leaveRes.data);
+    setPendingList(sortedLeaves.slice(0, SLOT_COUNT));
+    setPendingLeaveTotal(sortedLeaves.length);
+    setHolidays(Array.isArray(holidayRes.data) ? holidayRes.data : []);
+
+    const permData = Array.isArray(permissionRes.data) ? permissionRes.data : [];
+    setPermissionRows(permData.slice(0, SLOT_COUNT));
+    setPermissionTotal(permData.length);
+
+    const compSorted = sortPendingCompOff(
+      Array.isArray(compOffRes.data) ? compOffRes.data : [],
+    );
+    setCompOffRows(compSorted.slice(0, SLOT_COUNT));
+    setCompOffTotal(compSorted.length);
+  }, []);
 
   useEffect(() => {
     async function loadPendingLeaves() {
       setLoading(true);
       try {
-        const [leaveRes, holidayRes, permissionRes, compOffRes] = await Promise.all([
-          api.get<LeaveWithEmployee[]>('/leaves'),
-          api.get<Holiday[]>('/holidays').catch(() => ({ data: [] as Holiday[] })),
-          api
-            .get<PermissionRow[]>('/leaves/permissions/requests')
-            .catch(() => ({ data: [] as PermissionRow[] })),
-          api
-            .get<CompOffRow[]>('/leaves/comp-off-requests')
-            .catch(() => ({ data: [] as CompOffRow[] })),
-        ]);
-        setPendingList(pickLatestPending(leaveRes.data));
-        setHolidays(Array.isArray(holidayRes.data) ? holidayRes.data : []);
-        setPermissionRows(
-          Array.isArray(permissionRes.data)
-            ? permissionRes.data.slice(0, MAX_OTHER_VISIBLE)
-            : [],
-        );
-        setCompOffRows(
-          Array.isArray(compOffRes.data)
-            ? compOffRes.data.slice(0, MAX_OTHER_VISIBLE)
-            : [],
-        );
+        await reloadLists();
       } catch {
         setPendingList([]);
+        setPendingLeaveTotal(0);
         setHolidays([]);
         setPermissionRows([]);
+        setPermissionTotal(0);
         setCompOffRows([]);
+        setCompOffTotal(0);
       } finally {
         setLoading(false);
       }
     }
-    loadPendingLeaves();
-  }, []);
+    void loadPendingLeaves();
+  }, [reloadLists]);
 
   async function approveOrReject(
     leaveId: number,
     newStatus: 'APPROVED' | 'REJECTED',
     rejectionReason?: string,
   ) {
-    setBusyId(leaveId);
+    setBusyAction({ kind: 'leave', id: leaveId });
     try {
       await api.put(`/leaves/${leaveId}`, {
         status: newStatus,
@@ -155,52 +202,59 @@ export default function PendingLeaveRequests() {
           ? { rejectionReason: rejectionReason?.trim() ?? '' }
           : {}),
       });
-      const [leaveRes, permissionRes, compOffRes] = await Promise.all([
-        api.get<LeaveWithEmployee[]>('/leaves'),
-        api
-          .get<PermissionRow[]>('/leaves/permissions/requests')
-          .catch(() => ({ data: [] as PermissionRow[] })),
-        api
-          .get<CompOffRow[]>('/leaves/comp-off-requests')
-          .catch(() => ({ data: [] as CompOffRow[] })),
-      ]);
-      setPendingList(pickLatestPending(leaveRes.data));
-      setPermissionRows(
-        Array.isArray(permissionRes.data)
-          ? permissionRes.data.slice(0, MAX_OTHER_VISIBLE)
-          : [],
-      );
-      setCompOffRows(
-        Array.isArray(compOffRes.data)
-          ? compOffRes.data.slice(0, MAX_OTHER_VISIBLE)
-          : [],
-      );
+      await reloadLists();
     } catch {
       // silent
     } finally {
-      setBusyId(null);
+      setBusyAction(null);
     }
   }
 
-  const isRejectingCurrent = rejectLeaveId !== null && busyId === rejectLeaveId;
+  async function approveOrRejectCompOff(
+    compOffId: number,
+    newStatus: 'APPROVED' | 'REJECTED',
+  ) {
+    setBusyAction({ kind: 'compOff', id: compOffId });
+    try {
+      await api.put(`/leaves/comp-off-requests/${compOffId}`, { status: newStatus });
+      await reloadLists();
+    } catch {
+      // silent
+    } finally {
+      setBusyAction(null);
+    }
+  }
 
-  const openRejectModal = (leaveId: number) => {
-    setRejectLeaveId(leaveId);
+  const isRejectingCurrent =
+    rejectTarget !== null &&
+    busyAction !== null &&
+    busyAction.kind === rejectTarget.kind &&
+    busyAction.id === rejectTarget.id;
+
+  const openRejectModal = (kind: 'leave' | 'compOff', id: number) => {
+    setRejectTarget(kind === 'leave' ? { kind: 'leave', id } : { kind: 'compOff', id });
     setRejectReason('');
   };
 
   const closeRejectModal = () => {
     if (isRejectingCurrent) return;
-    setRejectLeaveId(null);
+    setRejectTarget(null);
     setRejectReason('');
   };
 
   const confirmReject = () => {
-    if (rejectLeaveId === null) return;
+    if (rejectTarget === null) return;
     const trimmed = rejectReason.trim();
     if (!trimmed) return;
-    void approveOrReject(rejectLeaveId, 'REJECTED', trimmed).finally(() => {
-      setRejectLeaveId(null);
+    if (rejectTarget.kind === 'leave') {
+      void approveOrReject(rejectTarget.id, 'REJECTED', trimmed).finally(() => {
+        setRejectTarget(null);
+        setRejectReason('');
+      });
+      return;
+    }
+    void approveOrRejectCompOff(rejectTarget.id, 'REJECTED').finally(() => {
+      setRejectTarget(null);
       setRejectReason('');
     });
   };
@@ -208,8 +262,8 @@ export default function PendingLeaveRequests() {
   if (loading) {
     return (
       <AdminDashboardPanel
-        title='Pending leave requests'
-        subtitle={`Up to ${MAX_VISIBLE} newest`}
+        title='Requests'
+        subtitle={`Last ${SLOT_COUNT} pending`}
         icon={ClipboardList}
         iconTileClass='bg-violet-50'
         iconClass='text-violet-600'
@@ -226,19 +280,19 @@ export default function PendingLeaveRequests() {
   const leaveBadge = (
     <span className='flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full ring-1 ring-amber-200 font-semibold text-[11px] text-amber-700'>
       <span className='bg-amber-500 rounded-full w-1.5 h-1.5' />
-      {pendingList.length} pending
+      {pendingLeaveTotal} pending
     </span>
   );
 
   const permissionBadge = (
     <span className='rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700 ring-1 ring-sky-200'>
-      {permissionRows.length} latest
+      {permissionTotal} total
     </span>
   );
 
   const compOffBadge = (
     <span className='rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 ring-1 ring-indigo-200'>
-      {compOffRows.length} latest
+      {compOffTotal} pending
     </span>
   );
 
@@ -297,153 +351,199 @@ export default function PendingLeaveRequests() {
       </div>
 
       {activeTab === 'LEAVE' ? (
-        pendingList.length === 0 ? (
-          <AdminDashboardEmpty
-            icon={ClipboardList}
-            message='No pending leave requests. New submissions will appear here.'
-          />
-        ) : (
-          <ul className='space-y-2'>
-            {pendingList.map((row) => {
-              const isBusy = busyId === row.id;
-              const name = row.user?.name ?? 'Unknown';
-              const typeColors = LEAVE_TYPE_COLORS[row.type] ?? {
-                bg: 'bg-gray-100',
-                text: 'text-gray-600',
-              };
-
+        <ul className='flex flex-col gap-2' aria-label='Pending leave requests'>
+          {withSlotPadding(pendingList, SLOT_COUNT).map((row, i) => {
+            if (!row) {
               return (
-                <li
-                  key={row.id}
-                  className='group flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-gray-50/70 hover:bg-gray-50 p-3 rounded-xl transition-colors duration-150'
-                >
-                  <div className='flex items-center gap-3 min-w-0'>
-                    <InitialsAvatar name={name} />
-                    <div className='min-w-0'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <p className='font-semibold text-gray-900 text-sm'>
-                          {name}
-                        </p>
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${typeColors.bg} ${typeColors.text}`}
-                        >
-                          {leaveTypeLabel(row.type)}
-                        </span>
-                      </div>
-                      <p className='mt-0.5 text-gray-400 text-xs'>
-                        {formatDate(row.startDate)} → {formatDate(row.endDate)}
-                        <span className='mx-1.5 text-gray-300'>•</span>
-                        <span>
-                          {(() => {
-                            const workingDays = workingDaysForLeaveRange(
-                              row.startDate,
-                              row.endDate,
-                              holidays,
-                            );
-                            return `${workingDays} working ${workingDays === 1 ? 'day' : 'days'}`;
-                          })()}
-                        </span>
+                <RequestRowPlaceholder key={`leave-empty-${i}`}>
+                  {pendingList.length === 0 && i === 0 ? (
+                    <div className='flex flex-col flex-1 justify-center items-center px-2 py-1 text-center'>
+                      <ClipboardList
+                        size={18}
+                        strokeWidth={1.5}
+                        className='mb-2 text-gray-300'
+                        aria-hidden
+                      />
+                      <p className='max-w-xs text-gray-400 text-sm leading-relaxed'>
+                        No pending leave requests. New submissions will appear here.
                       </p>
                     </div>
-                  </div>
-
-                  <div className='flex gap-2 pl-11 sm:pl-0 shrink-0'>
-                    <button
-                      disabled={isBusy}
-                      onClick={() => approveOrReject(row.id, 'APPROVED')}
-                      className='flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 px-3 py-1.5 rounded-lg ring-1 ring-emerald-200 font-semibold text-emerald-700 text-xs transition-all duration-150 disabled:cursor-not-allowed'
-                    >
-                      <CheckCircle2 size={13} />
-                      Approve
-                    </button>
-                    <button
-                      disabled={isBusy}
-                      onClick={() => openRejectModal(row.id)}
-                      className='flex items-center gap-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 px-3 py-1.5 rounded-lg ring-1 ring-red-200 font-semibold text-red-700 text-xs transition-all duration-150 disabled:cursor-not-allowed'
-                    >
-                      <XCircle size={13} />
-                      Reject
-                    </button>
-                  </div>
-                </li>
+                  ) : null}
+                </RequestRowPlaceholder>
               );
-            })}
-          </ul>
-        )
+            }
+
+            const isBusy = busyAction?.kind === 'leave' && busyAction.id === row.id;
+            const name = row.user?.name ?? 'Unknown';
+            const typeColors = LEAVE_TYPE_COLORS[row.type] ?? {
+              bg: 'bg-gray-100',
+              text: 'text-gray-600',
+            };
+            const workingDays = workingDaysForLeaveRange(
+              row.startDate,
+              row.endDate,
+              holidays,
+            );
+            const daysLabel = `${workingDays} working ${workingDays === 1 ? 'day' : 'days'}`;
+
+            return (
+              <li
+                key={row.id}
+                className={`group flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-gray-50/70 hover:bg-gray-50 p-3 rounded-xl transition-colors duration-150 ${SLOT_MIN_H}`}
+              >
+                <div className='flex items-center gap-3 min-w-0'>
+                  <InitialsAvatar name={name} />
+                  <div className='min-w-0'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <p className='font-semibold text-gray-900 text-sm'>{name}</p>
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${typeColors.bg} ${typeColors.text}`}
+                      >
+                        {leaveTypeLabel(row.type)}
+                      </span>
+                    </div>
+                    <p className='mt-0.5 text-gray-400 text-xs'>
+                      {formatDate(row.startDate)} → {formatDate(row.endDate)}
+                      <span className='mx-1.5 text-gray-300'>•</span>
+                      <span>{daysLabel}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className='shrink-0 pl-11 sm:pl-0'>
+                  <ApproveRejectButtonGroup
+                    disabled={isBusy}
+                    onApprove={() => approveOrReject(row.id, 'APPROVED')}
+                    onReject={() => openRejectModal('leave', row.id)}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       ) : null}
 
       {activeTab === 'PERMISSION' ? (
-        permissionRows.length === 0 ? (
-          <AdminDashboardEmpty
-            icon={Clock3}
-            message='No permission requests found.'
-          />
-        ) : (
-          <ul className='space-y-2'>
-            {permissionRows.map((row) => {
-              const employeeName = row.user?.name ?? 'Unknown';
-              return (
-                <li
-                  key={row.id}
-                  className='flex items-center justify-between gap-3 rounded-xl bg-gray-50/70 p-3'
-                >
-                  <div className='min-w-0'>
-                    <div className='flex items-center gap-2'>
-                      <p className='text-sm font-semibold text-gray-900'>{employeeName}</p>
-                      <span className='rounded-md bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700'>
-                        Permission
-                      </span>
-                    </div>
-                    <p className='mt-0.5 text-xs text-gray-500'>
-                      {formatDate(row.date)} • {formatMinutes(row.durationMinutes)}
+        <ul className='flex flex-col gap-2' aria-label='Permission requests'>
+          {withSlotPadding(permissionRows, SLOT_COUNT).map((row, i) =>
+            row ? (
+              <li
+                key={row.id}
+                className={`flex items-center justify-between gap-3 rounded-xl bg-gray-50/70 p-3 ${SLOT_MIN_H}`}
+              >
+                <div className='min-w-0'>
+                  <div className='flex items-center gap-2'>
+                    <p className='text-sm font-semibold text-gray-900'>
+                      {row.user?.name ?? 'Unknown'}
                     </p>
-                    <p className='mt-1 line-clamp-1 text-xs text-gray-400'>{row.reason}</p>
+                    <span className='rounded-md bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700'>
+                      Permission
+                    </span>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        )
+                  <p className='mt-0.5 text-xs text-gray-500'>
+                    {formatDate(row.date)} • {formatMinutes(row.durationMinutes)}
+                  </p>
+                  <p className='mt-1 line-clamp-1 text-xs text-gray-400'>{row.reason}</p>
+                </div>
+              </li>
+            ) : (
+              <RequestRowPlaceholder key={`permission-empty-${i}`}>
+                {permissionRows.length === 0 && i === 0 ? (
+                  <div className='flex flex-col flex-1 justify-center items-center px-2 py-1 text-center'>
+                    <Clock3
+                      size={18}
+                      strokeWidth={1.5}
+                      className='mb-2 text-gray-300'
+                      aria-hidden
+                    />
+                    <p className='max-w-xs text-gray-400 text-sm leading-relaxed'>
+                      No permission requests yet.
+                    </p>
+                  </div>
+                ) : null}
+              </RequestRowPlaceholder>
+            ),
+          )}
+        </ul>
       ) : null}
 
       {activeTab === 'COMP_OFF' ? (
-        compOffRows.length === 0 ? (
-          <AdminDashboardEmpty
-            icon={BriefcaseBusiness}
-            message='No comp off requests found.'
-          />
-        ) : (
-          <ul className='space-y-2'>
-            {compOffRows.map((row) => {
-              const employeeName = row.user?.name ?? 'Unknown';
+        <ul className='flex flex-col gap-2' aria-label='Pending comp off requests'>
+          {withSlotPadding(compOffRows, SLOT_COUNT).map((row, i) => {
+            if (!row) {
               return (
-                <li
-                  key={row.id}
-                  className='flex items-center justify-between gap-3 rounded-xl bg-gray-50/70 p-3'
-                >
+                <RequestRowPlaceholder key={`compoff-empty-${i}`}>
+                  {compOffRows.length === 0 && i === 0 ? (
+                    <div className='flex flex-col flex-1 justify-center items-center px-2 py-1 text-center'>
+                      <BriefcaseBusiness
+                        size={18}
+                        strokeWidth={1.5}
+                        className='mb-2 text-gray-300'
+                        aria-hidden
+                      />
+                      <p className='max-w-xs text-gray-400 text-sm leading-relaxed'>
+                        No pending comp off requests.
+                      </p>
+                    </div>
+                  ) : null}
+                </RequestRowPlaceholder>
+              );
+            }
+
+            const isBusy = busyAction?.kind === 'compOff' && busyAction.id === row.id;
+            const name = row.user?.name ?? 'Unknown';
+
+            return (
+              <li
+                key={row.id}
+                className={`group flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-gray-50/70 hover:bg-gray-50 p-3 rounded-xl transition-colors duration-150 ${SLOT_MIN_H}`}
+              >
+                <div className='flex items-center gap-3 min-w-0'>
+                  <InitialsAvatar name={name} />
                   <div className='min-w-0'>
-                    <div className='flex items-center gap-2'>
-                      <p className='text-sm font-semibold text-gray-900'>{employeeName}</p>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <p className='font-semibold text-gray-900 text-sm'>{name}</p>
                       <span className='rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700'>
                         Comp off
                       </span>
                     </div>
-                    <p className='mt-0.5 text-xs text-gray-500'>
+                    <p className='mt-0.5 text-gray-400 text-xs line-clamp-1'>
                       Worked on {formatDate(row.workDate)}
+                      <span className='mx-1.5 text-gray-300'>•</span>
+                      <span>{row.reason}</span>
                     </p>
-                    <p className='mt-1 line-clamp-1 text-xs text-gray-400'>{row.reason}</p>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        )
+                </div>
+
+                <div className='shrink-0 pl-11 sm:pl-0'>
+                  <ApproveRejectButtonGroup
+                    disabled={isBusy}
+                    onApprove={() => void approveOrRejectCompOff(row.id, 'APPROVED')}
+                    onReject={() => openRejectModal('compOff', row.id)}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       ) : null}
 
       <ConfirmModal
-        open={rejectLeaveId !== null}
-        title='Reject leave request'
-        message='Please provide a reason. This will be shown to the employee.'
+        open={rejectTarget !== null}
+        title={
+          rejectTarget === null
+            ? 'Reject request'
+            : rejectTarget.kind === 'leave'
+              ? 'Reject leave request'
+              : 'Reject comp off request'
+        }
+        message={
+          rejectTarget === null
+            ? 'Please provide a reason.'
+            : rejectTarget.kind === 'leave'
+              ? 'Please provide a reason. This will be shown to the employee.'
+              : 'Please provide a reason before rejecting this comp off request.'
+        }
         cancelLabel='Cancel'
         confirmLabel='Reject'
         isProcessing={isRejectingCurrent}

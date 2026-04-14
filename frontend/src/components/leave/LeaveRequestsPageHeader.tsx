@@ -22,10 +22,10 @@ export default function LeaveRequestsPageHeader({
             Administration
           </p>
           <h1
-            id='leave-requests-heading'
+            id='requests-heading'
             className='text-2xl font-bold leading-tight text-gray-900'
           >
-            Leave requests
+            Requests
           </h1>
           <p className='mt-1 text-sm text-gray-500'>
             Review, filter, and action team leave in one place.

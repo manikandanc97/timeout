@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { CalendarPlus, UserCheck, Users, Umbrella } from 'lucide-react';
+import { CalendarPlus, UserCheck, UserX, Users, Umbrella } from 'lucide-react';
 
 import { NEW_JOINER_DAYS } from './constants';
 import type { EmployeeDirectorySummary } from './utils';
@@ -9,7 +9,7 @@ type SummaryCardConfig = {
   label: string;
   field: keyof Pick<
     EmployeeDirectorySummary,
-    'total' | 'active' | 'onLeave' | 'newJoiners'
+    'total' | 'active' | 'onLeave' | 'deactivated' | 'newJoiners'
   >;
   accent: string;
   iconBg: string;
@@ -47,6 +47,15 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     Icon: Umbrella,
   },
   {
+    key: 'deactivated',
+    label: 'Deactivated',
+    field: 'deactivated',
+    accent: 'border-l-slate-400',
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-600',
+    Icon: UserX,
+  },
+  {
     key: 'new',
     label: 'New joiners',
     field: 'newJoiners',
@@ -62,21 +71,21 @@ function SummarySkeleton() {
   return (
     <section
       aria-label='Employee directory summary'
-      className='flex w-full shrink-0 flex-col gap-3.5 self-start rounded-2xl bg-white/95 sm:gap-4 lg:w-62 xl:w-56'
+      className='grid w-full shrink-0 grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-3.5'
     >
-      <h2 className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
-        Summary
-      </h2>
-      {[1, 2, 3, 4].map((i) => (
+      {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className='animate-pulse rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-3.5 shadow-sm sm:p-4'
+          className='animate-pulse rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-3 shadow-sm sm:p-3.5'
         >
           <div className='flex justify-between gap-2'>
-            <div className='h-3 w-20 rounded bg-gray-200' />
-            <div className='h-9 w-9 shrink-0 rounded-xl bg-gray-100' />
+            <div className='h-3 w-16 rounded bg-gray-200 sm:w-20' />
+            <div className='h-8 w-8 shrink-0 rounded-lg bg-gray-100 sm:h-9 sm:w-9 sm:rounded-xl' />
           </div>
-          <div className='mt-3 h-8 w-12 rounded bg-gray-200' />
+          <div className='mt-2 h-7 w-10 rounded bg-gray-200 sm:mt-2.5 sm:h-8' />
+          {i === 5 ? (
+            <div className='mt-1.5 h-2.5 w-20 rounded bg-gray-100 sm:w-24' />
+          ) : null}
         </div>
       ))}
     </section>
@@ -96,34 +105,33 @@ export default function EmployeesSummaryCards({ loading, summary }: Props) {
   return (
     <section
       aria-label='Employee directory summary'
-      className='flex w-full shrink-0 flex-col gap-3.5 self-start rounded-2xl bg-white/95 sm:gap-4 lg:w-62 xl:w-56'
+      className='grid w-full shrink-0 grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-3.5'
     >
-      <h2 className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
-        Summary
-      </h2>
       {SUMMARY_CARDS.map((c) => {
         const Icon = c.Icon;
         const value = summary[c.field];
         return (
           <div
             key={c.key}
-            className={`rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3.5 shadow-sm sm:p-4`}
+            className={`rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3 shadow-sm sm:p-3.5`}
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-xs font-medium uppercase tracking-wider text-gray-500'>
+              <span className='text-[11px] font-medium uppercase tracking-wider text-gray-500 sm:text-xs'>
                 {c.label}
               </span>
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${c.iconBg}`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl ${c.iconBg}`}
               >
                 <Icon size={17} strokeWidth={2} className={c.iconColor} />
               </div>
             </div>
-            <p className='mt-2.5 text-2xl font-bold tabular-nums tracking-tight text-gray-900 sm:text-3xl'>
+            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
               {value}
             </p>
             {c.subtitle ? (
-              <p className='mt-1 text-[11px] text-gray-400'>{c.subtitle}</p>
+              <p className='mt-1 text-[10px] text-gray-400 sm:text-[11px]'>
+                {c.subtitle}
+              </p>
             ) : null}
           </div>
         );

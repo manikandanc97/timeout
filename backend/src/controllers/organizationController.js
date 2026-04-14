@@ -160,7 +160,8 @@ export const getOrganizationEmployees = async (req, res) => {
               : null,
           }
         : null,
-      onLeaveToday: onLeaveUserIds.has(u.id),
+      // Deactivated users should not surface as "On leave" in directory status.
+      onLeaveToday: (u.isActive ?? true) && onLeaveUserIds.has(u.id),
     }));
 
     res.json({ employees });
@@ -731,6 +732,8 @@ export const createEmployeeUser = async (req, res) => {
         email,
         password: hashedPassword,
         role: userRole,
+        // Employee creation always starts as active; only admins can deactivate later.
+        isActive: true,
         organizationId,
         teamId: teamIdNum,
         gender,
@@ -997,6 +1000,365 @@ export const deleteEmployeeUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to delete employee' });
+  }
+};
+
+const parseDateInput = (raw) => {
+  if (!raw || !String(raw).trim()) return null;
+  const parsed = new Date(`${String(raw).slice(0, 10)}T12:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const endOfMonthDate = (year, month1to12) => {
+  if (!Number.isFinite(year) || !Number.isFinite(month1to12)) return null;
+  if (month1to12 < 1 || month1to12 > 12) return null;
+  return new Date(year, month1to12, 0, 12, 0, 0, 0);
+};
+
+const resolveSalaryEffectiveDate = (raw) => {
+  if (!raw || !String(raw).trim()) {
+    const now = new Date();
+    return endOfMonthDate(now.getFullYear(), now.getMonth() + 1);
+  }
+  const v = String(raw).trim();
+  // Supports YYYY-MM (month picker) by resolving to month-end payout date.
+  if (/^\d{4}-\d{2}$/.test(v)) {
+    const [y, m] = v.split('-').map(Number);
+    return endOfMonthDate(y, m);
+  }
+  // Supports YYYY-MM-DD and then normalizes to that month's end date.
+  const parsed = parseDateInput(v);
+  if (!parsed) return null;
+  return endOfMonthDate(parsed.getFullYear(), parsed.getMonth() + 1);
+};
+
+const toNumberOrZero = (value) => {
+  const num = Number(value);
+  if (Number.isNaN(num)) return 0;
+  return num;
+};
+
+const toFiniteOrNull = (value) => {
+  if (value == null || String(value).trim() === '') return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
+const monthlyTaxFromYearlyGross = (yearlyGrossSalary) => {
+  if (!Number.isFinite(yearlyGrossSalary) || yearlyGrossSalary <= 0) return 0;
+  if (yearlyGrossSalary <= 1200000) return 0;
+  return (yearlyGrossSalary * 0.15) / 12;
+};
+
+const deriveSalaryFromYearlyGross = (yearlyGrossSalary) => {
+  const monthlyGross = yearlyGrossSalary / 12;
+  const basicSalary = monthlyGross * 0.5;
+  const hra = basicSalary * 0.4;
+  const allowance = Math.max(monthlyGross - basicSalary - hra, 0);
+  const bonus = 0;
+  const pf = basicSalary * 0.12;
+  const tax = monthlyTaxFromYearlyGross(yearlyGrossSalary);
+  const professionalTax = 200;
+  return {
+    yearlyGrossSalary,
+    basicSalary,
+    hra,
+    allowance,
+    bonus,
+    pf,
+    tax,
+    professionalTax,
+  };
+};
+
+const computeNetSalary = (salary) =>
+  toNumberOrZero(salary.basicSalary) +
+  toNumberOrZero(salary.hra) +
+  toNumberOrZero(salary.allowance) +
+  toNumberOrZero(salary.bonus) -
+  toNumberOrZero(salary.pf) -
+  toNumberOrZero(salary.tax) -
+  toNumberOrZero(salary.professionalTax);
+
+const startOfDay = (d) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const endOfDay = (d) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+};
+
+const dayCountInclusive = (from, to) => {
+  const start = startOfDay(from);
+  const end = startOfDay(to);
+  if (end < start) return 0;
+  const ms = end.getTime() - start.getTime();
+  return Math.floor(ms / (24 * 60 * 60 * 1000)) + 1;
+};
+
+const overlapDaysInclusive = (aStart, aEnd, bStart, bEnd) => {
+  const start = aStart > bStart ? aStart : bStart;
+  const end = aEnd < bEnd ? aEnd : bEnd;
+  return dayCountInclusive(start, end);
+};
+
+export const getEmployeeDetails = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const userId = Number(req.params.userId);
+    if (Number.isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid employee' });
+    }
+
+    const employee = await prisma.user.findFirst({
+      where: { id: userId, organizationId, role: { not: 'ADMIN' } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+            department: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    const now = new Date();
+    const monthStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), 1));
+    const monthEnd = endOfDay(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+
+    const [leaveSummary, salaryStructures, payrolls, monthlyLeaves] = await Promise.all([
+      prisma.leave.groupBy({
+        by: ['status'],
+        where: { userId, organizationId },
+        _count: { status: true },
+      }),
+      prisma.salaryStructure.findMany({
+        where: { userId, organizationId },
+        orderBy: [{ isActive: 'desc' }, { effectiveFrom: 'desc' }],
+      }),
+      prisma.payroll.findMany({
+        where: { userId, organizationId },
+        orderBy: [{ year: 'desc' }, { month: 'desc' }, { createdAt: 'desc' }],
+        take: 12,
+      }),
+      prisma.leave.findMany({
+        where: {
+          userId,
+          organizationId,
+          startDate: { lte: monthEnd },
+          endDate: { gte: monthStart },
+        },
+        select: { status: true, startDate: true, endDate: true },
+      }),
+    ]);
+
+    const leave = { pending: 0, approved: 0, rejected: 0 };
+    leaveSummary.forEach((row) => {
+      if (row.status === 'PENDING') leave.pending = row._count.status;
+      if (row.status === 'APPROVED') leave.approved = row._count.status;
+      if (row.status === 'REJECTED') leave.rejected = row._count.status;
+    });
+
+    let appliedLeaveDays = 0;
+    let approvedLeaveDays = 0;
+    let pendingLeaveDays = 0;
+    let rejectedLeaveDays = 0;
+
+    for (const row of monthlyLeaves) {
+      const days = overlapDaysInclusive(
+        row.startDate,
+        row.endDate,
+        monthStart,
+        monthEnd,
+      );
+      appliedLeaveDays += days;
+      if (row.status === 'APPROVED') approvedLeaveDays += days;
+      if (row.status === 'PENDING') pendingLeaveDays += days;
+      if (row.status === 'REJECTED') rejectedLeaveDays += days;
+    }
+
+    const todayClampedToMonth = now < monthEnd ? now : monthEnd;
+    const elapsedMonthDays = dayCountInclusive(monthStart, todayClampedToMonth);
+    const workedDays = Math.max(0, elapsedMonthDays - approvedLeaveDays);
+
+    res.json({
+      employee: {
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        role: employee.role,
+        status: employee.isActive ? 'ACTIVE' : 'DEACTIVATED',
+        department: employee.team?.department?.name ?? null,
+        team: employee.team?.name ?? null,
+        createdAt: employee.createdAt.toISOString(),
+      },
+      leave,
+      leaveDaySummary: {
+        workedDays,
+        appliedLeaveDays,
+        approvedLeaveDays,
+        pendingLeaveDays,
+        rejectedLeaveDays,
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+      },
+      salaryStructures: salaryStructures.map((row) => ({
+        ...row,
+        effectiveFrom: row.effectiveFrom.toISOString(),
+        createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+      })),
+      payrolls: payrolls.map((row) => ({
+        ...row,
+        paidDate: row.paidDate ? row.paidDate.toISOString() : null,
+        createdAt: row.createdAt.toISOString(),
+      })),
+      documents: [],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to load employee details' });
+  }
+};
+
+export const upsertEmployeeSalaryStructure = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (req.user.role !== 'ADMIN') {
+      return res
+        .status(403)
+        .json({ message: 'Only admins can update salary structure' });
+    }
+    if (organizationId == null) {
+      return res.status(400).json({ message: 'Missing organization' });
+    }
+
+    const userId = Number(req.params.userId);
+    if (Number.isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid employee' });
+    }
+
+    const employee = await prisma.user.findFirst({
+      where: { id: userId, organizationId, role: { not: 'ADMIN' } },
+      select: { id: true },
+    });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    const yearlyGrossSalary = toFiniteOrNull(req.body.yearlyGrossSalary);
+    const derived =
+      yearlyGrossSalary != null && yearlyGrossSalary > 0
+        ? deriveSalaryFromYearlyGross(yearlyGrossSalary)
+        : null;
+
+    const basicSalaryInput = toFiniteOrNull(req.body.basicSalary);
+    const basicSalary = basicSalaryInput ?? derived?.basicSalary ?? null;
+    if (!Number.isFinite(basicSalary) || Number(basicSalary) < 0) {
+      return res.status(400).json({ message: 'Basic salary must be valid' });
+    }
+
+    const payload = {
+      yearlyGrossSalary,
+      basicSalary: Number(basicSalary),
+      hra: toFiniteOrNull(req.body.hra) ?? derived?.hra ?? 0,
+      allowance: toFiniteOrNull(req.body.allowance) ?? derived?.allowance ?? 0,
+      bonus: toFiniteOrNull(req.body.bonus) ?? derived?.bonus ?? 0,
+      pf: toFiniteOrNull(req.body.pf) ?? derived?.pf ?? 0,
+      tax: toFiniteOrNull(req.body.tax) ?? derived?.tax ?? 0,
+      professionalTax:
+        toFiniteOrNull(req.body.professionalTax) ?? derived?.professionalTax ?? 0,
+      effectiveFrom: resolveSalaryEffectiveDate(req.body.effectiveFrom),
+    };
+    if (!payload.effectiveFrom) {
+      return res.status(400).json({ message: 'Invalid salary month/effective date' });
+    }
+
+    await prisma.salaryStructure.updateMany({
+      where: { userId, organizationId, isActive: true },
+      data: { isActive: false },
+    });
+
+    const created = await prisma.salaryStructure.create({
+      data: {
+        userId,
+        organizationId,
+        ...payload,
+        isActive: true,
+      },
+    });
+
+    const netSalary = computeNetSalary(payload);
+    const payrollDate = payload.effectiveFrom;
+    const payrollMonth = payrollDate.getMonth() + 1;
+    const payrollYear = payrollDate.getFullYear();
+    await prisma.payroll.upsert({
+      where: {
+        userId_month_year: {
+          userId,
+          month: payrollMonth,
+          year: payrollYear,
+        },
+      },
+      update: {
+        yearlyGrossSalary: payload.yearlyGrossSalary,
+        basicSalary: payload.basicSalary,
+        hra: payload.hra,
+        allowance: payload.allowance,
+        bonus: payload.bonus,
+        pf: payload.pf,
+        tax: payload.tax,
+        professionalTax: payload.professionalTax,
+        netSalary,
+      },
+      create: {
+        userId,
+        organizationId,
+        month: payrollMonth,
+        year: payrollYear,
+        yearlyGrossSalary: payload.yearlyGrossSalary,
+        basicSalary: payload.basicSalary,
+        hra: payload.hra,
+        allowance: payload.allowance,
+        bonus: payload.bonus,
+        pf: payload.pf,
+        tax: payload.tax,
+        professionalTax: payload.professionalTax,
+        netSalary,
+        status: 'PENDING',
+      },
+    });
+
+    res.status(201).json({
+      salaryStructure: {
+        ...created,
+        effectiveFrom: created.effectiveFrom.toISOString(),
+        createdAt: created.createdAt.toISOString(),
+        updatedAt: created.updatedAt.toISOString(),
+      },
+      computedNetSalary: netSalary,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to update salary structure' });
   }
 };
 

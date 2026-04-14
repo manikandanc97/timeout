@@ -45,6 +45,8 @@ export type ApplyLeaveApplyTabProps = {
   balance: LeaveBalance | null;
   dateStats: ReturnType<typeof calculateLeaveDays>;
   daysToDeduct: number;
+  lopDays: number;
+  balanceDeductedDays: number;
   hasDateRange: boolean;
   hasOverlap: boolean;
   isOverdrawn: boolean;
@@ -72,6 +74,8 @@ const ApplyLeaveApplyTab = ({
   balance,
   dateStats,
   daysToDeduct,
+  lopDays,
+  balanceDeductedDays,
   hasDateRange,
   hasOverlap,
   isOverdrawn,
@@ -329,6 +333,18 @@ const ApplyLeaveApplyTab = ({
                   </p>
                 </div>
               ))}
+            </div>
+          ) : null}
+
+          {hasDateRange && lopDays > 0 ? (
+            <div className='mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800'>
+              <p className='font-semibold'>
+                Leave balance exceeded: {lopDays} day(s) will be treated as Loss of
+                Pay (LOP).
+              </p>
+              <p className='mt-1'>
+                Balance deduction: {balanceDeductedDays} day(s) | LOP: {lopDays} day(s)
+              </p>
             </div>
           ) : null}
         </section>

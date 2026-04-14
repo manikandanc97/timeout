@@ -1,3 +1,4 @@
+import ApproveRejectButtonGroup from '@/components/leave/ApproveRejectButtonGroup';
 import LeaveStatusBadge from '@/components/leave/LeaveStatusBadge';
 import { TYPE_CONFIG } from '@/components/leave/constants';
 import { fmt, getLeaveEnd, getLeaveStart } from '@/components/leave/utils';
@@ -5,7 +6,6 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import type { Holiday } from '@/types/holiday';
 import type { LeaveWithEmployee } from '@/types/leave';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
-import { CheckCircle2, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 type Props = {
@@ -52,26 +52,34 @@ export default function LeaveRequestsTable({
   };
 
   return (
-    <div className='min-h-0 flex-1 overflow-auto'>
-      <table className='min-h-full w-full min-w-[720px] border-collapse text-left text-sm'>
+    <div className='w-full min-w-0 overflow-x-auto'>
+      <table className='w-full min-w-4xl table-fixed border-collapse text-left text-sm'>
+        <colgroup>
+          <col className='w-[12%]' />
+          <col className='w-[14%]' />
+          <col className='w-[10%]' />
+          <col className='w-[10%]' />
+          <col className='w-[8%]' />
+          <col className='w-[28%]' />
+          <col className='w-[18%]' />
+        </colgroup>
         <thead className='sticky top-0 z-10'>
           <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
-            <th className='px-4 py-3.5 text-left'>Employee</th>
-            <th className='px-4 py-3.5 text-left'>Leave type</th>
-            <th className='px-4 py-3.5 text-left'>From</th>
-            <th className='px-4 py-3.5 text-left'>To</th>
-            <th className='px-4 py-3.5 text-left'>Days</th>
-            <th className='px-4 py-3.5 text-left'>Reason</th>
-            <th className='px-4 py-3.5 text-left'>Status</th>
-            <th className='px-4 py-3.5 text-right'>Actions</th>
+            <th className='px-3 py-3.5 text-left align-middle sm:px-4'>Employee</th>
+            <th className='px-3 py-3.5 text-left align-middle sm:px-4'>Leave type</th>
+            <th className='px-3 py-3.5 text-left align-middle sm:px-4'>From</th>
+            <th className='px-3 py-3.5 text-left align-middle sm:px-4'>To</th>
+            <th className='px-3 py-3.5 text-left align-middle sm:px-4'>Days</th>
+            <th className='px-3 py-3.5 text-left align-middle sm:px-4'>Reason</th>
+            <th className='px-3 py-3.5 text-left align-middle sm:px-4'>Status</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
               <td
-                colSpan={8}
-                className='px-4 py-16 text-center align-middle text-sm text-gray-500 sm:py-24'
+                colSpan={7}
+                className='px-3 py-16 text-center align-middle text-sm text-gray-500 sm:px-4 sm:py-24'
               >
                 No leave requests match your filters.
               </td>
@@ -86,23 +94,25 @@ export default function LeaveRequestsTable({
                   key={row.id}
                   className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
                 >
-                  <td className='px-4 py-2 text-left align-top font-medium text-gray-900'>
-                    <span>{name}</span>
+                  <td className='min-w-0 px-3 py-2.5 text-left align-middle font-medium text-gray-900 sm:px-4'>
+                    <span className='block truncate' title={name}>
+                      {name}
+                    </span>
                   </td>
-                  <td className='px-4 py-2 text-left align-top'>
+                  <td className='min-w-0 px-3 py-2.5 text-left align-middle sm:px-4'>
                     <span
-                      className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold ${typeCfg.bg} ${typeCfg.text} ${typeCfg.border}`}
+                      className={`inline-flex items-center whitespace-nowrap rounded-md border px-2 py-1 text-xs font-semibold leading-none ${typeCfg.bg} ${typeCfg.text} ${typeCfg.border}`}
                     >
                       {typeCfg.label}
                     </span>
                   </td>
-                  <td className='whitespace-nowrap px-4 py-2 text-left align-top text-gray-700'>
+                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-gray-700 sm:px-4'>
                     {fmt(getLeaveStart(row))}
                   </td>
-                  <td className='whitespace-nowrap px-4 py-2 text-left align-top text-gray-700'>
+                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-gray-700 sm:px-4'>
                     {fmt(getLeaveEnd(row))}
                   </td>
-                  <td className='whitespace-nowrap px-4 py-2 text-left align-top text-gray-700'>
+                  <td className='whitespace-nowrap px-3 py-2.5 text-left align-middle text-gray-700 sm:px-4'>
                     {workingDaysForLeaveRange(
                       getLeaveStart(row),
                       getLeaveEnd(row),
@@ -110,38 +120,20 @@ export default function LeaveRequestsTable({
                     )}{' '}
                     day(s)
                   </td>
-                  <td className='max-w-[220px] px-4 py-2 text-left align-top text-gray-600'>
-                    <span className='line-clamp-2 text-left' title={row.reason}>
+                  <td className='min-w-0 px-3 py-2.5 text-left align-middle text-gray-600 sm:px-4'>
+                    <span className='line-clamp-2 wrap-break-word text-left' title={row.reason}>
                       {row.reason || '—'}
                     </span>
                   </td>
-                  <td className='px-4 py-2 text-left align-top'>
-                    <LeaveStatusBadge status={row.status} />
-                  </td>
-                  <td className='px-4 py-2 text-right align-top'>
+                  <td className='min-w-0 px-3 py-2.5 text-left align-middle sm:px-4'>
                     {canModerate && row.status === 'PENDING' ? (
-                      <div className='flex justify-end gap-2'>
-                        <button
-                          type='button'
-                          disabled={isBusy}
-                          onClick={() => onApproveReject(row.id, 'APPROVED')}
-                          className='inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50'
-                        >
-                          <CheckCircle2 size={13} />
-                          Approve
-                        </button>
-                        <button
-                          type='button'
-                          disabled={isBusy}
-                          onClick={() => openRejectModal(row.id)}
-                          className='inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50'
-                        >
-                          <XCircle size={13} />
-                          Reject
-                        </button>
-                      </div>
+                      <ApproveRejectButtonGroup
+                        disabled={isBusy}
+                        onApprove={() => onApproveReject(row.id, 'APPROVED')}
+                        onReject={() => openRejectModal(row.id)}
+                      />
                     ) : (
-                      <span className='text-xs text-gray-400'>—</span>
+                      <LeaveStatusBadge status={row.status} className='shrink-0' />
                     )}
                   </td>
                 </tr>

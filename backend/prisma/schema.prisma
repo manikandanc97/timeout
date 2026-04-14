@@ -30,6 +30,8 @@ model Organization {
   departments  Department[]
   holidays     Holiday[]
   leaves       Leave[]
+  salaryStructures SalaryStructure[]
+  payrolls     Payroll[]
   compOffWorkLogs CompOffWorkLog[]
   permissionRequests PermissionRequest[]
 }
@@ -93,6 +95,8 @@ model User {
   team         Team?        @relation(fields: [teamId], references: [id])
 
   leaves       Leave[]
+  salaryStructures SalaryStructure[]
+  payrolls     Payroll[]
   leaveBalance LeaveBalance?
   compOffWorkLogs CompOffWorkLog[]
   permissionRequests PermissionRequest[]
@@ -110,6 +114,11 @@ enum RequestStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum PayrollStatus {
+  PENDING
+  PAID
 }
 
 enum LeaveType {
@@ -131,6 +140,12 @@ model Leave {
   reason         String
   rejectionReason String?
   status         LeaveStatus @default(PENDING)
+  /** Days deducted from leave balance at request time */
+  balanceDeductedDays Int @default(0)
+  /** Days allowed as Loss of Pay when balance is insufficient */
+  lopDays        Int @default(0)
+  /** Estimated salary loss for LOP days */
+  lopAmount      Float @default(0)
 
   approvedById Int?
 
@@ -202,4 +217,61 @@ model PermissionRequest {
 
   @@index([userId, date])
   @@index([organizationId, date])
+}
+
+model SalaryStructure {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  organizationId  Int
+  yearlyGrossSalary Float?
+  basicSalary     Float
+  hra             Float    @default(0)
+  allowance       Float    @default(0)
+  bonus           Float    @default(0)
+  pf              Float    @default(0)
+  tax             Float    @default(0)
+  professionalTax Float    @default(0)
+  /** Running LOP days tracked against this active structure */
+  lopDays         Int      @default(0)
+  /** Running LOP amount tracked against this active structure */
+  lopAmount       Float    @default(0)
+  effectiveFrom   DateTime
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, effectiveFrom])
+  @@index([userId, effectiveFrom])
+}
+
+model Payroll {
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  organizationId Int
+  month          Int
+  year           Int
+  yearlyGrossSalary Float?
+  basicSalary    Float
+  hra            Float         @default(0)
+  allowance      Float         @default(0)
+  bonus          Float         @default(0)
+  pf             Float         @default(0)
+  tax            Float         @default(0)
+  professionalTax Float        @default(0)
+  lopDays         Int          @default(0)
+  lopAmount       Float        @default(0)
+  netSalary      Float
+  status         PayrollStatus @default(PENDING)
+  paidDate       DateTime?
+  createdAt      DateTime      @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, month, year])
+  @@index([userId, month, year])
+  @@unique([userId, month, year])
 }

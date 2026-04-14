@@ -75,8 +75,8 @@ const ApplyLeavePermissionTab = ({
     if (!permissionStartTime || !permissionEndTime) return null;
     const start = timeStringToMinutes(permissionStartTime);
     const end = timeStringToMinutes(permissionEndTime);
-    if (start == null || end == null) return 'Please select valid from and to times.';
-    if (end <= start) return 'To time must be after from time.';
+    if (start == null || end == null) return 'Please select valid start and end times.';
+    if (end <= start) return 'End time must be after start time.';
     if (end - start > 240)
       return 'In-between permission cannot exceed 240 minutes.';
     if (
@@ -137,7 +137,7 @@ const ApplyLeavePermissionTab = ({
         <Input
           id='permission-start-time'
           type='time'
-          label='From'
+          label='Start time'
           required
           value={permissionStartTime}
           onChange={(e) => setPermissionStartTime(e.target.value)}
@@ -145,7 +145,7 @@ const ApplyLeavePermissionTab = ({
         <Input
           id='permission-end-time'
           type='time'
-          label='To'
+          label='End time'
           required
           value={permissionEndTime}
           onChange={(e) => setPermissionEndTime(e.target.value)}
@@ -172,7 +172,7 @@ const ApplyLeavePermissionTab = ({
           </p>
         ) : (
           <p className='text-gray-500 text-xs sm:col-span-2'>
-            Same day only and &quot;To&quot; must be after &quot;From&quot;.
+            Same day only and end time must be after start time.
           </p>
         )}
         <div className='sm:col-span-2'>

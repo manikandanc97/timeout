@@ -98,6 +98,7 @@ export default function EmployeesFilterBar({
             { label: 'All statuses', value: 'ALL' },
             { label: 'Active', value: 'ACTIVE' },
             { label: 'On leave', value: 'ON_LEAVE' },
+            { label: 'Deactivated', value: 'DEACTIVATED' },
           ]}
           selectClassName='h-10 focus:ring-inset'
         />

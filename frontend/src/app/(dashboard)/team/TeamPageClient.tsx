@@ -8,6 +8,7 @@ import EditTeamModal from '@/components/teams/EditTeamModal';
 import TeamsFilterBar from '@/components/teams/TeamsFilterBar';
 import TeamsNoAccess from '@/components/teams/TeamsNoAccess';
 import TeamsPageHeader from '@/components/teams/TeamsPageHeader';
+import { TEAMS_PAGE_SIZE } from '@/components/teams/constants';
 import TeamsPagination from '@/components/teams/TeamsPagination';
 import TeamsSummaryCards from '@/components/teams/TeamsSummaryCards';
 import TeamsTable from '@/components/teams/TeamsTable';
@@ -90,7 +91,9 @@ export default function TeamPageClient() {
                 </div>
 
                 <TeamsPagination
-                  visible={!dir.loadingList && dir.filtered.length > 0}
+                  visible={
+                    !dir.loadingList && dir.filtered.length > TEAMS_PAGE_SIZE
+                  }
                   safePage={dir.safePage}
                   pageCount={dir.pageCount}
                   filteredLength={dir.filtered.length}

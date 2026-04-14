@@ -18,7 +18,7 @@ export default function HolidaysTable({
   onDelete,
 }: Props) {
   return (
-    <div className='min-h-0 flex-1 overflow-auto'>
+    <div className='w-full min-w-0 overflow-x-auto'>
       <table className='w-full min-w-[420px] border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
           <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>

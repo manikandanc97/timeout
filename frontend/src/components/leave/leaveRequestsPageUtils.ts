@@ -2,7 +2,7 @@ import type { FilterValue } from '@/components/leave/constants';
 import { getLeaveEnd, getLeaveStart } from '@/components/leave/utils';
 import type { LeaveStatus, LeaveType, LeaveWithEmployee } from '@/types/leave';
 
-export const LEAVE_REQUESTS_PAGE_SIZE = 15;
+export const LEAVE_REQUESTS_PAGE_SIZE = 10;
 
 export type LeaveRequestsSummary = {
   pending: number;
@@ -41,18 +41,31 @@ export function leaveOverlapsRange(
   return start <= rangeEnd && end >= rangeStart;
 }
 
-export function computeLeaveRequestsSummary(
-  rows: LeaveWithEmployee[],
+/** Pending / approved / rejected / total for any row with a `status` field (leave, permission, comp off). */
+export function computeRequestStatusSummary(
+  rows: Array<{ status: string }>,
 ): LeaveRequestsSummary {
-  const pending = rows.filter((r) => r.status === 'PENDING').length;
-  const approved = rows.filter((r) => r.status === 'APPROVED').length;
-  const rejected = rows.filter((r) => r.status === 'REJECTED').length;
+  let pending = 0;
+  let approved = 0;
+  let rejected = 0;
+  for (const r of rows) {
+    const s = String(r.status ?? '').toUpperCase();
+    if (s === 'PENDING') pending += 1;
+    else if (s === 'APPROVED') approved += 1;
+    else if (s === 'REJECTED') rejected += 1;
+  }
   return {
     pending,
     approved,
     rejected,
     total: rows.length,
   };
+}
+
+export function computeLeaveRequestsSummary(
+  rows: LeaveWithEmployee[],
+): LeaveRequestsSummary {
+  return computeRequestStatusSummary(rows);
 }
 
 export function filterLeaveRequests(
