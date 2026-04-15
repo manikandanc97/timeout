@@ -3,9 +3,11 @@
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import Button from '../ui/Button';
-import { Bell, Moon, Settings, Sun, User } from 'lucide-react';
+import { Bell, Settings } from 'lucide-react';
 import RightPanel from './RightPanel';
-import { applyTheme, type ThemeMode } from '@/lib/theme';
+import { useNotifications } from '@/context/NotificationProvider';
+import { useAuth } from '@/context/AuthContext';
+import { formatPersonName, initialsFromPersonName } from '@/lib/personName';
 
 /** Single map: easier to update labels and avoids a long if/else chain. */
 const ROUTE_TITLES: Record<string, string> = {
@@ -33,43 +35,39 @@ const resolvePageTitle = (pathname: string) => {
 
 const Topbar = () => {
   const pathname = usePathname();
+  const { unreadCount } = useNotifications();
+  const { user } = useAuth();
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
-  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'));
+    const openAiPanel = () => setActivePanel('aiChat');
+    window.addEventListener('open-ai-chat-panel', openAiPanel);
+    return () => window.removeEventListener('open-ai-chat-panel', openAiPanel);
   }, []);
 
   const pageTitle = resolvePageTitle(pathname);
-
-  const toggleColorMode = () => {
-    const next: ThemeMode = isDark ? 'light' : 'dark';
-    applyTheme(next);
-    setIsDark(next === 'dark');
-  };
+  const displayName = formatPersonName(user?.name) || 'User';
+  const roleLabel = String(user?.role ?? 'Member').toUpperCase();
+  const initials = initialsFromPersonName(displayName);
 
   return (
-    <div className='flex items-center justify-between border-b border-border bg-card p-4 shadow-sm'>
+    <div className='flex items-center justify-between border-b border-border bg-card p-4 shadow-sm dark:shadow-none'>
       <h1 className='text-2xl font-bold text-card-foreground'>{pageTitle}</h1>
       <div className='flex items-center gap-1'>
         <Button
           type='button'
           variant='ghost'
-          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          onClick={toggleColorMode}
-          className='text-muted-foreground! hover:text-card-foreground!'
-        >
-          {isDark ? <Sun size={20} /> : <Moon size={20} />}
-        </Button>
-        <Button
-          type='button'
-          variant='ghost'
           aria-label='Notifications'
           onClick={() => setActivePanel('notifications')}
-          className='text-muted-foreground! hover:text-card-foreground!'
+          className='relative text-muted-foreground! hover:text-card-foreground!'
         >
           <Bell size={20} />
+          {unreadCount > 0 ? (
+            <span className='absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground'>
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          ) : null}
         </Button>
         <Button
           type='button'
@@ -85,9 +83,21 @@ const Topbar = () => {
           variant='ghost'
           aria-label='Profile'
           onClick={() => setActivePanel('profile')}
-          className='text-card-foreground! opacity-90 hover:opacity-100'
+          className='rounded-full! border! border-border! bg-muted/60! px-2! py-1! text-card-foreground! hover:bg-muted!'
         >
-          <User size={20} />
+          <div className='flex items-center gap-2'>
+            <span className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground'>
+              {initials}
+            </span>
+            <span className='hidden text-left leading-tight sm:block'>
+              <span className='block max-w-32 truncate text-sm font-semibold text-card-foreground'>
+                {displayName}
+              </span>
+              <span className='block text-[11px] font-medium tracking-wide text-muted-foreground'>
+                {roleLabel}
+              </span>
+            </span>
+          </div>
         </Button>
       </div>
 

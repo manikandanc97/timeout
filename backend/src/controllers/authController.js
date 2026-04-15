@@ -140,15 +140,99 @@ export const refreshTokenHandler = (req, res) => {
 
 export const getCurrentUser = async (req, res) => {
   try {
-    res.json({
-      id: req.user.id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role,
-      organizationId: req.user.organizationId,
-      gender: req.user.gender,
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        organizationId: true,
+        gender: true,
+      },
     });
-  } catch (error) {}
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('[auth] getCurrentUser', error?.message ?? error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const updateProfileName = async (req, res) => {
+  try {
+    const name = String(req.body?.name ?? '').trim();
+    if (!name) {
+      return res.status(400).json({ message: 'Name is required' });
+    }
+    if (name.length < 2) {
+      return res.status(400).json({ message: 'Name must be at least 2 characters' });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { name },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        organizationId: true,
+        gender: true,
+      },
+    });
+
+    return res.json({ message: 'Name updated successfully', user: updatedUser });
+  } catch (error) {
+    console.error('[auth] updateProfileName', error?.message ?? error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const currentPassword = String(req.body?.currentPassword ?? '');
+    const newPassword = String(req.body?.newPassword ?? '');
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+    if (currentPassword === newPassword) {
+      return res
+        .status(400)
+        .json({ message: 'New password must be different from current password' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, password: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword },
+    });
+
+    return res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('[auth] changePassword', error?.message ?? error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
 };
 
 export const logout = (req, res) => {

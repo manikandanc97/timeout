@@ -15,16 +15,16 @@ export default function SettingsToggle({ checked, onChange, label }: Props) {
       />
       <span
         className={`relative h-6 w-11 rounded-full transition-colors ${
-          checked ? 'bg-primary' : 'bg-gray-300'
+          checked ? 'bg-primary' : 'bg-muted'
         }`}
       >
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-card shadow transition-transform ${
             checked ? 'translate-x-5' : 'translate-x-0.5'
           }`}
         />
       </span>
-      {label ? <span className='text-sm text-gray-700'>{label}</span> : null}
+      {label ? <span className='text-sm text-card-foreground/90'>{label}</span> : null}
     </label>
   );
 }

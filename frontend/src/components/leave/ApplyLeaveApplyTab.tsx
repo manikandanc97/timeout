@@ -103,7 +103,7 @@ const ApplyLeaveApplyTab = ({
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
                     canGoPrev
                       ? 'border-border bg-card text-muted-foreground hover:bg-muted'
-                      : 'cursor-not-allowed border-border bg-muted text-muted-foreground/40'
+                      : 'cursor-not-allowed border-border bg-muted text-muted-foreground/60'
                   }`}
                   aria-label='Show previous leave types'
                 >
@@ -120,7 +120,7 @@ const ApplyLeaveApplyTab = ({
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
                     canGoNext
                       ? 'border-border bg-card text-muted-foreground hover:bg-muted'
-                      : 'cursor-not-allowed border-border bg-muted text-muted-foreground/40'
+                      : 'cursor-not-allowed border-border bg-muted text-muted-foreground/60'
                   }`}
                   aria-label='Show next leave types'
                 >
@@ -217,7 +217,7 @@ const ApplyLeaveApplyTab = ({
             )}
           />
           {errors.type ? (
-            <p className='flex items-center gap-1 mt-2 text-red-500 text-xs'>
+            <p className='flex items-center gap-1 mt-2 text-destructive text-xs'>
               <AlertTriangle size={11} />
               {errors.type.message}
             </p>
@@ -275,7 +275,7 @@ const ApplyLeaveApplyTab = ({
           </div>
 
           {errors.startDate || errors.endDate ? (
-            <div className='space-y-1 mt-2 text-red-500 text-xs'>
+            <div className='space-y-1 mt-2 text-destructive text-xs'>
               {errors.startDate?.message ? (
                 <p className='flex items-center gap-1'>
                   <AlertTriangle size={11} />
@@ -291,7 +291,7 @@ const ApplyLeaveApplyTab = ({
             </div>
           ) : null}
           {hasDateRange && hasOverlap ? (
-            <p className='flex items-center gap-1 mt-2 text-red-500 text-xs'>
+            <p className='flex items-center gap-1 mt-2 text-destructive text-xs'>
               <AlertTriangle size={11} />
               You already applied for one or more of these dates.
             </p>
@@ -376,7 +376,7 @@ const ApplyLeaveApplyTab = ({
             )}
           />
           {errors.reason ? (
-            <p className='flex items-center gap-1 mt-2 text-red-500 text-xs'>
+            <p className='flex items-center gap-1 mt-2 text-destructive text-xs'>
               <AlertTriangle size={11} />
               {errors.reason.message}
             </p>

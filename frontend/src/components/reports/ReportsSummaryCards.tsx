@@ -28,12 +28,12 @@ export default function ReportsSummaryCards(props: ReportsSummaryCardsProps) {
       {cards.map((card) => (
         <article
           key={card.key}
-          className={`rounded-2xl border border-gray-100 border-l-4 ${card.accent} bg-white p-3 shadow-sm sm:p-3.5`}
+          className={`rounded-2xl border border-border border-l-4 ${card.accent} bg-card p-3 shadow-sm sm:p-3.5`}
         >
-          <p className='text-[11px] font-medium uppercase tracking-wider text-gray-500 sm:text-xs'>
+          <p className='text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-xs'>
             {card.label}
           </p>
-          <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
+          <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-card-foreground sm:mt-2.5 sm:text-2xl'>
             {values[card.key]}
           </p>
         </article>

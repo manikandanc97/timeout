@@ -4,7 +4,7 @@ import api from '@/services/api';
 import type { FilterValue } from '@/components/leave/constants';
 import type { LeaveStatus, LeaveType, LeaveWithEmployee } from '@/types/leave';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 import {
   computeLeaveRequestsSummary,
@@ -140,6 +140,7 @@ export function useLeaveRequestsPage({ initialLeaves }: Args) {
     hasActiveFilters,
     clearFilters,
     approveOrReject,
+    refetchLeaves: refresh,
     pageSize: LEAVE_REQUESTS_PAGE_SIZE,
   };
 }

@@ -1,72 +1,39 @@
-import dynamic from 'next/dynamic';
+import WelcomeCardServer from '@/components/dashboard/cards/WelcomeCardServer';
+import UpcomingHolidaysServer from '@/components/dashboard/sections/UpcomingHolidaysServer';
 import WelcomeCardSkeleton from '@/components/dashboard/skeletons/WelcomeCardSkeleton';
-import LeaveSummarySkeleton from '@/components/dashboard/skeletons/LeaveSummarySkeleton';
-import LeaveBalanceSkeleton from '@/components/dashboard/skeletons/LeaveBalanceSkeleton';
-import LeaveHistorySkeleton from '@/components/dashboard/skeletons/LeaveHistorySkeleton';
 import UpcomingHolidaysSkeleton from '@/components/dashboard/skeletons/UpcomingHolidaysSkeleton';
+import EmployeeDashboardShell from '@/components/dashboard/employee/EmployeeDashboardShell';
+import { getDashboardData, getLeaveHistory } from '@/services/dashboardService';
+import { serverFetch } from '@/services/serverApi';
+import type { Holiday } from '@/types/holiday';
+import type { Leave } from '@/types/leave';
+import { Suspense } from 'react';
 
-const WelcomeCardServer = dynamic(
-  () => import('@/components/dashboard/cards/WelcomeCardServer'),
-  {
-    loading: () => <WelcomeCardSkeleton />,
-    ssr: true,
-  },
-);
+export default async function EmployeeDashboard() {
+  const [dash, historyRaw, holidaysRaw] = await Promise.all([
+    getDashboardData(),
+    getLeaveHistory(),
+    serverFetch<Holiday[]>('/holidays').catch(() => []),
+  ]);
 
-const LeaveSummaryServer = dynamic(
-  () => import('@/components/dashboard/cards/LeaveSummaryServer'),
-  {
-    loading: () => <LeaveSummarySkeleton />,
-    ssr: true,
-  },
-);
+  const history = Array.isArray(historyRaw) ? historyRaw : [];
+  const holidays = Array.isArray(holidaysRaw) ? holidaysRaw : [];
 
-const LeaveBalanceServer = dynamic(
-  () => import('@/components/dashboard/cards/LeaveBalanceServer'),
-  {
-    loading: () => <LeaveBalanceSkeleton />,
-    ssr: true,
-  },
-);
-
-const LeaveHistoryServer = dynamic(
-  () => import('@/components/dashboard/sections/LeaveHistoryServer'),
-  {
-    loading: () => <LeaveHistorySkeleton />,
-    ssr: true,
-  },
-);
-
-const UpcomingHolidaysServer = dynamic(
-  () => import('@/components/dashboard/sections/UpcomingHolidaysServer'),
-  {
-    loading: () => <UpcomingHolidaysSkeleton />,
-    ssr: true,
-  },
-);
-
-const EmployeeDashboard = () => {
   return (
-    <div className='space-y-6'>
-      <div className='gap-6 grid grid-cols-1 md:grid-cols-3'>
-        <div className='md:col-span-2'>
+    <EmployeeDashboardShell
+      initialDashboard={dash}
+      initialHistory={history.slice(0, 10) as Leave[]}
+      holidays={holidays}
+      welcome={
+        <Suspense key='welcome-slot' fallback={<WelcomeCardSkeleton />}>
           <WelcomeCardServer />
-        </div>
-        <div className='md:col-span-1'>
-          <LeaveBalanceServer />
-        </div>
-      </div>
-      <div>
-        <LeaveSummaryServer />
-      </div>
-      <div>
-        <div className='gap-6 grid grid-cols-1 lg:grid-cols-2'>
-          <LeaveHistoryServer />
+        </Suspense>
+      }
+      upcoming={
+        <Suspense key='upcoming-slot' fallback={<UpcomingHolidaysSkeleton />}>
           <UpcomingHolidaysServer />
-        </div>
-      </div>
-    </div>
+        </Suspense>
+      }
+    />
   );
-};
-
-export default EmployeeDashboard;
+}

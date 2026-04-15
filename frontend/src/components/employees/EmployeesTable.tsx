@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from 'lucide-react';
 
 import Button from '@/components/ui/Button';
+import { formatPersonName } from '@/lib/personName';
 import type { OrganizationEmployee } from '@/types/employee';
 
 import { formatJoined, roleLabel } from './utils';
@@ -26,7 +27,7 @@ export default function EmployeesTable({
     <div className='w-full min-w-0 overflow-x-auto'>
       <table className='w-full min-w-[940px] border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
-          <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
+          <tr className='border-b border-border bg-muted/95 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
               <th className='px-4 py-3.5 text-left'>Name</th>
               <th className='px-4 py-3.5 text-left'>Email</th>
               <th className='px-4 py-3.5 text-left'>Department</th>
@@ -43,7 +44,7 @@ export default function EmployeesTable({
               <tr>
                 <td
                   colSpan={9}
-                  className='px-4 py-16 text-center align-middle text-sm text-gray-500 sm:py-24'
+                  className='px-4 py-16 text-center align-middle text-sm text-muted-foreground sm:py-24'
                 >
                   Loading…
                 </td>
@@ -52,7 +53,7 @@ export default function EmployeesTable({
               <tr>
                 <td
                   colSpan={9}
-                  className='px-4 py-16 text-center align-middle text-sm text-gray-500 sm:py-24'
+                  className='px-4 py-16 text-center align-middle text-sm text-muted-foreground sm:py-24'
                 >
                   No employees match your filters.
                 </td>
@@ -68,31 +69,31 @@ export default function EmployeesTable({
                     ? 'On leave'
                     : 'Active';
                 const statusClass = isDeactivated
-                  ? 'bg-gray-100 text-gray-700 ring-gray-300'
+                  ? 'bg-muted text-muted-foreground ring-border'
                   : row.onLeaveToday
-                    ? 'bg-amber-50 text-amber-800 ring-amber-200'
-                    : 'bg-emerald-50 text-emerald-800 ring-emerald-200';
+                    ? 'bg-warning-muted text-warning-muted-foreground ring-warning-muted-foreground/35'
+                    : 'bg-success-muted text-success-muted-foreground ring-success-muted-foreground/30';
                 return (
                   <tr
                     key={row.id}
-                    className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
+                    className='border-b border-border transition-colors hover:bg-muted/60'
                   >
-                    <td className='px-4 py-2 text-left align-top font-medium text-gray-900'>
-                      {row.name}
+                    <td className='px-4 py-2 text-left align-top font-medium text-card-foreground'>
+                      {formatPersonName(row.name) || '—'}
                     </td>
-                    <td className='max-w-[200px] truncate px-4 py-2 text-left align-top text-gray-600'>
+                    <td className='max-w-[200px] truncate px-4 py-2 text-left align-top text-muted-foreground'>
                       {row.email}
                     </td>
-                    <td className='px-4 py-2 text-left align-top text-gray-700'>
+                    <td className='px-4 py-2 text-left align-top text-card-foreground/90'>
                       {dept}
                     </td>
-                    <td className='px-4 py-2 text-left align-top text-gray-700'>
+                    <td className='px-4 py-2 text-left align-top text-card-foreground/90'>
                       {team}
                     </td>
-                    <td className='wrap-break-word px-4 py-2 text-left align-top text-gray-700'>
-                      {row.reportingManager?.name ?? '—'}
+                    <td className='wrap-break-word px-4 py-2 text-left align-top text-card-foreground/90'>
+                      {formatPersonName(row.reportingManager?.name) || '—'}
                     </td>
-                    <td className='whitespace-nowrap px-4 py-2 text-left align-top text-gray-700'>
+                    <td className='whitespace-nowrap px-4 py-2 text-left align-top text-card-foreground/90'>
                       {roleLabel(row.role)}
                     </td>
                     <td className='px-4 py-2 text-left align-top'>
@@ -102,7 +103,7 @@ export default function EmployeesTable({
                         {statusLabel}
                       </span>
                     </td>
-                    <td className='whitespace-nowrap px-4 py-2 text-left align-top text-gray-700'>
+                    <td className='whitespace-nowrap px-4 py-2 text-left align-top text-card-foreground/90'>
                       {formatJoined(row.joiningDate ?? row.createdAt)}
                     </td>
                     <td className='px-4 py-2 text-right align-top'>
@@ -111,25 +112,25 @@ export default function EmployeesTable({
                           <Button
                             type='button'
                             variant='ghost'
-                            aria-label={`Edit ${row.name}`}
+                            aria-label={`Edit ${formatPersonName(row.name) || 'employee'}`}
                             onClick={() => onEditEmployee(row)}
-                            className='rounded-lg! p-2! text-gray-600 hover:bg-gray-200!'
+                            className='rounded-lg! p-2! text-muted-foreground hover:bg-muted!'
                           >
                             <Pencil size={16} />
                           </Button>
                           <Button
                             type='button'
                             variant='ghost'
-                            aria-label={`Delete ${row.name}`}
+                            aria-label={`Delete ${formatPersonName(row.name) || 'employee'}`}
                             disabled={row.id === currentUserId}
                             onClick={() => onRequestDeleteEmployee(row)}
-                            className='rounded-lg! p-2! text-gray-600 hover:bg-rose-50! hover:text-rose-700!'
+                            className='rounded-lg! p-2! text-muted-foreground hover:bg-danger-muted! hover:text-danger-muted-foreground!'
                           >
                             <Trash2 size={16} />
                           </Button>
                         </div>
                       ) : (
-                        <span className='text-xs text-gray-400'>—</span>
+                        <span className='text-xs text-muted-foreground'>—</span>
                       )}
                     </td>
                   </tr>

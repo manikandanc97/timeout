@@ -68,7 +68,7 @@ export default function LeavePolicyDocumentEditor({
 
   return (
     <div className='mt-4 space-y-8'>
-      <div className='rounded-xl border border-gray-200 bg-gray-50/50 p-4'>
+      <div className='rounded-xl border border-border bg-muted/50 p-4'>
         <Input
           id='policy-intro'
           type='textarea'
@@ -82,11 +82,11 @@ export default function LeavePolicyDocumentEditor({
       </div>
 
       <div className='space-y-6'>
-        <p className='text-sm font-medium text-gray-800'>Sections</p>
+        <p className='text-sm font-medium text-card-foreground'>Sections</p>
         {draft.sections.map((section, sIdx) => (
           <div
             key={`sec-${sIdx}`}
-            className='rounded-xl border border-gray-200 bg-white p-4 shadow-sm'
+            className='rounded-xl border border-border bg-card p-4 shadow-sm'
           >
             <div className='grid gap-4 sm:grid-cols-2'>
               <Input
@@ -106,13 +106,13 @@ export default function LeavePolicyDocumentEditor({
               <div>
                 <label
                   htmlFor={`sec-icon-${sIdx}`}
-                  className='mb-1 block text-sm font-medium text-gray-700'
+                  className='mb-1 block text-sm font-medium text-card-foreground/90'
                 >
                   Icon
                 </label>
                 <select
                   id={`sec-icon-${sIdx}`}
-                  className='w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 disabled:opacity-50'
+                  className='w-full rounded-md border border-border bg-card px-3 py-2.5 text-sm text-card-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 disabled:opacity-50'
                   value={section.iconKey}
                   disabled={disabled}
                   onChange={(e) =>
@@ -180,7 +180,7 @@ export default function LeavePolicyDocumentEditor({
                   inputClassName='min-h-[280px] resize-y font-sans text-[15px] leading-relaxed'
                   disabled={disabled}
                 />
-                <p className='mt-2 text-xs text-gray-500'>
+                <p className='mt-2 text-xs text-muted-foreground'>
                   Edit like a short document: each block starts with one line for the
                   sub-heading, then the paragraph text. Start a new block on a line that
                   contains only <span className='font-mono'>---</span> (up to 12 blocks).
@@ -219,7 +219,7 @@ export default function LeavePolicyDocumentEditor({
                       variant='ghost'
                       unstyled
                       disabled={disabled || section.items.length <= 1}
-                      className='mt-7 shrink-0 self-start rounded-md p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-30'
+                      className='mt-7 shrink-0 self-start rounded-md p-2 text-muted-foreground hover:bg-danger-muted hover:text-danger-muted-foreground disabled:opacity-30'
                       aria-label='Remove bullet'
                       onClick={() => {
                         const nextItems = section.items.filter((_, j) => j !== iIdx);
@@ -258,7 +258,7 @@ export default function LeavePolicyDocumentEditor({
         ))}
       </div>
 
-      <div className='rounded-xl border border-gray-200 bg-gray-50/50 p-4'>
+      <div className='rounded-xl border border-border bg-muted/50 p-4'>
         <Input
           id='policy-footer'
           type='textarea'

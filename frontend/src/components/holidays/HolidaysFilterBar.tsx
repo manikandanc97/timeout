@@ -24,7 +24,7 @@ export default function HolidaysFilterBar({
       <div className='relative min-w-[180px] max-w-sm flex-1'>
         <Search
           size={14}
-          className='pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-gray-400'
+          className='pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground'
           aria-hidden
         />
         <Input
@@ -44,7 +44,7 @@ export default function HolidaysFilterBar({
         disabled={!hasActiveFilters}
         onClick={onClearFilters}
         aria-label='Clear search'
-        className='inline-flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white'
+        className='inline-flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-card px-3 text-sm font-medium text-card-foreground shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-card'
       >
         <RotateCcw size={14} className='shrink-0' aria-hidden />
         Clear
@@ -54,7 +54,7 @@ export default function HolidaysFilterBar({
           type='button'
           unstyled
           onClick={onAddHoliday}
-          className='ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-dark sm:ml-0'
+          className='ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary-dark sm:ml-0'
         >
           <Plus size={16} className='shrink-0' aria-hidden />
           Add Holiday

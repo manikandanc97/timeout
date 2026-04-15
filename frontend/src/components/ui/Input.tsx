@@ -73,7 +73,7 @@ const Input: React.FC<InputProps> = ({
     ? 'px-3 py-3'
     : 'px-3 pb-2.5 pt-6 leading-normal';
 
-  const sharedClassName = `peer block w-full rounded-md border border-input bg-card ${spacingClass} text-sm text-card-foreground outline-none transition-all duration-150 ease-out placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-0 ${inputClassName}`;
+  const sharedClassName = `peer block w-full rounded-md border border-input bg-card ${spacingClass} text-sm text-card-foreground outline-none transition-all duration-150 ease-out placeholder:text-foreground/45 focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-0 ${inputClassName}`;
 
   const ariaLabel = label || placeholder || id;
   const placeholderText = placeholder ?? (isDate ? '' : ' ');
@@ -149,7 +149,9 @@ const Input: React.FC<InputProps> = ({
           }
         >
           {label}
-          {required ? <span className='ml-0.5 text-red-500'>*</span> : null}
+          {required ? (
+            <span className='ml-0.5 text-destructive'>*</span>
+          ) : null}
         </label>
       )}
 

@@ -40,6 +40,8 @@ model Organization {
   payrolls     Payroll[]
   compOffWorkLogs CompOffWorkLog[]
   permissionRequests PermissionRequest[]
+  notifications Notification[]
+  hrPolicies    HrPolicy[]
 }
 
 model Department {
@@ -106,6 +108,7 @@ model User {
   leaveBalance LeaveBalance?
   compOffWorkLogs CompOffWorkLog[]
   permissionRequests PermissionRequest[]
+  notifications Notification[]
 
   @@index([reportingManagerId])
 }
@@ -135,6 +138,51 @@ enum LeaveType {
   PATERNITY
 }
 
+enum NotificationType {
+  LEAVE_APPLIED
+  LEAVE_APPROVED
+  LEAVE_REJECTED
+  LEAVE_CANCELLED
+  PERMISSION_APPLIED
+  PERMISSION_APPROVED
+  PERMISSION_REJECTED
+  COMP_OFF_APPLIED
+  COMP_OFF_APPROVED
+  COMP_OFF_REJECTED
+  EMPLOYEE_ADDED
+  EMPLOYEE_UPDATED
+  EMPLOYEE_DEACTIVATED
+  EMPLOYEE_REACTIVATED
+  SALARY_STRUCTURE_UPDATED
+  HOLIDAY_CREATED
+  HOLIDAY_UPDATED
+  HOLIDAY_DELETED
+  LEAVE_POLICY_UPDATED
+  ADMIN_SETTINGS_UPDATED
+  ORG_STRUCTURE_UPDATED
+  PAYROLL_UPDATED
+  PAYSLIP_PAID
+}
+
+model Notification {
+  id             Int              @id @default(autoincrement())
+  userId         Int
+  organizationId Int
+  type           NotificationType
+  title          String
+  body           String?
+  readAt         DateTime?
+  leaveId        Int?
+  createdAt      DateTime         @default(now())
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leave          Leave?           @relation(fields: [leaveId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
 model Leave {
   id             Int         @id @default(autoincrement())
   userId         Int
@@ -160,6 +208,7 @@ model Leave {
   user         User         @relation(fields: [userId], references: [id])
   organization Organization @relation(fields: [organizationId], references: [id])
   team         Team?        @relation(fields: [teamId], references: [id])
+  notifications Notification[]
 
   @@index([userId, status])
   @@index([organizationId])
@@ -280,4 +329,17 @@ model Payroll {
   @@index([organizationId, month, year])
   @@index([userId, month, year])
   @@unique([userId, month, year])
+}
+
+model HrPolicy {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  title          String
+  category       String?
+  content        String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }

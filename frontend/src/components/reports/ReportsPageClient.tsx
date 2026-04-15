@@ -2,13 +2,14 @@
 
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { formatPersonName } from '@/lib/personName';
 import api from '@/services/api';
 import type { OrganizationEmployee } from '@/types/employee';
 import type { LeaveWithEmployee } from '@/types/leave';
 import type { PayrollRow } from '@/types/payroll';
 import { Download, FileSpreadsheet } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import ReportTableSection from './ReportTableSection';
 import ReportsSummaryCards from './ReportsSummaryCards';
 
@@ -45,9 +46,11 @@ const downloadCsv = (name: string, rows: Array<Array<string | number | boolean>>
 
 function ReportsNoAccess() {
   return (
-    <section className='rounded-3xl border border-amber-100 bg-amber-50 p-6 text-amber-900 shadow-sm'>
+    <section className='rounded-3xl border border-warning-muted-foreground/25 bg-warning-muted p-6 text-warning-muted-foreground shadow-sm'>
       <h2 className='text-lg font-semibold'>Reports access restricted</h2>
-      <p className='mt-1 text-sm text-amber-800'>You do not have permission to view reports.</p>
+      <p className='mt-1 text-sm text-warning-muted-foreground/90'>
+        You do not have permission to view reports.
+      </p>
     </section>
   );
 }
@@ -116,7 +119,7 @@ export default function ReportsPageClient() {
 
   const employeeByName = useMemo(() => {
     const byName = new Map<string, OrganizationEmployee>();
-    employees.forEach((entry) => byName.set(entry.name, entry));
+    employees.forEach((entry) => byName.set(formatPersonName(entry.name), entry));
     return byName;
   }, [employees]);
 
@@ -135,7 +138,9 @@ export default function ReportsPageClient() {
   const filteredLeaves = useMemo(
     () =>
       leaves.filter((row) => {
-        const employee = row.userId ? employeeById.get(row.userId) : employeeByName.get(row.user?.name ?? '');
+        const employee = row.userId
+          ? employeeById.get(row.userId)
+          : employeeByName.get(formatPersonName(row.user?.name));
         const department = employee?.team?.department?.name ?? 'Unassigned';
         const fromDate = new Date(row.startDate);
         const monthMatch =
@@ -181,7 +186,7 @@ export default function ReportsPageClient() {
         const employee = employeeById.get(row.userId);
         const department = employee?.team?.department?.name ?? 'Unassigned';
         return [
-        row.employeeName,
+        formatPersonName(row.employeeName) || 'Employee',
         department,
         monthLabel(row.month, row.year),
         String(Math.round(row.netSalary)),
@@ -198,7 +203,9 @@ export default function ReportsPageClient() {
     const rows = [
       ['Employee', 'Type', 'Start Date', 'End Date', 'Status', 'LOP Days', 'LOP Amount'],
       ...filteredLeaves.map((row) => [
-        row.user?.name ?? employeeById.get(row.userId ?? -1)?.name ?? 'Employee',
+        formatPersonName(row.user?.name) ||
+          formatPersonName(employeeById.get(row.userId ?? -1)?.name) ||
+          'Employee',
         row.type,
         row.startDate ? dateFmt.format(new Date(row.startDate)) : '-',
         row.endDate ? dateFmt.format(new Date(row.endDate)) : '-',
@@ -214,7 +221,7 @@ export default function ReportsPageClient() {
     const rows = [
       ['Name', 'Email', 'Role', 'Department', 'Team', 'Status'],
       ...filteredEmployees.map((row) => [
-        row.name,
+        formatPersonName(row.name) || 'Employee',
         row.email,
         row.role,
         row.team?.department?.name ?? 'Unassigned',
@@ -384,7 +391,7 @@ export default function ReportsPageClient() {
             const department = employee?.team?.department?.name ?? 'Unassigned';
             return [
             <span key='employee' className='font-medium text-card-foreground'>
-              {row.employeeName}
+              {formatPersonName(row.employeeName) || 'Employee'}
             </span>,
             department,
             monthLabel(row.month, row.year),
@@ -398,8 +405,8 @@ export default function ReportsPageClient() {
               key='status'
               className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${
                 row.status === 'PAID'
-                  ? 'bg-emerald-50 text-emerald-800 ring-emerald-200'
-                  : 'bg-amber-50 text-amber-800 ring-amber-200'
+                  ? 'bg-success-muted text-success-muted-foreground ring-success-muted-foreground/30'
+                  : 'bg-warning-muted text-warning-muted-foreground ring-warning-muted-foreground/35'
               }`}
             >
               {row.status}
@@ -423,7 +430,9 @@ export default function ReportsPageClient() {
             'LOP Applied',
           ]}
           rows={filteredLeaves.map((row) => {
-            const employee = row.userId ? employeeById.get(row.userId) : employeeByName.get(row.user?.name ?? '');
+            const employee = row.userId
+              ? employeeById.get(row.userId)
+              : employeeByName.get(formatPersonName(row.user?.name));
             const from = new Date(row.startDate);
             const to = new Date(row.endDate);
             const totalDays = Math.max(
@@ -432,7 +441,9 @@ export default function ReportsPageClient() {
             );
             return [
             <span key='employee' className='font-medium text-card-foreground'>
-              {row.user?.name ?? employee?.name ?? 'Employee'}
+              {formatPersonName(row.user?.name) ||
+                formatPersonName(employee?.name) ||
+                'Employee'}
             </span>,
             row.type,
             row.startDate ? dateFmt.format(new Date(row.startDate)) : '-',
@@ -442,10 +453,10 @@ export default function ReportsPageClient() {
               key='status'
               className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${
                 row.status === 'APPROVED'
-                  ? 'bg-emerald-50 text-emerald-800 ring-emerald-200'
+                  ? 'bg-success-muted text-success-muted-foreground ring-success-muted-foreground/30'
                   : row.status === 'PENDING'
-                    ? 'bg-amber-50 text-amber-800 ring-amber-200'
-                    : 'bg-rose-50 text-rose-700 ring-rose-200'
+                    ? 'bg-warning-muted text-warning-muted-foreground ring-warning-muted-foreground/35'
+                    : 'bg-danger-muted text-danger-muted-foreground ring-danger-muted-foreground/35'
               }`}
             >
               {row.status}
@@ -475,7 +486,7 @@ export default function ReportsPageClient() {
             const currentPayroll = filteredPayroll.find((payroll) => payroll.userId === row.id);
             return [
             <span key='employee' className='font-medium text-card-foreground'>
-              {row.name}
+              {formatPersonName(row.name) || 'Employee'}
             </span>,
             row.team?.department?.name ?? 'Unassigned',
             row.role,
@@ -484,8 +495,8 @@ export default function ReportsPageClient() {
               key='status'
               className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${
                 row.isActive === false
-                  ? 'bg-slate-100 text-slate-700 ring-slate-300'
-                  : 'bg-emerald-50 text-emerald-800 ring-emerald-200'
+                  ? 'bg-muted text-muted-foreground ring-border'
+                  : 'bg-success-muted text-success-muted-foreground ring-success-muted-foreground/30'
               }`}
             >
               {row.isActive === false ? 'INACTIVE' : 'ACTIVE'}

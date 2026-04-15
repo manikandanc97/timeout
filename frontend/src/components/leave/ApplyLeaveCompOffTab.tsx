@@ -37,7 +37,7 @@ const ApplyLeaveCompOffTab = ({
             Worked on Saturday/Sunday? Add one comp-off day for that date.
           </p>
         </div>
-        <span className='rounded-full bg-indigo-500/15 px-2.5 py-1 text-[11px] font-semibold text-indigo-700'>
+        <span className='rounded-full bg-indigo-500/15 px-2.5 py-1 text-[11px] font-semibold text-indigo-800 dark:text-indigo-200'>
           +1 day / weekend date
         </span>
       </div>

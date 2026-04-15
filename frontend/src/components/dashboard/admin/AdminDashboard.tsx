@@ -32,10 +32,10 @@ const AdminDashboard = () => {
             <p className='font-semibold text-primary text-xs uppercase tracking-widest'>
               Admin overview
             </p>
-            <h1 className='mt-0.5 font-bold text-gray-900 text-2xl tracking-tight'>
+            <h1 className='mt-0.5 font-bold text-card-foreground text-2xl tracking-tight'>
               Dashboard
             </h1>
-            <p className='mt-0.5 text-gray-400 text-sm'>{todayLabel()}</p>
+            <p className='mt-0.5 text-muted-foreground text-sm'>{todayLabel()}</p>
           </div>
         </div>
       </div>

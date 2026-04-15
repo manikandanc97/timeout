@@ -6,6 +6,7 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import type { Holiday } from '@/types/holiday';
 import type { LeaveWithEmployee } from '@/types/leave';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
+import { formatPersonName } from '@/lib/personName';
 import { useState } from 'react';
 
 type Props = {
@@ -88,7 +89,7 @@ export default function LeaveRequestsTable({
             rows.map((row) => {
               const typeCfg = TYPE_CONFIG[row.type] ?? TYPE_CONFIG.ANNUAL;
               const isBusy = busyId === row.id;
-              const name = row.user?.name ?? '—';
+              const name = formatPersonName(row.user?.name) || '—';
               return (
                 <tr
                   key={row.id}

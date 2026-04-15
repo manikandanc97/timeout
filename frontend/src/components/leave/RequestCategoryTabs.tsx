@@ -46,14 +46,14 @@ export default function RequestCategoryTabs({ activeTab, onTabChange }: Props) {
               className={`${focusRing} group relative flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-[13px] transition-[color,background-color,box-shadow,transform] duration-200 ease-out sm:min-h-0 sm:py-3 sm:text-sm ${
                 selected
                   ? 'z-1 bg-card font-semibold text-primary shadow-sm ring-1 ring-border'
-                  : 'font-medium text-muted-foreground hover:bg-card/70 hover:text-card-foreground'
+                  : 'font-medium text-card-foreground/78 hover:bg-card/70 hover:text-card-foreground'
               } active:scale-[0.985] motion-reduce:transform-none`}
             >
               <span
                 className={`flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-200 sm:size-9 ${
                   selected
                     ? 'bg-primary/15 text-primary'
-                    : 'bg-muted text-muted-foreground group-hover:bg-muted/90 group-hover:text-card-foreground'
+                    : 'bg-muted text-card-foreground/70 group-hover:bg-muted/90 group-hover:text-card-foreground'
                 }`}
               >
                 <Icon size={18} strokeWidth={selected ? 2.25 : 2} aria-hidden />

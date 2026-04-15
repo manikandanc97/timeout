@@ -38,7 +38,7 @@ const WelcomeCard = ({ name }: { name: string }) => {
 
         <Link
           href='/apply'
-          className='mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-colors hover:bg-primary-dark'
+          className='mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary-dark'
         >
           Apply Leave
         </Link>

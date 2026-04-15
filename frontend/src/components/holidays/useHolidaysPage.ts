@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 import api from '@/services/api';
 import type { Holiday } from '@/types/holiday';

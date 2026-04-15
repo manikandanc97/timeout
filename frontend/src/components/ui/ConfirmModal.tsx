@@ -97,7 +97,7 @@ export default function ConfirmModal({
           >
             {isProcessing ? (
               <span
-                className='inline-block border-2 border-white/40 border-t-white rounded-full w-4 h-4 animate-spin'
+                className='inline-block size-4 animate-spin rounded-full border-2 border-destructive-foreground/40 border-t-destructive-foreground'
                 aria-hidden
               />
             ) : null}

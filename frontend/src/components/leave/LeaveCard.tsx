@@ -10,7 +10,7 @@ import type { Leave } from '@/types/leave';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
 import { CalendarDays, ChevronDown, ChevronUp, Clock3, FileText, Pencil, X } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import Button from '../ui/Button';
 import ConfirmModal from '../ui/ConfirmModal';
 import LeaveStatusBadge from './LeaveStatusBadge';
@@ -122,7 +122,7 @@ export default function LeaveCard({
             <Button
               type='button'
               unstyled
-              onClick={() => toast.info('Leave editing is not wired up yet.')}
+              onClick={() => toast('Leave editing is not wired up yet.')}
               className='inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-card p-1.5 text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-card-foreground'
             >
               <Pencil size={14} />

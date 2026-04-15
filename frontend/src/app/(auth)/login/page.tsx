@@ -8,7 +8,7 @@ import api from '@/services/api';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useRef, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 const LOGIN_TOAST_ID = 'auth-login-feedback';
 
@@ -97,7 +97,7 @@ const Login = () => {
               variant='ghost'
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className='!rounded !p-0 !text-gray-700 hover:!bg-transparent hover:!text-primary focus:outline-none'
+              className='!rounded !p-0 !text-card-foreground/90 hover:!bg-transparent hover:!text-primary focus:outline-none'
             >
               {showPassword ? (
                 <EyeOff color='gray' size={18} />
@@ -114,7 +114,7 @@ const Login = () => {
         >
           {isSubmitting ? 'Signing in…' : 'Sign in'}
         </Button>
-        <p className='pt-1 text-center text-sm text-gray-500'>
+        <p className='pt-1 text-center text-sm text-muted-foreground'>
           New here?{' '}
           <button
             type='button'

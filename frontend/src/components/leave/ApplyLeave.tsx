@@ -8,7 +8,7 @@ import type { Gender } from '@/types/user';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import Button from '../ui/Button';
 import { CalendarClock } from 'lucide-react';
 import { calculateLeaveDays, startDate as formatDate } from '@/utils/leave/leaveHelpers';
@@ -346,7 +346,7 @@ const ApplyLeave = ({
             onClick={() => setActiveTab('LEAVE_APPLY')}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === 'LEAVE_APPLY'
-                ? 'bg-primary text-white'
+                ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-muted'
             }`}
           >
@@ -358,7 +358,7 @@ const ApplyLeave = ({
             onClick={() => setActiveTab('PERMISSION')}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === 'PERMISSION'
-                ? 'bg-primary text-white'
+                ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-muted'
             }`}
           >
@@ -370,7 +370,7 @@ const ApplyLeave = ({
             onClick={() => setActiveTab('COMP_OFF')}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === 'COMP_OFF'
-                ? 'bg-primary text-white'
+                ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-muted'
             }`}
           >

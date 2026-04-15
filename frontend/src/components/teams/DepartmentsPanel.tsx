@@ -14,7 +14,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 type Props = {
   departments: OrgDepartment[];
@@ -90,7 +90,7 @@ export default function DepartmentsPanel({
   return (
     <section
       aria-labelledby='departments-panel-heading'
-      className='flex min-h-0 min-w-0 flex-1 flex-col rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:p-4'
+      className='flex min-h-0 min-w-0 flex-1 flex-col rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4'
     >
       <div className='mb-3 flex shrink-0 flex-wrap items-start justify-between gap-2'>
         <div className='flex min-w-0 flex-1 items-start gap-2.5'>
@@ -100,11 +100,11 @@ export default function DepartmentsPanel({
           <div className='min-w-0'>
             <h2
               id='departments-panel-heading'
-              className='text-sm font-bold text-gray-900'
+              className='text-sm font-bold text-card-foreground'
             >
               Departments
             </h2>
-            <p className='text-xs text-gray-500'>
+            <p className='text-xs text-muted-foreground'>
               Click department to filter.
             </p>
           </div>
@@ -122,10 +122,10 @@ export default function DepartmentsPanel({
         ) : null}
       </div>
 
-      <div className='flex min-h-0 max-h-[min(56vh,32rem)] flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-xl border border-gray-100 bg-gray-50/40 sm:max-h-[min(60vh,36rem)]'>
+      <div className='flex min-h-0 max-h-[min(56vh,32rem)] flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-muted/40 sm:max-h-[min(60vh,36rem)]'>
         <table className='w-full table-fixed border-collapse text-left text-sm'>
           <thead className='sticky top-0 z-10'>
-            <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
+            <tr className='border-b border-border bg-muted/95 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
               <th className='min-w-0 px-2.5 py-2.5 text-left sm:px-3'>
                 Department
               </th>
@@ -141,7 +141,7 @@ export default function DepartmentsPanel({
               <tr>
                 <td
                   colSpan={isAdmin ? 2 : 1}
-                  className='px-3 py-16 text-center align-middle text-sm text-gray-500 sm:py-20'
+                  className='px-3 py-16 text-center align-middle text-sm text-muted-foreground sm:py-20'
                 >
                   Loading departments…
                 </td>
@@ -150,7 +150,7 @@ export default function DepartmentsPanel({
               <tr>
                 <td
                   colSpan={isAdmin ? 2 : 1}
-                  className='px-3 py-16 text-center align-middle text-sm text-gray-500 sm:py-20'
+                  className='px-3 py-16 text-center align-middle text-sm text-muted-foreground sm:py-20'
                 >
                   No departments yet.
                   {isAdmin ? ' Use + to add one.' : null}
@@ -162,14 +162,14 @@ export default function DepartmentsPanel({
                 return (
                   <tr
                     key={d.id}
-                    className='border-b border-gray-100/80 last:border-0'
+                    className='border-b border-border/80 last:border-0'
                   >
                     <td className='min-w-0 px-2.5 py-2.5 text-left align-top sm:px-3'>
                       <button
                         type='button'
                         onClick={() => onFilterByDepartment(String(d.id))}
                         className={`w-full min-w-0 text-left text-sm font-medium leading-snug wrap-break-word transition-colors hover:text-primary ${
-                          activeFilter ? 'text-primary' : 'text-gray-800'
+                          activeFilter ? 'text-primary' : 'text-card-foreground'
                         }`}
                       >
                         <span className='block'>{d.name}</span>
@@ -188,7 +188,7 @@ export default function DepartmentsPanel({
                             variant='ghost'
                             aria-label={`Edit ${d.name}`}
                             onClick={() => onEdit(d)}
-                            className='!rounded-lg !p-2 text-gray-600 hover:!bg-gray-200'
+                            className='!rounded-lg !p-2 text-muted-foreground hover:!bg-skeleton'
                           >
                             <Pencil size={16} />
                           </Button>
@@ -197,7 +197,7 @@ export default function DepartmentsPanel({
                             variant='ghost'
                             aria-label={`Delete ${d.name}`}
                             onClick={() => requestDelete(d)}
-                            className='!rounded-lg !p-2 text-gray-600 hover:!bg-rose-50 hover:!text-rose-700'
+                            className='!rounded-lg !p-2 text-muted-foreground hover:!bg-danger-muted hover:!text-danger-muted-foreground'
                           >
                             <Trash2 size={16} />
                           </Button>
@@ -213,18 +213,18 @@ export default function DepartmentsPanel({
       </div>
 
       {showDeptPagination ? (
-        <div className='mt-2 flex shrink-0 flex-col items-stretch justify-between gap-2 border-t border-gray-100 pt-2 sm:flex-row sm:items-center'>
-          <p className='text-[11px] text-gray-500'>
+        <div className='mt-2 flex shrink-0 flex-col items-stretch justify-between gap-2 border-t border-border pt-2 sm:flex-row sm:items-center'>
+          <p className='text-[11px] text-muted-foreground'>
             Showing{' '}
-            <span className='font-semibold text-gray-700'>
+            <span className='font-semibold text-card-foreground/90'>
               {(safeDeptPage - 1) * TEAMS_PAGE_SIZE + 1}
             </span>
             –
-            <span className='font-semibold text-gray-700'>
+            <span className='font-semibold text-card-foreground/90'>
               {Math.min(safeDeptPage * TEAMS_PAGE_SIZE, departments.length)}
             </span>{' '}
             of{' '}
-            <span className='font-semibold text-gray-700'>
+            <span className='font-semibold text-card-foreground/90'>
               {departments.length}
             </span>
           </p>
@@ -233,12 +233,12 @@ export default function DepartmentsPanel({
               type='button'
               disabled={safeDeptPage <= 1}
               onClick={() => setDeptPage((p) => Math.max(1, p - 1))}
-              className='inline-flex items-center gap-0.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40'
+              className='inline-flex items-center gap-0.5 rounded-lg border border-border bg-card px-2 py-1 text-[11px] font-semibold text-card-foreground/90 shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40'
             >
               <ChevronLeft size={12} />
               Prev
             </button>
-            <span className='text-[11px] font-medium text-gray-600'>
+            <span className='text-[11px] font-medium text-muted-foreground'>
               {safeDeptPage} / {deptPageCount}
             </span>
             <button
@@ -247,7 +247,7 @@ export default function DepartmentsPanel({
               onClick={() =>
                 setDeptPage((p) => Math.min(deptPageCount, p + 1))
               }
-              className='inline-flex items-center gap-0.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40'
+              className='inline-flex items-center gap-0.5 rounded-lg border border-border bg-card px-2 py-1 text-[11px] font-semibold text-card-foreground/90 shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40'
             >
               Next
               <ChevronRight size={12} />

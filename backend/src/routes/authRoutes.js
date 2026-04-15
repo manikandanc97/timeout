@@ -5,6 +5,8 @@ import {
   refreshTokenHandler,
   logout,
   getCurrentUser,
+  updateProfileName,
+  changePassword,
 } from '../controllers/authController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
@@ -15,5 +17,7 @@ router.post('/login', login);
 router.post('/refresh', refreshTokenHandler);
 router.post('/logout', logout);
 router.get('/me', authMiddleware, getCurrentUser);
+router.patch('/me/name', authMiddleware, updateProfileName);
+router.patch('/me/password', authMiddleware, changePassword);
 
 export default router;

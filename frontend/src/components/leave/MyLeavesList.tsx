@@ -3,10 +3,10 @@
 import api from '@/services/api';
 import type { Holiday } from '@/types/holiday';
 import type { Leave, LeaveStatus, LeaveType } from '@/types/leave';
+import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
 import { CalendarDays, RotateCcw, Search, Sparkles } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -33,13 +33,32 @@ const MyLeavesList = ({
   userGender = null,
   holidays = [],
 }: Props) => {
+  const [localLeaves, setLocalLeaves] = useState<Leave[]>(leaves);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<FilterValue<LeaveStatus>>('ALL');
   const [typeFilter, setTypeFilter] = useState<FilterValue<LeaveType>>('ALL');
 
-  const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setLocalLeaves(leaves);
+  }, [leaves]);
+
+  const refetchLeaveHistory = useCallback(async () => {
+    try {
+      const res = await api.get<Leave[]>('/history');
+      setLocalLeaves(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      /* keep list */
+    }
+  }, []);
+
+  useEffect(() => {
+    return subscribeDashboardRefresh('employeeLeavesPage', () => {
+      void refetchLeaveHistory();
+    });
+  }, [refetchLeaveHistory]);
 
   const typeOptionsForUser = useMemo(
     () => typeFilterOptionsForGender(userGender),
@@ -57,12 +76,12 @@ const MyLeavesList = ({
   }, [userGender, typeFilter]);
 
   const dedupedLeaves = useMemo(() => {
-    if (!leaves?.length) return [];
+    if (!localLeaves?.length) return [];
 
     const seen = new Set<string>();
     const list: Leave[] = [];
 
-    leaves.forEach((leave) => {
+    localLeaves.forEach((leave) => {
       const start = getLeaveStart(leave);
       const end = getLeaveEnd(leave);
       const key = leave?.id
@@ -78,7 +97,7 @@ const MyLeavesList = ({
         new Date(getLeaveStart(b)).getTime() -
         new Date(getLeaveStart(a)).getTime(),
     );
-  }, [leaves]);
+  }, [localLeaves]);
 
   const filteredLeaves = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -144,7 +163,7 @@ const MyLeavesList = ({
       setDeletingId(id);
       await api.delete(`/leaves/${id}`);
       toast.success('Leave request cancelled successfully');
-      router.refresh();
+      await refetchLeaveHistory();
       return true;
     } catch {
       toast.error('Failed to cancel leave request. Please try again.');

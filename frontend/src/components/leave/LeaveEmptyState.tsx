@@ -21,7 +21,7 @@ export default function LeaveEmptyState({ className = '' }: Props) {
           <p className='text-lg font-semibold'>
             No leave requests yet
           </p>
-          <p className='mx-auto max-w-sm text-sm leading-6 text-muted-foreground'>
+          <p className='mx-auto max-w-sm text-sm leading-6 text-card-foreground/82'>
             Once you submit time off, your request history and approval states
             will appear here.
           </p>

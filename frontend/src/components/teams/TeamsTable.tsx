@@ -9,7 +9,7 @@ const SKELETON_ROWS = 6;
 export function TeamsTableSkeletonBody() {
   const bar = (className: string) => (
     <div
-      className={`animate-pulse rounded-md bg-gray-200/90 ${className}`}
+      className={`animate-pulse rounded-md bg-muted/90 ${className}`}
       aria-hidden
     />
   );
@@ -20,7 +20,7 @@ export function TeamsTableSkeletonBody() {
         const w = (a: string, b: string, c: string) =>
           [a, b, c][i % 3] as string;
         return (
-          <tr key={i} className='border-b border-gray-50' aria-hidden>
+          <tr key={i} className='border-b border-border' aria-hidden>
             <td className='px-4 py-2 align-middle'>
               {bar(`h-4 ${w('w-36', 'w-44', 'w-32')} max-w-full`)}
             </td>
@@ -61,7 +61,7 @@ export default function TeamsTable({
     <div className='min-h-0 flex-1 overflow-y-auto overflow-x-hidden'>
       <table className='w-full table-fixed border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
-          <tr className='border-b border-gray-100 bg-gray-50/95 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm'>
+          <tr className='border-b border-border bg-muted/95 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
             <th className='w-[30%] px-4 py-3.5 text-left'>Team name</th>
             <th className='w-[30%] px-4 py-3.5 text-left'>Department</th>
             <th className='w-[15%] whitespace-nowrap px-2 py-3.5 text-left'>
@@ -82,7 +82,7 @@ export default function TeamsTable({
             <tr>
               <td
                 colSpan={4}
-                className='px-4 py-16 text-center align-middle text-sm text-gray-500 sm:py-24'
+                className='px-4 py-16 text-center align-middle text-sm text-muted-foreground sm:py-24'
               >
                 No teams match your filters.
               </td>
@@ -92,15 +92,15 @@ export default function TeamsTable({
               return (
                 <tr
                   key={row.id}
-                  className='border-b border-gray-50 transition-colors hover:bg-gray-50/60'
+                  className='border-b border-border transition-colors hover:bg-muted/60'
                 >
-                  <td className='wrap-break-word px-4 py-2 text-left align-top font-medium text-gray-900'>
+                  <td className='wrap-break-word px-4 py-2 text-left align-top font-medium text-card-foreground'>
                     {row.name}
                   </td>
-                  <td className='wrap-break-word px-4 py-2 text-left align-top text-gray-700'>
+                  <td className='wrap-break-word px-4 py-2 text-left align-top text-card-foreground/90'>
                     {row.departmentName}
                   </td>
-                  <td className='whitespace-nowrap px-2 py-2 pr-1 text-left align-top tabular-nums text-gray-700'>
+                  <td className='whitespace-nowrap px-2 py-2 pr-1 text-left align-top tabular-nums text-card-foreground/90'>
                     {row.employeeCount}
                   </td>
                   <td className='px-2 py-2 pl-1 text-right align-top'>
@@ -108,7 +108,7 @@ export default function TeamsTable({
                       {row.lead ? (
                         <a
                           href={`mailto:${encodeURIComponent(row.lead.email)}`}
-                          className='inline-flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50'
+                          className='inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-semibold text-card-foreground/90 shadow-sm transition-colors hover:bg-muted'
                         >
                           <Mail size={13} />
                           Email lead
@@ -121,7 +121,7 @@ export default function TeamsTable({
                             variant='ghost'
                             aria-label={`Edit ${row.name}`}
                             onClick={() => onEditTeam(row)}
-                            className='rounded-lg! p-2! text-gray-600 hover:bg-gray-200!'
+                            className='rounded-lg! p-2! text-muted-foreground hover:bg-muted!'
                           >
                             <Pencil size={16} />
                           </Button>
@@ -139,7 +139,7 @@ export default function TeamsTable({
                               aria-label={`Delete ${row.name}`}
                               disabled={row.employeeCount > 0}
                               onClick={() => onRequestDeleteTeam(row)}
-                              className='rounded-lg! p-2! text-gray-600 hover:bg-rose-50! hover:text-rose-700!'
+                              className='rounded-lg! p-2! text-muted-foreground hover:bg-danger-muted! hover:text-danger-muted-foreground!'
                             >
                               <Trash2 size={16} />
                             </Button>
@@ -148,7 +148,7 @@ export default function TeamsTable({
                       ) : null}
                       {!row.lead &&
                       !(isAdmin && onEditTeam && onRequestDeleteTeam) ? (
-                        <span className='text-xs text-gray-400'>—</span>
+                        <span className='text-xs text-muted-foreground'>—</span>
                       ) : null}
                     </div>
                   </td>

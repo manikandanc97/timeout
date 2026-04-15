@@ -1,4 +1,8 @@
 import prisma from '../prismaClient.js';
+import {
+  notifyAdmins,
+  notifyEmployeePayslipPaid,
+} from '../services/notificationService.js';
 
 const VIEW_ROLES = new Set(['ADMIN', 'MANAGER', 'HR']);
 const MARK_PAID_ROLES = new Set(['ADMIN', 'MANAGER']);
@@ -363,6 +367,23 @@ export const markPayrollPaid = async (req, res) => {
       include: { user: { select: { name: true } } },
     });
 
+    try {
+      await notifyEmployeePayslipPaid({
+        userId: updated.userId,
+        organizationId,
+        month: updated.month,
+        year: updated.year,
+      });
+      await notifyAdmins({
+        organizationId,
+        type: 'PAYROLL_UPDATED',
+        title: 'Payroll marked paid',
+        body: `${updated.user?.name ?? 'Employee'} payroll marked as paid.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] payslip paid', notifyErr);
+    }
+
     res.json({
       payroll: {
         id: updated.id,
@@ -394,6 +415,17 @@ export const markPayrollPaidBulk = async (req, res) => {
       return res.status(400).json({ message: 'Invalid month or year' });
     }
 
+    const pendingRows = await prisma.payroll.findMany({
+      where: {
+        organizationId,
+        month,
+        year,
+        status: { not: 'PAID' },
+        user: { isActive: true },
+      },
+      select: { id: true, userId: true },
+    });
+
     const result = await prisma.payroll.updateMany({
       where: {
         organizationId,
@@ -407,6 +439,31 @@ export const markPayrollPaidBulk = async (req, res) => {
         paidDate: new Date(),
       },
     });
+
+    for (const row of pendingRows) {
+      try {
+        await notifyEmployeePayslipPaid({
+          userId: row.userId,
+          organizationId,
+          month,
+          year,
+        });
+      } catch (notifyErr) {
+        console.error('[notifications] payslip paid bulk', notifyErr);
+      }
+    }
+    if (pendingRows.length > 0) {
+      try {
+        await notifyAdmins({
+          organizationId,
+          type: 'PAYROLL_UPDATED',
+          title: 'Payroll marked paid (bulk)',
+          body: `${pendingRows.length} payroll record(s) were marked as paid.`,
+        });
+      } catch (notifyErr) {
+        console.error('[notifications] payroll updated bulk', notifyErr);
+      }
+    }
 
     return res.json({
       message: `Marked ${result.count} payroll record(s) as paid`,

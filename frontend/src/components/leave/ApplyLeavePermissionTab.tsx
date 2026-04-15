@@ -151,7 +151,7 @@ const ApplyLeavePermissionTab = ({
           onChange={(e) => setPermissionEndTime(e.target.value)}
         />
         {validationWarning ? (
-          <p className='text-xs font-medium text-red-600 sm:col-span-2'>
+          <p className='text-xs font-medium text-destructive sm:col-span-2'>
             {validationWarning}
           </p>
         ) : projectedRemaining != null ? (

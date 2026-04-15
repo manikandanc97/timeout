@@ -45,24 +45,24 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
         onClick={onClose}
       />
 
-      <div className='relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-2xl'>
-        <div className='relative bg-linear-to-br from-primary-dark via-primary to-accent px-6 pb-8 pt-6'>
-          <div className='absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/5' />
-          <div className='absolute -right-4 top-8 h-20 w-20 rounded-full bg-white/8' />
+      <div className='relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-2xl'>
+        <div className='relative bg-linear-to-br from-primary-dark via-primary to-accent px-6 pb-8 pt-6 text-primary-foreground'>
+          <div className='absolute -right-10 -top-10 h-40 w-40 rounded-full bg-card/5' />
+          <div className='absolute -right-4 top-8 h-20 w-20 rounded-full bg-sidebar-hover' />
 
           <div className='relative flex items-start justify-between gap-4'>
             <div className='flex items-center gap-4'>
-              <div className='flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm ring-2 ring-white/30'>
-                <span className='text-lg font-bold text-white'>{initials}</span>
+              <div className='flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-card-foreground/20 backdrop-blur-sm ring-2 ring-primary-foreground/30'>
+                <span className='text-lg font-bold text-primary-foreground'>{initials}</span>
               </div>
               <div>
-                <p className='text-sm font-semibold uppercase tracking-widest text-white/60'>
+                <p className='text-sm font-semibold uppercase tracking-widest text-primary-foreground/60'>
                   Pay Slip
                 </p>
-                <h2 className='mt-0.5 text-xl font-bold leading-tight text-white'>
+                <h2 className='mt-0.5 text-xl font-bold leading-tight text-primary-foreground'>
                   {row.employeeName}
                 </h2>
-                <p className='mt-1 text-sm text-white/70'>{monthLabel}</p>
+                <p className='mt-1 text-sm text-primary-foreground/70'>{monthLabel}</p>
               </div>
             </div>
 
@@ -77,11 +77,11 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
             </div>
           </div>
 
-          <div className='relative mt-6 rounded-2xl border border-white/20 bg-white/15 px-5 py-4 backdrop-blur-sm'>
-            <p className='text-xs font-semibold uppercase tracking-widest text-white/60'>
+          <div className='relative mt-6 rounded-2xl border border-primary-foreground/20 bg-card/15 px-5 py-4 backdrop-blur-sm'>
+            <p className='text-xs font-semibold uppercase tracking-widest text-primary-foreground/60'>
               Net Salary
             </p>
-            <p className='mt-1 text-3xl font-bold text-white'>{rupee.format(computedNetSalary)}</p>
+            <p className='mt-1 text-3xl font-bold text-primary-foreground'>{rupee.format(computedNetSalary)}</p>
             {lopDays > 0 && (
               <p className='mt-1 text-xs text-amber-200'>
                 Includes {lopDays} LOP day{lopDays !== 1 ? 's' : ''} deduction of{' '}
@@ -93,10 +93,10 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
 
         <div className='overflow-y-auto px-6 pb-6 pt-5'>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            <div className='rounded-2xl border border-gray-100 bg-gray-50/50 p-4'>
+            <div className='rounded-2xl border border-border bg-muted/50 p-4'>
               <div className='mb-3 flex items-center gap-2'>
                 <div className='h-1.5 w-4 rounded-full bg-emerald-500' />
-                <p className='text-[11px] font-bold uppercase tracking-widest text-gray-500'>
+                <p className='text-[11px] font-bold uppercase tracking-widest text-muted-foreground'>
                   Earnings
                 </p>
               </div>
@@ -108,15 +108,15 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
                   { label: 'Bonus', value: bonus },
                 ].map((item) => (
                   <div key={item.label} className='flex items-center justify-between'>
-                    <span className='text-sm text-gray-600'>{item.label}</span>
-                    <span className='text-sm font-semibold text-gray-900'>
+                    <span className='text-sm text-muted-foreground'>{item.label}</span>
+                    <span className='text-sm font-semibold text-card-foreground'>
                       {rupee.format(item.value)}
                     </span>
                   </div>
                 ))}
-                <div className='mt-2 border-t border-gray-200 pt-2.5'>
+                <div className='mt-2 border-t border-border pt-2.5'>
                   <div className='flex items-center justify-between'>
-                    <span className='text-sm font-bold text-gray-800'>Gross earnings</span>
+                    <span className='text-sm font-bold text-card-foreground'>Gross earnings</span>
                     <span className='text-sm font-bold text-emerald-700'>
                       {rupee.format(grossEarnings)}
                     </span>
@@ -125,10 +125,10 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
               </div>
             </div>
 
-            <div className='rounded-2xl border border-gray-100 bg-gray-50/50 p-4'>
+            <div className='rounded-2xl border border-border bg-muted/50 p-4'>
               <div className='mb-3 flex items-center gap-2'>
                 <div className='h-1.5 w-4 rounded-full bg-rose-500' />
-                <p className='text-[11px] font-bold uppercase tracking-widest text-gray-500'>
+                <p className='text-[11px] font-bold uppercase tracking-widest text-muted-foreground'>
                   Deductions
                 </p>
               </div>
@@ -146,24 +146,28 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
                   <div key={item.label} className='flex items-center justify-between'>
                     <span
                       className={`text-sm ${
-                        item.highlight ? 'font-medium text-rose-600' : 'text-gray-600'
+                        item.highlight
+                          ? 'font-medium text-danger-muted-foreground'
+                          : 'text-muted-foreground'
                       }`}
                     >
                       {item.label}
                     </span>
                     <span
                       className={`text-sm font-semibold ${
-                        item.highlight ? 'text-rose-700' : 'text-gray-900'
+                        item.highlight
+                          ? 'text-danger-muted-foreground'
+                          : 'text-card-foreground'
                       }`}
                     >
                       {item.value > 0 ? `- ${rupee.format(item.value)}` : rupee.format(0)}
                     </span>
                   </div>
                 ))}
-                <div className='mt-2 border-t border-gray-200 pt-2.5'>
+                <div className='mt-2 border-t border-border pt-2.5'>
                   <div className='flex items-center justify-between'>
-                    <span className='text-sm font-bold text-gray-800'>Total deductions</span>
-                    <span className='text-sm font-bold text-rose-700'>
+                    <span className='text-sm font-bold text-card-foreground'>Total deductions</span>
+                    <span className='text-sm font-bold text-danger-muted-foreground'>
                       - {rupee.format(totalDeductions)}
                     </span>
                   </div>
@@ -181,7 +185,7 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
                 {rupee.format(computedNetSalary)}
               </p>
             </div>
-            <div className='text-right text-xs text-gray-500'>
+            <div className='text-right text-xs text-muted-foreground'>
               <p>
                 {grossEarnings > 0
                   ? `${Math.round((computedNetSalary / grossEarnings) * 100)}% of gross`
@@ -195,14 +199,14 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
             <button
               type='button'
               onClick={onClose}
-              className='rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50'
+              className='rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-semibold text-card-foreground/90 transition-colors hover:bg-muted'
             >
               Close
             </button>
             <button
               type='button'
               onClick={() => onDownload(row)}
-              className='flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-colors hover:bg-primary-dark'
+              className='flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary-dark'
             >
               <svg
                 width='16'

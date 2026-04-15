@@ -3,11 +3,13 @@
 import Button from '@/components/ui/Button';
 import PayslipPreviewModal from '@/components/payroll/PayslipPreviewModal';
 import { useAuth } from '@/context/AuthContext';
+import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
+import { formatPersonName } from '@/lib/personName';
 import api from '@/services/api';
 import type { PayrollRow } from '@/types/payroll';
 import { Download, Eye, RotateCcw, WalletCards } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
 const rupee = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -29,9 +31,9 @@ const CARD_CONFIG = [
 
 function PayrollNoAccess() {
   return (
-    <section className='rounded-3xl border border-amber-100 bg-amber-50 p-6 text-amber-900 shadow-sm'>
+    <section className='rounded-3xl border border-warning-muted-foreground/25 bg-warning-muted p-6 text-warning-muted-foreground shadow-sm'>
       <h2 className='text-lg font-semibold'>Payroll access restricted</h2>
-      <p className='mt-1 text-sm text-amber-800'>
+      <p className='mt-1 text-sm text-warning-muted-foreground/90'>
         You do not have permission to view payroll details.
       </p>
     </section>
@@ -72,8 +74,8 @@ export default function PayrollPageClient() {
     lopAmount: '',
   });
 
-  const loadPayroll = () => {
-    if (!canView) return;
+  const loadPayroll = useCallback(() => {
+    if (!canView) return Promise.resolve();
     setLoading(true);
     return api
       .get<{ payroll: PayrollRow[] }>(
@@ -89,11 +91,17 @@ export default function PayrollPageClient() {
         toast.error(msg);
       })
       .finally(() => setLoading(false));
-  };
+  }, [canView, selectedMonth, selectedYear]);
 
   useEffect(() => {
     void loadPayroll();
-  }, [canView, selectedMonth, selectedYear]);
+  }, [loadPayroll]);
+
+  useEffect(() => {
+    return subscribeDashboardRefresh('payrollSummary', () => {
+      void loadPayroll();
+    });
+  }, [loadPayroll]);
 
   const summary = useMemo(() => {
     const totalEmployees = rows.length;
@@ -133,7 +141,10 @@ export default function PayrollPageClient() {
     const query = searchTerm.trim().toLowerCase();
     const filtered = rows.filter((row) => {
       const matchesSearch =
-        query.length === 0 || row.employeeName.toLowerCase().includes(query);
+        query.length === 0 ||
+        (formatPersonName(row.employeeName) || row.employeeName)
+          .toLowerCase()
+          .includes(query);
       const matchesStatus =
         statusFilter === 'ALL'
           ? true
@@ -145,8 +156,16 @@ export default function PayrollPageClient() {
 
     const sorted = [...filtered];
     sorted.sort((a, b) => {
-      if (sortBy === 'NAME_ASC') return a.employeeName.localeCompare(b.employeeName);
-      if (sortBy === 'NAME_DESC') return b.employeeName.localeCompare(a.employeeName);
+      if (sortBy === 'NAME_ASC') {
+        return (formatPersonName(a.employeeName) || a.employeeName).localeCompare(
+          formatPersonName(b.employeeName) || b.employeeName,
+        );
+      }
+      if (sortBy === 'NAME_DESC') {
+        return (formatPersonName(b.employeeName) || b.employeeName).localeCompare(
+          formatPersonName(a.employeeName) || a.employeeName,
+        );
+      }
       if (sortBy === 'STATUS') return a.status.localeCompare(b.status);
       const aMonthKey = a.year * 100 + a.month;
       const bMonthKey = b.year * 100 + b.month;
@@ -160,11 +179,11 @@ export default function PayrollPageClient() {
 
   const markAsPaid = async (row: PayrollRow) => {
     if (row.payrollAdded === false) {
-      toast.info('Payroll not added yet. Add salary in employee payroll details first.');
+      toast('Payroll not added yet. Add salary in employee payroll details first.');
       return;
     }
     if (row.status === 'PAID') {
-      toast.info(`${row.employeeName} payroll is already paid`);
+      toast(`${formatPersonName(row.employeeName) || row.employeeName} payroll is already paid`);
       return;
     }
     try {
@@ -172,7 +191,7 @@ export default function PayrollPageClient() {
       setRows((prev) =>
         prev.map((item) => (item.id === row.id ? { ...item, status: 'PAID' } : item)),
       );
-      toast.success(`${row.employeeName} marked as paid`);
+      toast.success(`${formatPersonName(row.employeeName) || row.employeeName} marked as paid`);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -190,7 +209,7 @@ export default function PayrollPageClient() {
         row.status !== 'NOT_ADDED',
     );
     if (pendingEligibleRows.length === 0) {
-      toast.info('No pending payroll records available to mark as paid');
+      toast('No pending payroll records available to mark as paid');
       return;
     }
     setBulkMarkingPaid(true);
@@ -244,7 +263,7 @@ export default function PayrollPageClient() {
     const html = `
       <html>
         <head>
-          <title>Payslip - ${row.employeeName}</title>
+          <title>Payslip - ${formatPersonName(row.employeeName) || row.employeeName}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 24px; color: #111827; }
             h1 { margin-bottom: 4px; }
@@ -257,7 +276,7 @@ export default function PayrollPageClient() {
         </head>
         <body>
           <h1>Payslip</h1>
-          <p><strong>Employee:</strong> ${row.employeeName}</p>
+          <p><strong>Employee:</strong> ${formatPersonName(row.employeeName) || row.employeeName}</p>
           <p><strong>Status:</strong> ${statusLabel}</p>
           <p><strong>Month:</strong> ${summary.currentMonth}</p>
           <table>
@@ -282,7 +301,9 @@ export default function PayrollPageClient() {
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
-    toast.success(`Download dialog opened for ${row.employeeName}`);
+    toast.success(
+      `Download dialog opened for ${formatPersonName(row.employeeName) || row.employeeName}`,
+    );
   };
 
   const openEditPayroll = async (row: PayrollRow) => {
@@ -443,7 +464,11 @@ export default function PayrollPageClient() {
     const dailyRate = monthlyNetBeforeLop / monthDays;
     return String(Math.round((lopDays * dailyRate + Number.EPSILON) * 100) / 100);
   };
-  const formatTableAmount = (value: number) => (showAmounts ? rupee.format(value) : '₹******');
+  const formatTableAmount = (value: number) => {
+    const formattedAmount = rupee.format(value);
+    const maskedAmount = formattedAmount.replace(/\d/g, '•');
+    return <span className='tabular-nums'>{showAmounts ? formattedAmount : maskedAmount}</span>;
+  };
   const computedEditNetSalary =
     toNum(editForm.basicSalary) +
     toNum(editForm.hra) +
@@ -625,19 +650,19 @@ export default function PayrollPageClient() {
                     const isDeactivated = row.employeeActive === false;
                     const statusClass =
                       isDeactivated
-                        ? 'bg-slate-100 text-slate-700 ring-slate-300'
+                        ? 'bg-muted text-muted-foreground ring-border'
                         : row.status === 'PAID'
-                        ? 'bg-emerald-50 text-emerald-800 ring-emerald-200'
-                        : row.status === 'NOT_ADDED'
-                          ? 'bg-slate-100 text-slate-700 ring-slate-300'
-                        : 'bg-amber-50 text-amber-800 ring-amber-200';
+                          ? 'bg-success-muted text-success-muted-foreground ring-success-muted-foreground/30'
+                          : row.status === 'NOT_ADDED'
+                            ? 'bg-muted text-muted-foreground ring-border'
+                            : 'bg-warning-muted text-warning-muted-foreground ring-warning-muted-foreground/35';
                     return (
                       <tr
                         key={row.id}
                         className='border-b border-border/60 transition-colors hover:bg-muted/50'
                       >
                         <td className='px-4 py-2 text-left align-top font-medium text-card-foreground'>
-                          {row.employeeName}
+                          {formatPersonName(row.employeeName) || 'Employee'}
                         </td>
                         <td className='px-4 py-2 text-left align-top text-muted-foreground'>
                           {formatTableAmount(row.basicSalary)}
@@ -645,7 +670,7 @@ export default function PayrollPageClient() {
                         <td className='px-4 py-2 text-left align-top text-muted-foreground'>
                           {formatTableAmount(row.allowance)}
                         </td>
-                        <td className='px-4 py-2 text-left align-top text-rose-700'>
+                        <td className='px-4 py-2 text-left align-top text-danger-muted-foreground'>
                           <span>{row.lopDays ?? 0} day(s)</span>
                         </td>
                         <td className='px-4 py-2 text-left align-top text-muted-foreground'>
@@ -770,7 +795,9 @@ export default function PayrollPageClient() {
             <h3 className='text-lg font-bold'>
               {editRow.payrollAdded === false ? 'Add payroll details' : 'Edit payroll details'}
             </h3>
-            <p className='mt-1 text-sm text-muted-foreground'>{editRow.employeeName}</p>
+            <p className='mt-1 text-sm text-muted-foreground'>
+              {formatPersonName(editRow.employeeName) || 'Employee'}
+            </p>
             <div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2'>
               <label className='text-sm sm:col-span-2'>
                 <span className='mb-1 block text-xs uppercase text-muted-foreground'>
@@ -839,7 +866,7 @@ export default function PayrollPageClient() {
                 Auto-calculate deduction and salary breakup from yearly gross
               </label>
             </div>
-            <div className='mt-4 rounded-lg bg-indigo-50 p-3'>
+            <div className='mt-4 rounded-lg border border-border bg-muted p-3'>
               <p className='text-xs uppercase tracking-wide text-indigo-700'>Net salary</p>
               <p className='mt-1 text-lg font-bold text-indigo-900'>
                 Rs. {Math.max(computedEditNetSalary, 0).toLocaleString('en-IN')}

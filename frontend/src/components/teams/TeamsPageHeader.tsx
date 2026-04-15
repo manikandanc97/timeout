@@ -18,21 +18,21 @@ export default function TeamsPageHeader({
           <UsersRound size={20} />
         </div>
         <div>
-          <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400'>
+          <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
             Organization
           </p>
           <h1
             id='teams-heading'
-            className='text-2xl font-bold leading-tight text-gray-900'
+            className='text-2xl font-bold leading-tight text-card-foreground'
           >
             Teams
           </h1>
-          <p className='mt-1 text-sm text-gray-500'>
+          <p className='mt-1 text-sm text-muted-foreground'>
             Browse teams, leads, and staffing at a glance.
           </p>
         </div>
       </div>
-      <div className='inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm'>
+      <div className='inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm'>
         <Users size={12} className='text-primary' />
         <span>
           {filteredCount === totalCount && !hasActiveFilters

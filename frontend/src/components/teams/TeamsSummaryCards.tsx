@@ -19,8 +19,8 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     label: 'Total teams',
     field: 'totalTeams',
     accent: 'border-l-sky-400',
-    iconBg: 'bg-sky-50',
-    iconColor: 'text-sky-600',
+    iconBg: 'bg-sky-500/12 dark:bg-sky-400/18',
+    iconColor: 'text-sky-700 dark:text-sky-300',
     Icon: UsersRound,
   },
   {
@@ -28,8 +28,8 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     label: 'Total departments',
     field: 'totalDepartments',
     accent: 'border-l-violet-400',
-    iconBg: 'bg-violet-50',
-    iconColor: 'text-violet-600',
+    iconBg: 'bg-violet-500/12 dark:bg-violet-400/18',
+    iconColor: 'text-violet-700 dark:text-violet-300',
     Icon: Building2,
   },
 ];
@@ -38,22 +38,22 @@ function SummarySkeleton() {
   return (
     <section
       aria-label='Teams summary'
-      className='w-full shrink-0 self-start rounded-2xl bg-white/95'
+      className='w-full shrink-0 self-start rounded-2xl bg-card/95'
     >
-      <h2 className='mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
+      <h2 className='mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground lg:hidden'>
         Summary
       </h2>
       <div className='grid grid-cols-2 gap-2.5 sm:gap-3'>
         {[1, 2].map((i) => (
           <div
             key={i}
-            className='animate-pulse rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-3 shadow-sm sm:p-3.5'
+            className='animate-pulse rounded-2xl border border-border border-l-4 border-l-border bg-card p-3 shadow-sm sm:p-3.5'
           >
             <div className='flex justify-between gap-1.5'>
-              <div className='h-2.5 w-12 rounded bg-gray-200 sm:h-3 sm:w-16' />
-              <div className='h-7 w-7 shrink-0 rounded-lg bg-gray-100 sm:h-8 sm:w-8' />
+              <div className='h-2.5 w-12 rounded bg-skeleton sm:h-3 sm:w-16' />
+              <div className='h-7 w-7 shrink-0 rounded-lg bg-muted sm:h-8 sm:w-8' />
             </div>
-            <div className='mt-2 h-6 w-8 rounded bg-gray-200 sm:mt-2.5 sm:h-7' />
+            <div className='mt-2 h-6 w-8 rounded bg-skeleton sm:mt-2.5 sm:h-7' />
           </div>
         ))}
       </div>
@@ -74,9 +74,9 @@ export default function TeamsSummaryCards({ loading, summary }: Props) {
   return (
     <section
       aria-label='Teams summary'
-      className='w-full shrink-0 self-start rounded-2xl bg-white/95'
+      className='w-full shrink-0 self-start rounded-2xl bg-card/95'
     >
-      <h2 className='mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 lg:hidden'>
+      <h2 className='mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground lg:hidden'>
         Summary
       </h2>
       <div className='grid grid-cols-2 gap-2.5 sm:gap-3'>
@@ -86,10 +86,10 @@ export default function TeamsSummaryCards({ loading, summary }: Props) {
           return (
             <div
               key={c.key}
-              className={`min-w-0 rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3 shadow-sm sm:p-3.5`}
+              className={`min-w-0 rounded-2xl border border-border border-l-4 ${c.accent} bg-card p-3 shadow-sm sm:p-3.5`}
             >
               <div className='flex items-start justify-between gap-1.5'>
-                <span className='min-w-0 text-[10px] font-medium uppercase leading-snug tracking-wide text-gray-500 sm:text-xs sm:tracking-wider'>
+                <span className='min-w-0 text-[10px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs sm:tracking-wider'>
                   {c.label}
                 </span>
                 <div
@@ -98,7 +98,7 @@ export default function TeamsSummaryCards({ loading, summary }: Props) {
                   <Icon size={16} strokeWidth={2} className={c.iconColor} />
                 </div>
               </div>
-              <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
+              <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-card-foreground sm:mt-2.5 sm:text-2xl'>
                 {value}
               </p>
             </div>

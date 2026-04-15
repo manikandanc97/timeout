@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import http from 'http';
 import express from 'express';
 import prisma from './prismaClient.js';
 import cors from 'cors';
@@ -14,12 +15,18 @@ import holidayRoutes from './routes/holidayRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import organizationRoutes from './routes/organizationRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import { initSocketServer } from './socket/socketServer.js';
+import aiChatRoutes from './routes/aiChatRoutes.js';
 
 const app = express();
 
+const clientOrigin =
+  process.env.CLIENT_ORIGIN?.trim() || 'http://localhost:3000';
+
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: clientOrigin,
     credentials: true,
   }),
 );
@@ -68,6 +75,11 @@ app.use('/api/dashboard', adminRoutes);
 app.use('/api/organization', organizationRoutes);
 app.use('/api/payroll', payrollRoutes);
 
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/ai', aiChatRoutes);
+
+const httpServer = http.createServer(app);
+
 function requireEnv(name) {
   const v = process.env[name];
   if (v == null || String(v).trim() === '') {
@@ -94,8 +106,10 @@ async function start() {
     process.exit(1);
   }
 
-  app.listen(5000, () => {
-    console.log('Server running on port 5000');
+  initSocketServer(httpServer, { clientOrigin });
+
+  httpServer.listen(5000, () => {
+    console.log('Server running on port 5000 (HTTP + Socket.IO)');
   });
 }
 

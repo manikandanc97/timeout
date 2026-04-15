@@ -8,7 +8,8 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
+import { useCallback, useEffect, useState } from 'react';
 
 type AdminDashboardStats = {
   totalEmployees: number;
@@ -103,24 +104,33 @@ const AdminSummaryCards = () => {
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchDashboardStats() {
-      try {
-        const { data } = await api.get<AdminDashboardStats>('/dashboard/stats');
-        setStats(data);
-      } catch {
-        setStats({
-          totalEmployees: 0,
-          presentToday: 0,
-          onLeaveToday: 0,
-          departments: 0,
-        });
-      } finally {
-        setLoading(false);
-      }
+  const fetchDashboardStats = useCallback(async (opts?: { showSkeleton?: boolean }) => {
+    const showSkeleton = opts?.showSkeleton !== false;
+    if (showSkeleton) setLoading(true);
+    try {
+      const { data } = await api.get<AdminDashboardStats>('/dashboard/stats');
+      setStats(data);
+    } catch {
+      setStats({
+        totalEmployees: 0,
+        presentToday: 0,
+        onLeaveToday: 0,
+        departments: 0,
+      });
+    } finally {
+      if (showSkeleton) setLoading(false);
     }
-    fetchDashboardStats();
   }, []);
+
+  useEffect(() => {
+    void fetchDashboardStats({ showSkeleton: true });
+  }, [fetchDashboardStats]);
+
+  useEffect(() => {
+    return subscribeDashboardRefresh('adminDashboardStats', () => {
+      void fetchDashboardStats({ showSkeleton: false });
+    });
+  }, [fetchDashboardStats]);
 
   if (loading) {
     return (
@@ -128,7 +138,7 @@ const AdminSummaryCards = () => {
         {STAT_CARDS.map((c, i) => (
           <SkeletonCard
             key={c.field}
-            accentClass={KPI_SKELETON_ACCENTS[i] ?? 'border-l-gray-200'}
+            accentClass={KPI_SKELETON_ACCENTS[i] ?? 'border-l-border'}
           />
         ))}
       </div>

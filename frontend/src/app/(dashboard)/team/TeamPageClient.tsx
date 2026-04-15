@@ -19,7 +19,7 @@ import api from '@/services/api';
 import type { OrgDepartment } from '@/types/organization';
 import type { OrganizationTeamRow } from '@/types/organizationTeam';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export default function TeamPageClient() {
   const { user } = useAuth();

@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import type { Holiday } from '@/types/holiday';
 import { useCallback, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export default function HolidaysPageClient() {
   const { user } = useAuth();

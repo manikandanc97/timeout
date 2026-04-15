@@ -7,7 +7,7 @@ import api from '@/services/api';
 import type { OrganizationEmployee } from '@/types/employee';
 import type { OrgDepartment } from '@/types/organization';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 function isoToDateInput(iso: string | null | undefined): string {
   if (!iso) return '';

@@ -3,10 +3,10 @@
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 const approveBtnClass =
-  'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-2.5';
+  'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg bg-success-muted px-2 py-1 text-xs font-semibold text-success-muted-foreground ring-1 ring-success-muted-foreground/25 transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:px-2.5';
 
 const rejectBtnClass =
-  'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-2.5';
+  'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg bg-danger-muted px-2 py-1 text-xs font-semibold text-danger-muted-foreground ring-1 ring-danger-muted-foreground/30 transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:px-2.5';
 
 const groupClass =
   'flex min-w-0 flex-wrap items-center gap-1.5 sm:flex-nowrap sm:gap-2';

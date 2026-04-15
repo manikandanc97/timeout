@@ -6,7 +6,7 @@ import Select from '@/components/ui/Select';
 import api from '@/services/api';
 import type { OrgDepartment } from '@/types/organization';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 type Props = {
   onCreated?: () => void;

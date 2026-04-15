@@ -65,16 +65,16 @@ const LeaveBalance = ({ balance }: Props) => {
     setTooltip((prev) => ({ ...prev, visible: false }));
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md">
+    <div className="flex min-h-0 flex-col rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md">
       <h2 className="mb-4 text-xl font-semibold">Leave Balance</h2>
 
       <div
         ref={containerRef}
-        className="relative flex-1 w-full min-h-[200px]"
+        className="relative h-[240px] w-full min-h-[200px] min-w-0"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <PieChart>
             <Pie
               data={data}

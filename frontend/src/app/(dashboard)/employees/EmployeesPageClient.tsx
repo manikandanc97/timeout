@@ -15,7 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import type { OrganizationEmployee } from '@/types/employee';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export default function EmployeesPageClient() {
   const { user } = useAuth();

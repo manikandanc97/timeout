@@ -1,5 +1,14 @@
 import prisma from '../prismaClient.js';
 import { findHolidaysForOrgInDateRange } from '../lib/findHolidaysForOrgInDateRange.js';
+import {
+  notifyLeaveAppliedRecipients,
+  notifyEmployeeLeaveDecision,
+  notifyLeaveCancelledRecipients,
+  notifyPermissionAppliedRecipients,
+  notifyPermissionDecision,
+  notifyCompOffAppliedRecipients,
+  notifyCompOffDecision,
+} from '../services/notificationService.js';
 
 const MONTHLY_PERMISSION_LIMIT_MINUTES = 4 * 60;
 
@@ -331,7 +340,7 @@ export const applyLeave = async (req, res) => {
 
     const applicant = await prisma.user.findUnique({
       where: { id: userId },
-      select: { organizationId: true, teamId: true },
+      select: { organizationId: true, teamId: true, name: true },
     });
 
     if (!applicant) {
@@ -484,6 +493,17 @@ export const applyLeave = async (req, res) => {
 
     console.log('Leave applied:', totalDays, leave);
 
+    try {
+      await notifyLeaveAppliedRecipients({
+        leave,
+        applicantId: userId,
+        applicantName: applicant.name ?? 'Employee',
+        organizationId: applicant.organizationId,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] leave applied', notifyErr);
+    }
+
     res.status(201).json({
       message:
         isBalanceManagedType && lopDays > 0
@@ -562,7 +582,7 @@ export const applyCompOffCredit = async (req, res) => {
         .json({ message: 'Comp off already claimed for this date' });
     }
 
-    await prisma.compOffWorkLog.create({
+    const created = await prisma.compOffWorkLog.create({
       data: {
         userId,
         organizationId: user.organizationId,
@@ -571,6 +591,21 @@ export const applyCompOffCredit = async (req, res) => {
         status: 'PENDING',
       },
     });
+
+    try {
+      const applicant = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { name: true },
+      });
+      await notifyCompOffAppliedRecipients({
+        organizationId: user.organizationId,
+        applicantId: user.id,
+        applicantName: applicant?.name ?? 'Employee',
+        workDate: created.workDate,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] comp-off applied', notifyErr);
+    }
 
     return res.status(201).json({ message: 'Comp off request submitted' });
   } catch (error) {
@@ -684,6 +719,21 @@ export const applyPermissionRequest = async (req, res) => {
         status: 'PENDING',
       },
     });
+
+    try {
+      const applicant = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { name: true },
+      });
+      await notifyPermissionAppliedRecipients({
+        organizationId: user.organizationId,
+        applicantId: user.id,
+        applicantName: applicant?.name ?? 'Employee',
+        date: created.date,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] permission applied', notifyErr);
+    }
 
     return res.status(201).json({
       message: 'Permission request submitted',
@@ -853,6 +903,22 @@ export const updatePermissionRequestStatus = async (req, res) => {
       where: { id: requestId },
       data: { status },
     });
+
+    try {
+      const actorName = await prisma.user.findUnique({
+        where: { id: actor.id },
+        select: { name: true },
+      });
+      await notifyPermissionDecision({
+        organizationId: row.organizationId,
+        employeeId: row.userId,
+        status,
+        actorName: actorName?.name ?? 'Manager',
+        date: updated.date,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] permission decision', notifyErr);
+    }
     return res.json({ message: 'Permission request updated', request: updated });
   } catch (error) {
     console.error(error);
@@ -919,6 +985,22 @@ export const updateCompOffRequestStatus = async (req, res) => {
       where: { userId: row.userId },
       select: { compOff: true },
     });
+
+    try {
+      const actorName = await prisma.user.findUnique({
+        where: { id: actor.id },
+        select: { name: true },
+      });
+      await notifyCompOffDecision({
+        organizationId: row.organizationId,
+        employeeId: row.userId,
+        status,
+        actorName: actorName?.name ?? 'Manager',
+        workDate: updated.workDate,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] comp-off decision', notifyErr);
+    }
 
     return res.json({
       message: 'Comp off request updated',
@@ -1083,6 +1165,7 @@ export const updateLeaveStatus = async (req, res) => {
           status,
           rejectionReason:
             status === 'REJECTED' ? normalizedRejectionReason : null,
+          approvedById: req.user.id,
         },
       }),
     ];
@@ -1150,6 +1233,24 @@ export const updateLeaveStatus = async (req, res) => {
 
     if (leaveType === 'SICK' || leaveType === 'ANNUAL') {
       await recalculatePayrollForLeaveRange(leave);
+    }
+
+    try {
+      const actor = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { name: true },
+      });
+      await notifyEmployeeLeaveDecision({
+        leave: { ...leave, status },
+        employeeId: leave.userId,
+        organizationId: leave.organizationId,
+        status,
+        actorName: actor?.name ?? 'Manager',
+        rejectionReason:
+          status === 'REJECTED' ? normalizedRejectionReason : undefined,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] leave decision', notifyErr);
     }
 
     res.json({ message: 'Leave status updated', leave: updated });
@@ -1300,6 +1401,21 @@ export const cancelLeave = async (req, res) => {
 
     if (type === 'SICK' || type === 'ANNUAL') {
       await recalculatePayrollForLeaveRange(leave);
+    }
+
+    try {
+      const cancelledBy = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { name: true },
+      });
+      await notifyLeaveCancelledRecipients({
+        leave,
+        organizationId: leave.organizationId,
+        cancelledByUserId: req.user.id,
+        cancelledByName: cancelledBy?.name ?? null,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] leave cancelled', notifyErr);
     }
 
     res.json({ message: 'Leave cancelled successfully' });

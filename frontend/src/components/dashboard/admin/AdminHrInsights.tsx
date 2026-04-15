@@ -1,6 +1,7 @@
 'use client';
 
 import api from '@/services/api';
+import { formatPersonName } from '@/lib/personName';
 import {
   Cake,
   PartyPopper,
@@ -44,12 +45,12 @@ function InitialsAvatar({
 }
 
 const avatarColors = [
-  'bg-sky-100 text-sky-700',
-  'bg-violet-100 text-violet-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
-  'bg-teal-100 text-teal-700',
+  'bg-sky-500/15 text-sky-800 dark:bg-sky-400/20 dark:text-sky-200',
+  'bg-violet-500/15 text-violet-800 dark:bg-violet-400/20 dark:text-violet-200',
+  'bg-emerald-500/15 text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-200',
+  'bg-amber-500/15 text-amber-900 dark:bg-amber-400/20 dark:text-amber-200',
+  'bg-rose-500/15 text-rose-800 dark:bg-rose-400/20 dark:text-rose-200',
+  'bg-teal-500/15 text-teal-800 dark:bg-teal-400/20 dark:text-teal-200',
 ];
 
 function getAvatarColor(name: string) {
@@ -61,14 +62,18 @@ function getAvatarColor(name: string) {
 
 function LeaveTypeBadge({ type }: { type: string }) {
   const map: Record<string, string> = {
-    'Annual Leave': 'bg-sky-50 text-sky-700',
-    'Sick Leave': 'bg-rose-50 text-rose-700',
-    'Maternity Leave': 'bg-pink-50 text-pink-700',
-    'Paternity Leave': 'bg-violet-50 text-violet-700',
+    'Annual Leave':
+      'bg-sky-500/12 text-sky-800 dark:bg-sky-400/18 dark:text-sky-200',
+    'Sick Leave':
+      'bg-rose-500/12 text-rose-800 dark:bg-rose-400/18 dark:text-rose-200',
+    'Maternity Leave':
+      'bg-pink-500/12 text-pink-800 dark:bg-pink-400/18 dark:text-pink-200',
+    'Paternity Leave':
+      'bg-violet-500/12 text-violet-800 dark:bg-violet-400/18 dark:text-violet-200',
   };
   return (
     <span
-      className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${map[type] ?? 'bg-gray-100 text-gray-600'}`}
+      className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${map[type] ?? 'bg-muted text-muted-foreground'}`}
     >
       {type}
     </span>
@@ -195,11 +200,11 @@ export default function AdminHrInsights() {
               >
                 <div className='flex items-center gap-2.5 min-w-0'>
                   <InitialsAvatar
-                    name={row.userName}
-                    colorClass={getAvatarColor(row.userName)}
+                    name={formatPersonName(row.userName) || 'Unknown'}
+                    colorClass={getAvatarColor(formatPersonName(row.userName) || 'Unknown')}
                   />
                   <span className='truncate text-sm font-medium'>
-                    {row.userName}
+                    {formatPersonName(row.userName) || 'Unknown'}
                   </span>
                 </div>
                 <LeaveTypeBadge type={row.leaveType} />
@@ -259,11 +264,11 @@ export default function AdminHrInsights() {
               >
                 <div className='flex items-center gap-2.5 min-w-0'>
                   <InitialsAvatar
-                    name={row.name}
-                    colorClass={getAvatarColor(row.name)}
+                    name={formatPersonName(row.name) || 'Unknown'}
+                    colorClass={getAvatarColor(formatPersonName(row.name) || 'Unknown')}
                   />
                   <span className='truncate text-sm font-medium'>
-                    {row.name}
+                    {formatPersonName(row.name) || 'Unknown'}
                   </span>
                 </div>
                 <span className='shrink-0 rounded-lg bg-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground ring-1 ring-border'>
@@ -297,11 +302,11 @@ export default function AdminHrInsights() {
               >
                 <div className='flex items-center gap-2.5 min-w-0'>
                   <InitialsAvatar
-                    name={row.name}
-                    colorClass={getAvatarColor(row.name)}
+                    name={formatPersonName(row.name) || 'Unknown'}
+                    colorClass={getAvatarColor(formatPersonName(row.name) || 'Unknown')}
                   />
                   <span className='truncate text-sm font-medium'>
-                    {row.name}
+                    {formatPersonName(row.name) || 'Unknown'}
                   </span>
                 </div>
                 <span className='shrink-0 rounded-lg bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground ring-1 ring-border'>

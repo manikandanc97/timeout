@@ -194,7 +194,7 @@ const LeaveCalendarPanel = ({
 
     if (isToday)
       return {
-        cell: 'bg-primary text-white font-bold shadow-md shadow-primary/30 scale-105',
+        cell: 'scale-105 bg-primary font-bold text-primary-foreground shadow-md shadow-primary/30',
         dot: '',
       };
     if (isHoliday)
@@ -221,7 +221,7 @@ const LeaveCalendarPanel = ({
     }
     if (isWeekend)
       return {
-        cell: `text-muted-foreground/50 ${isHovered ? 'bg-muted' : ''}`,
+        cell: `text-muted-foreground/75 ${isHovered ? 'bg-muted' : ''}`,
         dot: '',
       };
     return {
@@ -259,38 +259,40 @@ const LeaveCalendarPanel = ({
       className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-md ${rootClassName}`.trim()}
     >
       {/* Top banner */}
-      <div className='shrink-0 bg-linear-to-br from-primary-dark via-primary to-accent px-5 pt-5 pb-6'>
+      <div className='shrink-0 bg-linear-to-br from-primary-dark via-primary to-accent px-5 pt-5 pb-6 text-primary-foreground'>
         <div className='flex flex-col gap-2'>
           <div>
-            <div className='flex items-center gap-1.5 mb-1'>
-              <CalendarDays size={13} className='text-white/70' />
-              <span className='font-semibold text-[11px] text-white/70 uppercase tracking-widest'>
+            <div className='mb-1 flex items-center gap-1.5'>
+              <CalendarDays size={13} className='text-primary-foreground/80' />
+              <span className='text-[11px] font-semibold uppercase tracking-widest text-primary-foreground/85'>
                 {bannerEyebrow}
               </span>
             </div>
-            <h2 className='font-bold text-white text-xl leading-tight'>
+            <h2 className='text-xl font-bold leading-tight text-primary-foreground'>
               {bannerTitle}
             </h2>
           </div>
 
           {upcomingHoliday && (
-            <div className='flex justify-between items-center gap-2 bg-white/15 backdrop-blur-sm px-3 py-2.5 border border-white/25 rounded-xl shrink-0'>
-              <div className='flex items-center gap-1 mb-0.5'>
-                <MapPin size={10} className='text-amber-300' />
-                <p className='font-semibold text-[10px] text-amber-300 uppercase tracking-wide'>
-                  Next Holiday
+            <div className='mt-1 flex shrink-0 flex-col gap-2 rounded-xl border border-primary-foreground/25 bg-card/15 px-3 py-2.5 text-primary-foreground backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between'>
+              <div className='flex items-center gap-1.5'>
+                <MapPin size={10} className='shrink-0 text-amber-200' aria-hidden />
+                <p className='text-[10px] font-semibold uppercase tracking-wide text-amber-200'>
+                  Next holiday
                 </p>
               </div>
-              <p className='font-bold text-white text-sm leading-tight'>
-                {upcomingHoliday.name}
-              </p>
-              <p className='mt-0.5 text-[11px] text-white/60'>
-                {upcomingHoliday.date.toLocaleDateString('en-US', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </p>
+              <div className='min-w-0 sm:text-right'>
+                <p className='text-sm font-bold leading-tight text-primary-foreground'>
+                  {upcomingHoliday.name}
+                </p>
+                <p className='text-[11px] text-primary-foreground/85'>
+                  {upcomingHoliday.date.toLocaleDateString('en-US', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -337,9 +339,9 @@ const LeaveCalendarPanel = ({
             {DAYS_OF_WEEK.map((d) => (
               <div
                 key={d}
-                className={`text-center text-[11px] font-semibold py-1 ${
+                className={`py-1 text-center text-[11px] font-semibold ${
                   d === 'Su' || d === 'Sa'
-                    ? 'text-muted-foreground/45'
+                    ? 'text-muted-foreground/75'
                     : 'text-muted-foreground'
                 }`}
               >

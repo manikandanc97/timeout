@@ -7,7 +7,7 @@ import api from '@/services/api';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const router = useRouter();
@@ -121,7 +121,7 @@ const Register = () => {
               variant='ghost'
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className='hover:!bg-transparent !p-0 !rounded focus:outline-none !text-gray-700 hover:!text-primary'
+              className='hover:!bg-transparent !p-0 !rounded focus:outline-none !text-card-foreground/90 hover:!text-primary'
             >
               {showPassword ? (
                 <EyeOff color='gray' size={18} />
@@ -150,7 +150,7 @@ const Register = () => {
                   ? 'Hide confirm password'
                   : 'Show confirm password'
               }
-              className='hover:!bg-transparent !p-0 !rounded focus:outline-none !text-gray-700 hover:!text-primary'
+              className='hover:!bg-transparent !p-0 !rounded focus:outline-none !text-card-foreground/90 hover:!text-primary'
             >
               {showConfirmPassword ? (
                 <EyeOff color='gray' size={18} />
@@ -168,7 +168,7 @@ const Register = () => {
           Create account
         </Button>
 
-        <p className='col-span-full -mt-0.5 text-gray-500 text-sm text-center'>
+        <p className='col-span-full -mt-0.5 text-muted-foreground text-sm text-center'>
           Already have an account?{' '}
           <button
             type='button'

@@ -8,4 +8,5 @@ export interface User {
   email: string;
   gender?: Gender | string;
   role?: Role | string;
+  organizationId?: number;
 }

@@ -37,7 +37,7 @@ export function AdminDashboardPanel({
             <Icon size={18} strokeWidth={2} className={iconClass} aria-hidden />
           </div>
           <div>
-            <h2 className='text-sm font-semibold'>{title}</h2>
+            <h2 className='text-sm font-semibold text-card-foreground'>{title}</h2>
             {subtitle && (
               <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
                 {subtitle}
@@ -73,7 +73,7 @@ export function AdminDashboardEmpty({
           aria-hidden
         />
       </div>
-      <p className='max-w-xs text-sm leading-relaxed text-muted-foreground'>
+      <p className='max-w-xs text-sm leading-relaxed text-card-foreground/85'>
         {message}
       </p>
     </div>

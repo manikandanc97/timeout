@@ -9,7 +9,7 @@ import type { LeavePolicyDocument } from '@/types/leavePolicy';
 import api from '@/services/api';
 import { Pencil, RotateCcw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export default function LeavePolicyPageClient() {
   const { user } = useAuth();
@@ -105,9 +105,9 @@ export default function LeavePolicyPageClient() {
     return (
       <PageCard title='Leave Policy'>
         <div className='mt-6 animate-pulse space-y-4'>
-          <div className='h-20 rounded-xl bg-gray-100' />
-          <div className='h-40 rounded-xl bg-gray-100' />
-          <div className='h-32 rounded-xl bg-gray-100' />
+          <div className='h-20 rounded-xl bg-muted' />
+          <div className='h-40 rounded-xl bg-muted' />
+          <div className='h-32 rounded-xl bg-muted' />
         </div>
       </PageCard>
     );
@@ -146,7 +146,7 @@ export default function LeavePolicyPageClient() {
     >
       {isAdmin && editing && draft ? (
         <>
-          <div className='flex flex-wrap items-center justify-end gap-2 border-b border-gray-100 pb-4'>
+          <div className='flex flex-wrap items-center justify-end gap-2 border-b border-border pb-4'>
             <Button
               type='button'
               variant='outline'
@@ -172,8 +172,8 @@ export default function LeavePolicyPageClient() {
       ) : (
         <>
           {isAdmin && usingDefault ? (
-            <p className='mb-2 rounded-lg border border-dashed border-primary/25 bg-primary/5 px-3 py-2 text-xs text-gray-600'>
-              Showing the default policy. Use <strong className='text-gray-800'>Edit</strong> to
+            <p className='mb-2 rounded-lg border border-dashed border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground'>
+              Showing the default policy. Use <strong className='text-card-foreground'>Edit</strong> to
               customise it for your organisation.
             </p>
           ) : null}

@@ -9,20 +9,34 @@ import {
   ClipboardList,
   Clock3,
 } from 'lucide-react';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { formatPersonName } from '@/lib/personName';
+import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
+import { useCallback, useEffect, useState } from 'react';
 import type { LeaveWithEmployee } from '@/types/leave';
 import type { Holiday } from '@/types/holiday';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
 import { AdminDashboardPanel } from './AdminDashboardPanel';
 
-/** Fixed number of row slots so empty / partial tabs keep the same card height */
+/** Max items shown per tab (list area always reserves height for this many rows). */
 const SLOT_COUNT = 3;
 
 const LEAVE_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  ANNUAL: { bg: 'bg-sky-50', text: 'text-sky-700' },
-  SICK: { bg: 'bg-rose-50', text: 'text-rose-700' },
-  MATERNITY: { bg: 'bg-pink-50', text: 'text-pink-700' },
-  PATERNITY: { bg: 'bg-violet-50', text: 'text-violet-700' },
+  ANNUAL: {
+    bg: 'bg-sky-500/12 dark:bg-sky-400/18',
+    text: 'text-sky-800 dark:text-sky-200',
+  },
+  SICK: {
+    bg: 'bg-rose-500/12 dark:bg-rose-400/18',
+    text: 'text-rose-800 dark:text-rose-200',
+  },
+  MATERNITY: {
+    bg: 'bg-pink-500/12 dark:bg-pink-400/18',
+    text: 'text-pink-800 dark:text-pink-200',
+  },
+  PATERNITY: {
+    bg: 'bg-violet-500/12 dark:bg-violet-400/18',
+    text: 'text-violet-800 dark:text-violet-200',
+  },
 };
 
 function leaveTypeLabel(type: string) {
@@ -46,12 +60,6 @@ function sortPendingLeaves(rows: LeaveWithEmployee[]) {
         new Date(b.createdAt ?? 0).getTime() -
         new Date(a.createdAt ?? 0).getTime(),
     );
-}
-
-function withSlotPadding<T>(items: T[], count: number): (T | null)[] {
-  const slots: (T | null)[] = items.slice(0, count);
-  while (slots.length < count) slots.push(null);
-  return slots;
 }
 
 type PermissionRow = {
@@ -108,22 +116,11 @@ function InitialsAvatar({ name }: { name: string }) {
 
 const SLOT_MIN_H = 'min-h-[5.75rem] sm:min-h-[5.25rem]';
 
-function RequestRowPlaceholder({
-  children,
-  'aria-label': ariaLabel = 'Empty slot',
-}: {
-  children?: ReactNode;
-  'aria-label'?: string;
-}) {
-  return (
-    <li
-      aria-label={ariaLabel}
-      className={`flex items-stretch justify-center px-3 py-3 ${SLOT_MIN_H} rounded-xl border border-dashed border-gray-200/90 bg-gray-50/50`}
-    >
-      {children ?? <span className='text-gray-300 text-xs' aria-hidden> </span>}
-    </li>
-  );
-}
+/** Matches 3× row min-height + 2× gap-2 so the panel height stays stable with 0–3 items. */
+const REQUEST_LIST_MIN_H =
+  'min-h-[calc(3*5.75rem+2*0.5rem)] sm:min-h-[calc(3*5.25rem+2*0.5rem)]';
+
+const requestListClass = `flex flex-col gap-2 ${REQUEST_LIST_MIN_H}`;
 
 export default function PendingLeaveRequests() {
   const [activeTab, setActiveTab] = useState<'LEAVE' | 'PERMISSION' | 'COMP_OFF'>(
@@ -187,6 +184,12 @@ export default function PendingLeaveRequests() {
       }
     }
     void loadPendingLeaves();
+  }, [reloadLists]);
+
+  useEffect(() => {
+    return subscribeDashboardRefresh('adminPendingRequests', () => {
+      void reloadLists();
+    });
   }, [reloadLists]);
 
   async function approveOrReject(
@@ -265,12 +268,12 @@ export default function PendingLeaveRequests() {
         title='Requests'
         subtitle={`Last ${SLOT_COUNT} pending`}
         icon={ClipboardList}
-        iconTileClass='bg-violet-50'
+        iconTileClass='bg-violet-500/15 dark:bg-violet-400/20'
         iconClass='text-violet-600'
       >
         <div className='space-y-3'>
           {[1, 2, 3].map((i) => (
-            <div key={i} className='bg-gray-50 rounded-xl h-14 animate-pulse' />
+            <div key={i} className='bg-muted rounded-xl h-14 animate-pulse' />
           ))}
         </div>
       </AdminDashboardPanel>
@@ -278,20 +281,20 @@ export default function PendingLeaveRequests() {
   }
 
   const leaveBadge = (
-    <span className='flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full ring-1 ring-amber-200 font-semibold text-[11px] text-amber-700'>
-      <span className='bg-amber-500 rounded-full w-1.5 h-1.5' />
+    <span className='flex items-center gap-1.5 rounded-full bg-warning-muted px-2.5 py-1 text-[11px] font-semibold text-warning-muted-foreground ring-1 ring-warning-muted-foreground/30'>
+      <span className='h-1.5 w-1.5 rounded-full bg-warning-muted-foreground/80' />
       {pendingLeaveTotal} pending
     </span>
   );
 
   const permissionBadge = (
-    <span className='rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700 ring-1 ring-sky-200'>
+    <span className='rounded-full bg-sky-500/12 px-2.5 py-1 text-[11px] font-semibold text-sky-800 ring-1 ring-sky-500/25 dark:bg-sky-400/18 dark:text-sky-200 dark:ring-sky-400/35'>
       {permissionTotal} total
     </span>
   );
 
   const compOffBadge = (
-    <span className='rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 ring-1 ring-indigo-200'>
+    <span className='rounded-full bg-indigo-500/12 px-2.5 py-1 text-[11px] font-semibold text-indigo-800 ring-1 ring-indigo-500/25 dark:bg-indigo-400/18 dark:text-indigo-200 dark:ring-indigo-400/35'>
       {compOffTotal} pending
     </span>
   );
@@ -301,7 +304,7 @@ export default function PendingLeaveRequests() {
       title='Requests'
       subtitle='Leave / Permission / Comp off'
       icon={ClipboardList}
-      iconTileClass='bg-violet-50'
+      iconTileClass='bg-violet-500/15 dark:bg-violet-400/20'
       iconClass='text-violet-600'
       action={
         activeTab === 'LEAVE'
@@ -311,15 +314,15 @@ export default function PendingLeaveRequests() {
             : compOffBadge
       }
     >
-      <div className='mb-4 flex items-center gap-2 rounded-xl border border-gray-100 bg-white/80 p-1'>
+      <div className='mb-4 flex items-center gap-2 rounded-xl border border-border bg-card/80 p-1'>
         <Button
           type='button'
           unstyled
           onClick={() => setActiveTab('LEAVE')}
           className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
             activeTab === 'LEAVE'
-              ? 'bg-primary text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-card-foreground/80 hover:bg-muted'
           }`}
         >
           Leave
@@ -330,8 +333,8 @@ export default function PendingLeaveRequests() {
           onClick={() => setActiveTab('PERMISSION')}
           className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
             activeTab === 'PERMISSION'
-              ? 'bg-primary text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-card-foreground/80 hover:bg-muted'
           }`}
         >
           Permission
@@ -342,8 +345,8 @@ export default function PendingLeaveRequests() {
           onClick={() => setActiveTab('COMP_OFF')}
           className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
             activeTab === 'COMP_OFF'
-              ? 'bg-primary text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-card-foreground/80 hover:bg-muted'
           }`}
         >
           Comp off
@@ -351,33 +354,26 @@ export default function PendingLeaveRequests() {
       </div>
 
       {activeTab === 'LEAVE' ? (
-        <ul className='flex flex-col gap-2' aria-label='Pending leave requests'>
-          {withSlotPadding(pendingList, SLOT_COUNT).map((row, i) => {
-            if (!row) {
-              return (
-                <RequestRowPlaceholder key={`leave-empty-${i}`}>
-                  {pendingList.length === 0 && i === 0 ? (
-                    <div className='flex flex-col flex-1 justify-center items-center px-2 py-1 text-center'>
-                      <ClipboardList
-                        size={18}
-                        strokeWidth={1.5}
-                        className='mb-2 text-gray-300'
-                        aria-hidden
-                      />
-                      <p className='max-w-xs text-gray-400 text-sm leading-relaxed'>
-                        No pending leave requests. New submissions will appear here.
-                      </p>
-                    </div>
-                  ) : null}
-                </RequestRowPlaceholder>
-              );
-            }
-
+        <ul className={requestListClass} aria-label='Pending leave requests'>
+          {pendingList.length === 0 ? (
+            <li className='flex flex-1 flex-col items-center justify-center gap-2 px-2 py-8 text-center'>
+              <ClipboardList
+                size={18}
+                strokeWidth={1.5}
+                className='text-muted-foreground'
+                aria-hidden
+              />
+              <p className='max-w-xs text-sm leading-relaxed text-muted-foreground'>
+                No pending leave requests. New submissions will appear here.
+              </p>
+            </li>
+          ) : null}
+          {pendingList.map((row) => {
             const isBusy = busyAction?.kind === 'leave' && busyAction.id === row.id;
-            const name = row.user?.name ?? 'Unknown';
+            const name = formatPersonName(row.user?.name) || 'Unknown';
             const typeColors = LEAVE_TYPE_COLORS[row.type] ?? {
-              bg: 'bg-gray-100',
-              text: 'text-gray-600',
+              bg: 'bg-muted',
+              text: 'text-muted-foreground',
             };
             const workingDays = workingDaysForLeaveRange(
               row.startDate,
@@ -389,22 +385,22 @@ export default function PendingLeaveRequests() {
             return (
               <li
                 key={row.id}
-                className={`group flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-gray-50/70 hover:bg-gray-50 p-3 rounded-xl transition-colors duration-150 ${SLOT_MIN_H}`}
+                className={`group flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-muted/70 hover:bg-muted p-3 rounded-xl transition-colors duration-150 ${SLOT_MIN_H}`}
               >
                 <div className='flex items-center gap-3 min-w-0'>
                   <InitialsAvatar name={name} />
                   <div className='min-w-0'>
                     <div className='flex flex-wrap items-center gap-2'>
-                      <p className='font-semibold text-gray-900 text-sm'>{name}</p>
+                      <p className='font-semibold text-card-foreground text-sm'>{name}</p>
                       <span
                         className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${typeColors.bg} ${typeColors.text}`}
                       >
                         {leaveTypeLabel(row.type)}
                       </span>
                     </div>
-                    <p className='mt-0.5 text-gray-400 text-xs'>
+                    <p className='mt-0.5 text-muted-foreground text-xs'>
                       {formatDate(row.startDate)} → {formatDate(row.endDate)}
-                      <span className='mx-1.5 text-gray-300'>•</span>
+                      <span className='mx-1.5 text-muted-foreground/70'>•</span>
                       <span>{daysLabel}</span>
                     </p>
                   </div>
@@ -424,92 +420,80 @@ export default function PendingLeaveRequests() {
       ) : null}
 
       {activeTab === 'PERMISSION' ? (
-        <ul className='flex flex-col gap-2' aria-label='Permission requests'>
-          {withSlotPadding(permissionRows, SLOT_COUNT).map((row, i) =>
-            row ? (
-              <li
-                key={row.id}
-                className={`flex items-center justify-between gap-3 rounded-xl bg-gray-50/70 p-3 ${SLOT_MIN_H}`}
-              >
-                <div className='min-w-0'>
-                  <div className='flex items-center gap-2'>
-                    <p className='text-sm font-semibold text-gray-900'>
-                      {row.user?.name ?? 'Unknown'}
-                    </p>
-                    <span className='rounded-md bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700'>
-                      Permission
-                    </span>
-                  </div>
-                  <p className='mt-0.5 text-xs text-gray-500'>
-                    {formatDate(row.date)} • {formatMinutes(row.durationMinutes)}
+        <ul className={requestListClass} aria-label='Permission requests'>
+          {permissionRows.length === 0 ? (
+            <li className='flex flex-1 flex-col items-center justify-center gap-2 px-2 py-8 text-center'>
+              <Clock3
+                size={18}
+                strokeWidth={1.5}
+                className='text-muted-foreground'
+                aria-hidden
+              />
+              <p className='max-w-xs text-sm leading-relaxed text-muted-foreground'>
+                No permission requests yet.
+              </p>
+            </li>
+          ) : null}
+          {permissionRows.map((row) => (
+            <li
+              key={row.id}
+              className={`flex items-center justify-between gap-3 rounded-xl bg-muted/70 p-3 ${SLOT_MIN_H}`}
+            >
+              <div className='min-w-0'>
+                <div className='flex items-center gap-2'>
+                  <p className='text-sm font-semibold text-card-foreground'>
+                    {formatPersonName(row.user?.name) || 'Unknown'}
                   </p>
-                  <p className='mt-1 line-clamp-1 text-xs text-gray-400'>{row.reason}</p>
+                  <span className='rounded-md bg-sky-500/12 px-2 py-0.5 text-[11px] font-semibold text-sky-800 dark:bg-sky-400/18 dark:text-sky-200'>
+                    Permission
+                  </span>
                 </div>
-              </li>
-            ) : (
-              <RequestRowPlaceholder key={`permission-empty-${i}`}>
-                {permissionRows.length === 0 && i === 0 ? (
-                  <div className='flex flex-col flex-1 justify-center items-center px-2 py-1 text-center'>
-                    <Clock3
-                      size={18}
-                      strokeWidth={1.5}
-                      className='mb-2 text-gray-300'
-                      aria-hidden
-                    />
-                    <p className='max-w-xs text-gray-400 text-sm leading-relaxed'>
-                      No permission requests yet.
-                    </p>
-                  </div>
-                ) : null}
-              </RequestRowPlaceholder>
-            ),
-          )}
+                <p className='mt-0.5 text-xs text-muted-foreground'>
+                  {formatDate(row.date)} • {formatMinutes(row.durationMinutes)}
+                </p>
+                <p className='mt-1 line-clamp-1 text-xs text-muted-foreground'>{row.reason}</p>
+              </div>
+            </li>
+          ))}
         </ul>
       ) : null}
 
       {activeTab === 'COMP_OFF' ? (
-        <ul className='flex flex-col gap-2' aria-label='Pending comp off requests'>
-          {withSlotPadding(compOffRows, SLOT_COUNT).map((row, i) => {
-            if (!row) {
-              return (
-                <RequestRowPlaceholder key={`compoff-empty-${i}`}>
-                  {compOffRows.length === 0 && i === 0 ? (
-                    <div className='flex flex-col flex-1 justify-center items-center px-2 py-1 text-center'>
-                      <BriefcaseBusiness
-                        size={18}
-                        strokeWidth={1.5}
-                        className='mb-2 text-gray-300'
-                        aria-hidden
-                      />
-                      <p className='max-w-xs text-gray-400 text-sm leading-relaxed'>
-                        No pending comp off requests.
-                      </p>
-                    </div>
-                  ) : null}
-                </RequestRowPlaceholder>
-              );
-            }
-
+        <ul className={requestListClass} aria-label='Pending comp off requests'>
+          {compOffRows.length === 0 ? (
+            <li className='flex flex-1 flex-col items-center justify-center gap-2 px-2 py-8 text-center'>
+              <BriefcaseBusiness
+                size={18}
+                strokeWidth={1.5}
+                className='text-muted-foreground'
+                aria-hidden
+              />
+              <p className='max-w-xs text-sm leading-relaxed text-muted-foreground'>
+                No pending comp off requests.
+              </p>
+            </li>
+          ) : null}
+          {compOffRows.map((row) => {
             const isBusy = busyAction?.kind === 'compOff' && busyAction.id === row.id;
-            const name = row.user?.name ?? 'Unknown';
+            const name = formatPersonName(row.user?.name) || 'Unknown';
 
             return (
               <li
                 key={row.id}
-                className={`group flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-gray-50/70 hover:bg-gray-50 p-3 rounded-xl transition-colors duration-150 ${SLOT_MIN_H}`}
+                className={`group flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-muted/70 hover:bg-muted p-3 rounded-xl transition-colors duration-150 ${SLOT_MIN_H}`}
               >
                 <div className='flex items-center gap-3 min-w-0'>
                   <InitialsAvatar name={name} />
                   <div className='min-w-0'>
                     <div className='flex flex-wrap items-center gap-2'>
-                      <p className='font-semibold text-gray-900 text-sm'>{name}</p>
-                      <span className='rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700'>
+                      <p className='font-semibold text-card-foreground text-sm'>{name}</p>
+                      <span className='rounded-md bg-indigo-500/12 px-2 py-0.5 text-[11px] font-semibold text-indigo-800 dark:bg-indigo-400/18 dark:text-indigo-200'>
                         Comp off
                       </span>
                     </div>
-                    <p className='mt-0.5 text-gray-400 text-xs line-clamp-1'>
+                    <p className='mt-0.5 text-muted-foreground text-xs line-clamp-1'>
                       Worked on {formatDate(row.workDate)}
-                      <span className='mx-1.5 text-gray-300'>•</span>
+                      <span className='mx-1.5 text-muted-foreground/70'>•</span>
                       <span>{row.reason}</span>
                     </p>
                   </div>
@@ -555,10 +539,10 @@ export default function PendingLeaveRequests() {
           onChange={(e) => setRejectReason(e.target.value)}
           rows={4}
           placeholder='Enter rejection reason'
-          className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none transition-colors focus:border-red-300 focus:ring-2 focus:ring-red-100'
+          className='w-full rounded-lg border border-border px-3 py-2 text-sm text-card-foreground/90 outline-none transition-colors focus:border-red-300 focus:ring-2 focus:ring-red-100'
         />
         {!rejectReason.trim() ? (
-          <p className='mt-2 text-xs text-rose-600'>Rejection reason is required.</p>
+          <p className='mt-2 text-xs text-destructive'>Rejection reason is required.</p>
         ) : null}
       </ConfirmModal>
     </AdminDashboardPanel>

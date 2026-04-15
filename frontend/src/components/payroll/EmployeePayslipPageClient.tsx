@@ -2,12 +2,13 @@
 
 import PayslipPreviewModal from '@/components/payroll/PayslipPreviewModal';
 import Button from '@/components/ui/Button';
-import { useAuth } from '@/context/AuthContext';
+import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
+import { formatPersonName } from '@/lib/personName';
 import api from '@/services/api';
 import type { PayrollRow } from '@/types/payroll';
-import { Download, Eye, ReceiptText } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { Download, Eye, EyeOff, ReceiptText } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
 const rupee = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -16,14 +17,15 @@ const rupee = new Intl.NumberFormat('en-IN', {
 });
 
 export default function EmployeePayslipPageClient() {
-  const { user } = useAuth();
   const [rows, setRows] = useState<PayrollRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePayslip, setActivePayslip] = useState<PayrollRow | null>(null);
+  const [showSalaryAmounts, setShowSalaryAmounts] = useState(false);
 
-  useEffect(() => {
-    setLoading(true);
-    void api
+  const loadPayslips = useCallback((opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (!silent) setLoading(true);
+    return api
       .get<{ payslips: PayrollRow[] }>('/payroll/my-payslips')
       .then((res) => {
         setRows(Array.isArray(res.data?.payslips) ? res.data.payslips : []);
@@ -34,13 +36,32 @@ export default function EmployeePayslipPageClient() {
           'Failed to load payslips';
         toast.error(msg);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!silent) {
+          setLoading(false);
+        }
+      });
   }, []);
+
+  useEffect(() => {
+    void loadPayslips();
+  }, [loadPayslips]);
+
+  useEffect(() => {
+    return subscribeDashboardRefresh('employeePayslips', () => {
+      void loadPayslips({ silent: true });
+    });
+  }, [loadPayslips]);
 
   const monthLabel = (row: PayrollRow) =>
     new Date(row.year, row.month - 1, 1).toLocaleString('en-IN', { month: 'short', year: 'numeric' });
 
   const latestPaidMonth = useMemo(() => (rows.length > 0 ? monthLabel(rows[0]) : '—'), [rows]);
+  const renderSalaryAmount = (value: number) => {
+    const formattedAmount = rupee.format(value);
+    const maskedAmount = formattedAmount.replace(/\d/g, '•');
+    return <span className='tabular-nums'>{showSalaryAmounts ? formattedAmount : maskedAmount}</span>;
+  };
 
   const downloadPayslipPdf = (row: PayrollRow) => {
     const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
@@ -59,11 +80,11 @@ export default function EmployeePayslipPageClient() {
     const totalDeductions = pf + tax + professionalTax + lopAmount;
     const month = monthLabel(row);
     const html = `
-      <html><head><title>Payslip - ${row.employeeName}</title>
+      <html><head><title>Payslip - ${formatPersonName(row.employeeName) || row.employeeName}</title>
       <style>body{font-family:Arial,sans-serif;margin:24px;color:#111827}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #e5e7eb;padding:10px;text-align:left}th{background:#f9fafb}.net{font-weight:700}</style>
       </head><body>
       <h1>Payslip</h1>
-      <p><strong>Employee:</strong> ${row.employeeName}</p>
+      <p><strong>Employee:</strong> ${formatPersonName(row.employeeName) || row.employeeName}</p>
       <p><strong>Month:</strong> ${month}</p>
       <p><strong>Status:</strong> Paid</p>
       <table>
@@ -87,21 +108,34 @@ export default function EmployeePayslipPageClient() {
   };
 
   return (
-    <section className='rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5'>
+    <section className='rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-5'>
       <div className='mb-4 flex items-center justify-between'>
         <div>
-          <h2 className='text-xl font-bold text-gray-900'>My Payslips</h2>
-          <p className='text-sm text-gray-500'>Only paid payrolls are available for view/download.</p>
+          <h2 className='text-xl font-bold text-card-foreground'>My Payslips</h2>
+          <p className='text-sm text-muted-foreground'>Only paid payrolls are available for view/download.</p>
         </div>
-        <div className='text-right text-xs text-gray-500'>
-          <p>Latest paid: {latestPaidMonth}</p>
+        <div className='flex items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => setShowSalaryAmounts((prev) => !prev)}
+            className='h-8 px-3 text-xs'
+          >
+            <span className='flex items-center gap-1'>
+              {showSalaryAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
+              {showSalaryAmounts ? 'Hide Salary' : 'View Salary'}
+            </span>
+          </Button>
+          <div className='text-right text-xs text-muted-foreground'>
+            <p>Latest paid: {latestPaidMonth}</p>
+          </div>
         </div>
       </div>
 
-      <div className='overflow-x-auto rounded-xl border border-gray-100'>
+      <div className='overflow-x-auto rounded-xl border border-border'>
         <table className='w-full min-w-[760px] border-collapse text-left text-sm'>
           <thead>
-            <tr className='border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500'>
+            <tr className='border-b border-border bg-muted text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
               <th className='px-4 py-3'>Month</th>
               <th className='px-4 py-3'>Gross</th>
               <th className='px-4 py-3'>Deductions</th>
@@ -113,25 +147,27 @@ export default function EmployeePayslipPageClient() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className='px-4 py-12 text-center text-sm text-gray-500'>
+                <td colSpan={6} className='px-4 py-12 text-center text-sm text-muted-foreground'>
                   Loading payslips...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className='px-4 py-12 text-center text-sm text-gray-500'>
+                <td colSpan={6} className='px-4 py-12 text-center text-sm text-muted-foreground'>
                   No paid payslips available yet.
                 </td>
               </tr>
             ) : (
               rows.map((row) => (
-                <tr key={row.id} className='border-b border-gray-50'>
+                <tr key={row.id} className='border-b border-border'>
                   <td className='px-4 py-2'>{monthLabel(row)}</td>
                   <td className='px-4 py-2'>
-                    {rupee.format((row.basicSalary ?? 0) + (row.hra ?? 0) + (row.allowance ?? 0) + (row.bonus ?? 0))}
+                    {renderSalaryAmount(
+                      (row.basicSalary ?? 0) + (row.hra ?? 0) + (row.allowance ?? 0) + (row.bonus ?? 0),
+                    )}
                   </td>
-                  <td className='px-4 py-2'>{rupee.format(row.deductions ?? 0)}</td>
-                  <td className='px-4 py-2 font-semibold'>{rupee.format(row.netSalary ?? 0)}</td>
+                  <td className='px-4 py-2'>{renderSalaryAmount(row.deductions ?? 0)}</td>
+                  <td className='px-4 py-2 font-semibold'>{renderSalaryAmount(row.netSalary ?? 0)}</td>
                   <td className='px-4 py-2'>
                     {row.paidDate ? new Date(row.paidDate).toLocaleDateString('en-GB') : '—'}
                   </td>

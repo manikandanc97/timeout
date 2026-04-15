@@ -17,24 +17,24 @@ const SUMMARY_CARDS: CardDef[] = [
     key: 'upcoming',
     label: 'Upcoming',
     accent: 'border-l-violet-400',
-    iconBg: 'bg-violet-50',
-    iconColor: 'text-violet-600',
+    iconBg: 'bg-violet-500/12 dark:bg-violet-400/18',
+    iconColor: 'text-violet-700 dark:text-violet-300',
     Icon: Sparkles,
   },
   {
     key: 'thisMonth',
     label: 'This month',
     accent: 'border-l-emerald-400',
-    iconBg: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-500/12 dark:bg-emerald-400/18',
+    iconColor: 'text-emerald-700 dark:text-emerald-300',
     Icon: CalendarRange,
   },
   {
     key: 'total',
     label: 'Total holidays',
     accent: 'border-l-sky-400',
-    iconBg: 'bg-sky-50',
-    iconColor: 'text-sky-600',
+    iconBg: 'bg-sky-500/12 dark:bg-sky-400/18',
+    iconColor: 'text-sky-700 dark:text-sky-300',
     Icon: CalendarDays,
   },
 ];
@@ -60,13 +60,13 @@ function SummarySkeleton() {
       {accents.map((accent, i) => (
         <div
           key={i}
-          className={`animate-pulse rounded-2xl border border-gray-100 border-l-4 ${accent} bg-white p-3 shadow-sm sm:p-3.5`}
+          className={`animate-pulse rounded-2xl border border-border border-l-4 ${accent} bg-card p-3 shadow-sm sm:p-3.5`}
         >
           <div className='flex items-center justify-between gap-2'>
-            <div className='h-3 w-20 rounded bg-gray-200 sm:w-24' />
-            <div className='h-8 w-8 shrink-0 rounded-lg bg-gray-100 sm:h-9 sm:w-9 sm:rounded-xl' />
+            <div className='h-3 w-20 rounded bg-skeleton sm:w-24' />
+            <div className='h-8 w-8 shrink-0 rounded-lg bg-muted sm:h-9 sm:w-9 sm:rounded-xl' />
           </div>
-          <div className='mt-2 h-7 w-10 rounded bg-gray-200 sm:mt-2.5 sm:h-8' />
+          <div className='mt-2 h-7 w-10 rounded bg-skeleton sm:mt-2.5 sm:h-8' />
         </div>
       ))}
     </section>
@@ -100,10 +100,10 @@ export default function HolidaysSummaryCards({
         return (
           <div
             key={c.key}
-            className={`rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3 shadow-sm sm:p-3.5`}
+            className={`rounded-2xl border border-border border-l-4 ${c.accent} bg-card p-3 shadow-sm sm:p-3.5`}
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-[11px] font-medium uppercase tracking-wider text-gray-500 sm:text-xs'>
+              <span className='text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-xs'>
                 {c.label}
               </span>
               <div
@@ -112,7 +112,7 @@ export default function HolidaysSummaryCards({
                 <Icon size={17} strokeWidth={2} className={c.iconColor} />
               </div>
             </div>
-            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
+            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-card-foreground sm:mt-2.5 sm:text-2xl'>
               {value}
             </p>
           </div>

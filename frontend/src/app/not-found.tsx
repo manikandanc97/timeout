@@ -4,10 +4,10 @@ import { FileQuestion } from 'lucide-react';
 import React from 'react';
 
 const primaryLinkClass =
-  'inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-[15px] font-medium text-white transition-colors duration-300 hover:bg-primary-dark sm:w-auto';
+  'inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-[15px] font-medium text-primary-foreground transition-colors duration-300 hover:bg-primary-dark sm:w-auto';
 
 const outlineLinkClass =
-  'inline-flex w-full items-center justify-center rounded-lg border border-gray-200 bg-transparent px-4 py-2.5 text-[15px] font-medium text-gray-800 transition-colors duration-300 hover:bg-gray-100 sm:w-auto';
+  'inline-flex w-full items-center justify-center rounded-lg border border-border bg-transparent px-4 py-2.5 text-[15px] font-medium text-card-foreground transition-colors duration-300 hover:bg-muted sm:w-auto';
 
 export default function NotFound() {
   return (
@@ -28,7 +28,7 @@ export default function NotFound() {
           Sign in
         </Link>
       </div>
-      <p className='mt-6 text-center text-xs font-medium tracking-wide text-gray-400'>
+      <p className='mt-6 text-center text-xs font-medium tracking-wide text-muted-foreground'>
         404 — Not found
       </p>
     </AuthPageShell>

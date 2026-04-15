@@ -1,5 +1,6 @@
 import prisma from '../prismaClient.js';
 import { findHolidaysForOrgInDateRange } from '../lib/findHolidaysForOrgInDateRange.js';
+import { notifyHolidayBroadcast } from '../services/notificationService.js';
 
 const holidayResponseSelect = {
   id: true,
@@ -76,6 +77,17 @@ export const createHoliday = async (req, res) => {
       },
       select: holidayResponseSelect,
     });
+    try {
+      await notifyHolidayBroadcast({
+        organizationId,
+        type: 'HOLIDAY_CREATED',
+        title: 'New holiday added',
+        holidayName: holiday.name,
+        holidayDate: holiday.date,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] holiday created', notifyErr);
+    }
     res.status(201).json(holiday);
   } catch (error) {
     if (error.code === 'P2002') {
@@ -129,6 +141,17 @@ export const updateHoliday = async (req, res) => {
       data,
       select: holidayResponseSelect,
     });
+    try {
+      await notifyHolidayBroadcast({
+        organizationId,
+        type: 'HOLIDAY_UPDATED',
+        title: 'Holiday updated',
+        holidayName: holiday.name,
+        holidayDate: holiday.date,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] holiday updated', notifyErr);
+    }
     res.json(holiday);
   } catch (error) {
     if (error.code === 'P2002') {
@@ -161,7 +184,22 @@ export const deleteHoliday = async (req, res) => {
       return res.status(404).json({ message: 'Holiday not found' });
     }
 
+    const holiday = await prisma.holiday.findUnique({
+      where: { id },
+      select: { name: true, date: true },
+    });
     await prisma.holiday.delete({ where: { id } });
+    try {
+      await notifyHolidayBroadcast({
+        organizationId,
+        type: 'HOLIDAY_DELETED',
+        title: 'Holiday removed',
+        holidayName: holiday?.name ?? 'Holiday',
+        holidayDate: holiday?.date ?? new Date(),
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] holiday deleted', notifyErr);
+    }
     res.json({ message: 'Deleted' });
   } catch (error) {
     console.error(error);

@@ -24,8 +24,8 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     label: 'Total employees',
     field: 'total',
     accent: 'border-l-sky-400',
-    iconBg: 'bg-sky-50',
-    iconColor: 'text-sky-600',
+    iconBg: 'bg-sky-500/12 dark:bg-sky-400/18',
+    iconColor: 'text-sky-700 dark:text-sky-300',
     Icon: Users,
   },
   {
@@ -33,8 +33,8 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     label: 'Active',
     field: 'active',
     accent: 'border-l-emerald-400',
-    iconBg: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-500/12 dark:bg-emerald-400/18',
+    iconColor: 'text-emerald-700 dark:text-emerald-300',
     Icon: UserCheck,
   },
   {
@@ -42,8 +42,8 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     label: 'On leave',
     field: 'onLeave',
     accent: 'border-l-amber-400',
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-amber-600',
+    iconBg: 'bg-amber-500/12 dark:bg-amber-400/18',
+    iconColor: 'text-amber-800 dark:text-amber-300',
     Icon: Umbrella,
   },
   {
@@ -51,8 +51,8 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     label: 'Deactivated',
     field: 'deactivated',
     accent: 'border-l-slate-400',
-    iconBg: 'bg-slate-100',
-    iconColor: 'text-slate-600',
+    iconBg: 'bg-muted dark:bg-slate-500/20',
+    iconColor: 'text-slate-700 dark:text-slate-300',
     Icon: UserX,
   },
   {
@@ -61,8 +61,8 @@ const SUMMARY_CARDS: SummaryCardConfig[] = [
     field: 'newJoiners',
     subtitle: `Last ${NEW_JOINER_DAYS} days`,
     accent: 'border-l-violet-400',
-    iconBg: 'bg-violet-50',
-    iconColor: 'text-violet-600',
+    iconBg: 'bg-violet-500/12 dark:bg-violet-400/18',
+    iconColor: 'text-violet-700 dark:text-violet-300',
     Icon: CalendarPlus,
   },
 ];
@@ -76,15 +76,15 @@ function SummarySkeleton() {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className='animate-pulse rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-3 shadow-sm sm:p-3.5'
+          className='animate-pulse rounded-2xl border border-border border-l-4 border-l-border bg-card p-3 shadow-sm sm:p-3.5'
         >
           <div className='flex justify-between gap-2'>
-            <div className='h-3 w-16 rounded bg-gray-200 sm:w-20' />
-            <div className='h-8 w-8 shrink-0 rounded-lg bg-gray-100 sm:h-9 sm:w-9 sm:rounded-xl' />
+            <div className='h-3 w-16 rounded bg-skeleton sm:w-20' />
+            <div className='h-8 w-8 shrink-0 rounded-lg bg-muted sm:h-9 sm:w-9 sm:rounded-xl' />
           </div>
-          <div className='mt-2 h-7 w-10 rounded bg-gray-200 sm:mt-2.5 sm:h-8' />
+          <div className='mt-2 h-7 w-10 rounded bg-skeleton sm:mt-2.5 sm:h-8' />
           {i === 5 ? (
-            <div className='mt-1.5 h-2.5 w-20 rounded bg-gray-100 sm:w-24' />
+            <div className='mt-1.5 h-2.5 w-20 rounded bg-muted sm:w-24' />
           ) : null}
         </div>
       ))}
@@ -113,10 +113,10 @@ export default function EmployeesSummaryCards({ loading, summary }: Props) {
         return (
           <div
             key={c.key}
-            className={`rounded-2xl border border-gray-100 border-l-4 ${c.accent} bg-white p-3 shadow-sm sm:p-3.5`}
+            className={`rounded-2xl border border-border border-l-4 ${c.accent} bg-card p-3 shadow-sm sm:p-3.5`}
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-[11px] font-medium uppercase tracking-wider text-gray-500 sm:text-xs'>
+              <span className='text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-xs'>
                 {c.label}
               </span>
               <div
@@ -125,11 +125,11 @@ export default function EmployeesSummaryCards({ loading, summary }: Props) {
                 <Icon size={17} strokeWidth={2} className={c.iconColor} />
               </div>
             </div>
-            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-gray-900 sm:mt-2.5 sm:text-2xl'>
+            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-card-foreground sm:mt-2.5 sm:text-2xl'>
               {value}
             </p>
             {c.subtitle ? (
-              <p className='mt-1 text-[10px] text-gray-400 sm:text-[11px]'>
+              <p className='mt-1 text-[10px] text-muted-foreground sm:text-[11px]'>
                 {c.subtitle}
               </p>
             ) : null}

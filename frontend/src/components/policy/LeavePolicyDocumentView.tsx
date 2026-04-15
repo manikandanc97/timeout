@@ -44,8 +44,8 @@ function TextBody({ body }: { body: string }) {
 
 function SectionBlock({ section }: { section: LeavePolicySection }) {
   return (
-    <section className='border-b border-gray-100 pb-8 last:border-b-0 last:pb-0'>
-      <h2 className='mb-3 flex items-center gap-3 text-base font-semibold text-gray-900'>
+    <section className='border-b border-border pb-8 last:border-b-0 last:pb-0'>
+      <h2 className='mb-3 flex items-center gap-3 text-base font-semibold text-card-foreground'>
         <span className='flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary'>
           <PolicyIcon name={section.iconKey} />
         </span>
@@ -61,7 +61,7 @@ function SectionBlock({ section }: { section: LeavePolicySection }) {
           <div className='space-y-6'>
             {section.cards.map((c, i) => (
               <div key={`${c.title}-${i}`}>
-                <h3 className='text-[15px] font-semibold text-gray-900'>{c.title}</h3>
+                <h3 className='text-[15px] font-semibold text-card-foreground'>{c.title}</h3>
                 <div className='mt-2'>
                   <TextBody body={c.body} />
                 </div>
@@ -87,8 +87,8 @@ type Props = {
 
 export default function LeavePolicyDocumentView({ document }: Props) {
   return (
-    <div className='mt-4 w-full space-y-8 text-sm leading-relaxed text-gray-600'>
-      <p className='rounded-xl border border-primary/15 bg-linear-to-r from-primary/5 via-white to-accent/10 p-4 text-gray-700'>
+    <div className='mt-4 w-full space-y-8 text-sm leading-relaxed text-muted-foreground'>
+      <p className='rounded-xl border border-primary/15 bg-linear-to-r from-primary/5 via-card to-accent/10 p-4 text-card-foreground/90'>
         {document.intro}
       </p>
 
@@ -98,7 +98,7 @@ export default function LeavePolicyDocumentView({ document }: Props) {
         ))}
       </div>
 
-      <p className='rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500'>
+      <p className='rounded-lg border border-border bg-muted px-4 py-3 text-xs text-muted-foreground'>
         {document.footer}
       </p>
     </div>

@@ -23,7 +23,7 @@ import Select from '@/components/ui/Select';
 import { useAuth } from '@/context/AuthContext';
 import { Settings2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 type AdminSettingsFormSnapshot = {
   generalSettings: GeneralSettings;
@@ -315,9 +315,9 @@ export default function SettingsPageClient() {
 
   if (!canManageSettings) {
     return (
-      <section className='rounded-3xl border border-amber-100 bg-amber-50 p-6 text-amber-900 shadow-sm'>
+      <section className='rounded-3xl border border-warning-muted-foreground/25 bg-warning-muted p-6 text-warning-muted-foreground shadow-sm'>
         <h2 className='text-lg font-semibold'>Settings access restricted</h2>
-        <p className='mt-1 text-sm text-amber-800'>
+        <p className='mt-1 text-sm text-warning-muted-foreground/90'>
           You do not have permission to view or update admin settings.
         </p>
       </section>
@@ -442,9 +442,9 @@ export default function SettingsPageClient() {
         }
       />
 
-      <div className='rounded-xl border border-gray-100 bg-gray-50/70 p-3'>
-        <p className='text-sm font-medium text-gray-800'>Comp Off Enabled</p>
-        <p className='mt-1 text-xs text-gray-500'>Allow comp-off usage for eligible employees.</p>
+      <div className='rounded-xl border border-border bg-muted/70 p-3'>
+        <p className='text-sm font-medium text-card-foreground'>Comp Off Enabled</p>
+        <p className='mt-1 text-xs text-muted-foreground'>Allow comp-off usage for eligible employees.</p>
         <div className='mt-3'>
           <SettingsToggle
             checked={leavePolicySettings.compOffEnabled}
@@ -458,9 +458,9 @@ export default function SettingsPageClient() {
         </div>
       </div>
 
-      <div className='rounded-xl border border-gray-100 bg-gray-50/70 p-3'>
-        <p className='text-sm font-medium text-gray-800'>Carry Forward Enabled</p>
-        <p className='mt-1 text-xs text-gray-500'>Carry unused leaves to next leave cycle.</p>
+      <div className='rounded-xl border border-border bg-muted/70 p-3'>
+        <p className='text-sm font-medium text-card-foreground'>Carry Forward Enabled</p>
+        <p className='mt-1 text-xs text-muted-foreground'>Carry unused leaves to next leave cycle.</p>
         <div className='mt-3'>
           <SettingsToggle
             checked={leavePolicySettings.carryForwardEnabled}
@@ -474,9 +474,9 @@ export default function SettingsPageClient() {
         </div>
       </div>
 
-      <div className='rounded-xl border border-gray-100 bg-gray-50/70 p-3 sm:col-span-2'>
-        <p className='text-sm font-medium text-gray-800'>LOP After Leave Limit</p>
-        <p className='mt-1 text-xs text-gray-500'>
+      <div className='rounded-xl border border-border bg-muted/70 p-3 sm:col-span-2'>
+        <p className='text-sm font-medium text-card-foreground'>LOP After Leave Limit</p>
+        <p className='mt-1 text-xs text-muted-foreground'>
           Apply loss of pay automatically once leave balance is exceeded.
         </p>
         <div className='mt-3'>
@@ -556,9 +556,9 @@ export default function SettingsPageClient() {
           }))
         }
       />
-      <div className='rounded-xl border border-gray-100 bg-gray-50/70 p-3'>
-        <p className='text-sm font-medium text-gray-800'>Auto LOP Deduction Enabled</p>
-        <p className='mt-1 text-xs text-gray-500'>Auto-calculate LOP deduction during payroll run.</p>
+      <div className='rounded-xl border border-border bg-muted/70 p-3'>
+        <p className='text-sm font-medium text-card-foreground'>Auto LOP Deduction Enabled</p>
+        <p className='mt-1 text-xs text-muted-foreground'>Auto-calculate LOP deduction during payroll run.</p>
         <div className='mt-3'>
           <SettingsToggle
             checked={payrollSettings.autoLopDeductionEnabled}
@@ -575,10 +575,10 @@ export default function SettingsPageClient() {
   );
 
   const renderRolesAndPermissions = () => (
-    <div className='overflow-x-auto rounded-xl border border-gray-100 bg-gray-50/40'>
+    <div className='overflow-x-auto rounded-xl border border-border bg-muted/40'>
       <table className='w-full min-w-[760px] border-collapse text-left text-sm'>
         <thead>
-          <tr className='border-b border-gray-100 bg-gray-50/90 text-xs font-semibold uppercase tracking-wide text-gray-500'>
+          <tr className='border-b border-border bg-muted/90 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
             <th className='px-4 py-3'>Role Name</th>
             <th className='px-4 py-3'>Can Approve Leave</th>
             <th className='px-4 py-3'>Can Manage Payroll</th>
@@ -588,8 +588,8 @@ export default function SettingsPageClient() {
         </thead>
         <tbody>
           {rolePermissions.map((role) => (
-            <tr key={role.id} className='border-b border-gray-50 bg-white/95 hover:bg-gray-50/70'>
-              <td className='px-4 py-3 font-medium text-gray-900'>{role.roleName}</td>
+            <tr key={role.id} className='border-b border-border bg-card/95 hover:bg-muted/70'>
+              <td className='px-4 py-3 font-medium text-card-foreground'>{role.roleName}</td>
               <td className='px-4 py-3'>
                 <SettingsToggle
                   checked={role.canApproveLeave}
@@ -654,9 +654,9 @@ export default function SettingsPageClient() {
   };
 
   return (
-    <section className='relative flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white/90 shadow-xl'>
+    <section className='hrm-shell-page'>
       <div className='absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
-      <div className='absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-indigo-100 blur-3xl' />
+      <div className='absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-400/15' />
 
       <div className='relative z-10 flex flex-col gap-4 p-4 sm:p-5'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
@@ -665,11 +665,11 @@ export default function SettingsPageClient() {
               <Settings2 size={20} />
             </div>
             <div>
-              <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400'>
+              <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
                 Administration
               </p>
-              <h1 className='text-2xl font-bold leading-tight text-gray-900'>Settings</h1>
-              <p className='mt-1 text-sm text-gray-500'>
+              <h1 className='text-2xl font-bold leading-tight text-card-foreground'>Settings</h1>
+              <p className='mt-1 text-sm text-muted-foreground'>
                 Manage company, leave, payroll, and roles in one place.
               </p>
             </div>
@@ -678,14 +678,14 @@ export default function SettingsPageClient() {
 
         <SettingsTabs tabs={SETTINGS_TABS} activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <section className='flex min-h-[420px] flex-col rounded-2xl border border-gray-100 bg-white/95 p-3 shadow-sm sm:p-4'>
+        <section className='hrm-shell-inner min-h-[420px]'>
           <div className='flex-1'>
             {loading ? (
               <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={index}
-                    className='h-20 animate-pulse rounded-xl border border-gray-100 bg-gray-100/80'
+                    className='h-20 animate-pulse rounded-xl border border-border bg-muted/80'
                   />
                 ))}
               </div>
@@ -694,7 +694,7 @@ export default function SettingsPageClient() {
             )}
           </div>
 
-          <div className='sticky bottom-0 mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 bg-white/95 pt-4'>
+          <div className='sticky bottom-0 mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-border bg-card/95 pt-4'>
             <Button
               type='button'
               variant='outline'

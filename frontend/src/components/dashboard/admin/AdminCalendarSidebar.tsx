@@ -33,7 +33,7 @@ export default function AdminCalendarSidebar() {
   if (loading) {
     return (
       <div
-        className='h-full min-h-[420px] w-full flex-1 animate-pulse rounded-2xl border border-gray-100 bg-linear-to-br from-gray-50 to-gray-100/80 shadow-inner'
+        className='h-full min-h-[420px] w-full flex-1 animate-pulse rounded-2xl border border-border bg-linear-to-br from-muted to-muted/80 shadow-inner'
         aria-hidden
       />
     );

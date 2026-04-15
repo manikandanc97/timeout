@@ -18,12 +18,13 @@ interface ButtonProps {
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary hover:bg-primary-dark rounded-lg py-2 px-4 text-white font-medium',
+    'rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary-dark',
   ghost:
     '!bg-transparent hover:!bg-muted rounded-full p-2 min-w-0 !text-muted-foreground hover:!text-card-foreground',
   outline:
     '!bg-transparent hover:!bg-muted border border-border rounded-lg py-2 px-4 !text-card-foreground font-medium',
-  danger: 'bg-red-500 hover:bg-red-700 rounded-lg py-2 px-4 text-white font-medium',
+  danger:
+    'rounded-lg bg-destructive px-4 py-2 font-medium text-destructive-foreground hover:opacity-90',
 };
 
 const Button = (props: ButtonProps) => {

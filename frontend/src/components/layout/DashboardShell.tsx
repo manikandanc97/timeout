@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { setAccessToken } from '@/lib/token';
 import api from '@/services/api';
 import { AuthProvider } from '@/context/AuthContext';
+import { NotificationProvider } from '@/context/NotificationProvider';
 import type { User } from '@/types/user';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
@@ -20,6 +21,8 @@ import PayrollSkeleton from '@/components/dashboard/skeletons/PayrollSkeleton';
 import ReportsSkeleton from '@/components/dashboard/skeletons/ReportsSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
 import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
+import Button from '@/components/ui/Button';
+import { Sparkles } from 'lucide-react';
 
 type Props = {
   children: React.ReactNode;
@@ -122,25 +125,41 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
 
   return (
     <AuthProvider user={user}>
-      <div className='flex h-screen overflow-hidden bg-background'>
-        <Sidebar />
-        <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
-          <Topbar />
-          <main
-            className={
-              fillMainHeight
-                ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-6'
-                : 'flex-1 overflow-y-auto p-6'
-            }
+      <NotificationProvider>
+        <div className='flex h-screen overflow-hidden bg-background'>
+          <Sidebar />
+          <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
+            <Topbar />
+            <main
+              className={
+                fillMainHeight
+                  ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-6'
+                  : 'flex-1 overflow-y-auto p-6'
+              }
+            >
+              {fillMainHeight ? (
+                <div className='flex min-h-0 flex-1 flex-col'>{children}</div>
+              ) : (
+                children
+              )}
+            </main>
+          </div>
+          <Button
+            type='button'
+            variant='primary'
+            className='fixed bottom-6 right-6 z-40 rounded-full! px-4! py-3! shadow-lg'
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('open-ai-chat-panel'));
+            }}
+            aria-label='Open AI assistant'
           >
-            {fillMainHeight ? (
-              <div className='flex min-h-0 flex-1 flex-col'>{children}</div>
-            ) : (
-              children
-            )}
-          </main>
+            <span className='flex items-center gap-2 text-sm font-semibold'>
+              <Sparkles size={16} />
+              AI Assistant
+            </span>
+          </Button>
         </div>
-      </div>
+      </NotificationProvider>
     </AuthProvider>
   );
 };

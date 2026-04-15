@@ -19,11 +19,13 @@ import type {
   LeaveWithEmployee,
   PermissionRequestWithEmployee,
 } from '@/types/leave';
-import { useMemo, useState } from 'react';
+import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
+import { formatPersonName } from '@/lib/personName';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import api from '@/services/api';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 type Props = {
   initialLeaves: LeaveWithEmployee[];
@@ -41,8 +43,35 @@ export default function LeaveRequestsPageClient({
   canModerate,
 }: Props) {
   const req = useLeaveRequestsPage({ initialLeaves });
+  const { refetchLeaves } = req;
   const [permissionRows, setPermissionRows] = useState(initialPermissionRequests);
   const [compOffRows, setCompOffRows] = useState(initialCompOffRequests);
+
+  const refetchAllRequestFeeds = useCallback(async () => {
+    await refetchLeaves();
+    try {
+      const [permRes, compRes] = await Promise.all([
+        api
+          .get<PermissionRequestWithEmployee[]>('/leaves/permissions/requests')
+          .catch(() => ({ data: [] as PermissionRequestWithEmployee[] })),
+        api
+          .get<CompOffRequestWithEmployee[]>('/leaves/comp-off-requests')
+          .catch(() => ({ data: [] as CompOffRequestWithEmployee[] })),
+      ]);
+      setPermissionRows(
+        Array.isArray(permRes.data) ? permRes.data : [],
+      );
+      setCompOffRows(Array.isArray(compRes.data) ? compRes.data : []);
+    } catch {
+      /* keep existing rows */
+    }
+  }, [refetchLeaves]);
+
+  useEffect(() => {
+    return subscribeDashboardRefresh('leaveRequestsPage', () => {
+      void refetchAllRequestFeeds();
+    });
+  }, [refetchAllRequestFeeds]);
   const [otherBusyKey, setOtherBusyKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'LEAVE' | 'PERMISSION' | 'COMP_OFF'>(
     'LEAVE',
@@ -55,7 +84,7 @@ export default function LeaveRequestsPageClient({
   const permissionFiltered = useMemo(() => {
     const q = otherSearch.trim().toLowerCase();
     return permissionRows.filter((row) => {
-      const name = (row.user?.name ?? '').toLowerCase();
+      const name = formatPersonName(row.user?.name).toLowerCase();
       const email = (row.user?.email ?? '').toLowerCase();
       const reason = (row.reason ?? '').toLowerCase();
       const matchesSearch =
@@ -74,7 +103,7 @@ export default function LeaveRequestsPageClient({
   const compOffFiltered = useMemo(() => {
     const q = otherSearch.trim().toLowerCase();
     return compOffRows.filter((row) => {
-      const name = (row.user?.name ?? '').toLowerCase();
+      const name = formatPersonName(row.user?.name).toLowerCase();
       const email = (row.user?.email ?? '').toLowerCase();
       const reason = (row.reason ?? '').toLowerCase();
       const matchesSearch =
@@ -377,8 +406,11 @@ export default function LeaveRequestsPageClient({
                               className='border-b border-border/60 transition-colors hover:bg-muted/50'
                             >
                               <td className='min-w-0 px-3 py-2 align-top text-sm font-medium text-card-foreground sm:px-4'>
-                                <span className='block truncate' title={row.user?.name ?? undefined}>
-                                  {row.user?.name ?? '—'}
+                                <span
+                                  className='block truncate'
+                                  title={formatPersonName(row.user?.name) || undefined}
+                                >
+                                  {formatPersonName(row.user?.name) || '—'}
                                 </span>
                               </td>
                               <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>
@@ -416,8 +448,11 @@ export default function LeaveRequestsPageClient({
                               className='border-b border-border/60 transition-colors hover:bg-muted/50'
                             >
                               <td className='min-w-0 px-3 py-2 align-top text-sm font-medium text-card-foreground sm:px-4'>
-                                <span className='block truncate' title={row.user?.name ?? undefined}>
-                                  {row.user?.name ?? '—'}
+                                <span
+                                  className='block truncate'
+                                  title={formatPersonName(row.user?.name) || undefined}
+                                >
+                                  {formatPersonName(row.user?.name) || '—'}
                                 </span>
                               </td>
                               <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>

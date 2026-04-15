@@ -9,6 +9,12 @@ import {
   DEFAULT_ORG_SETTINGS,
   sanitizeAdminSettings,
 } from '../lib/adminSettings.js';
+import {
+  getRoleLabel,
+  notifyAdmins,
+  notifyEmployeeProfileEvent,
+  notifyOrgWide,
+} from '../services/notificationService.js';
 
 export const getOrganizationStructure = async (req, res) => {
   try {
@@ -309,6 +315,16 @@ export const createOrganizationDepartment = async (req, res) => {
         sortOrder: nextSort,
       },
     });
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'ORG_STRUCTURE_UPDATED',
+        title: 'Department created',
+        body: `${dept.name} department was created.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] department created', notifyErr);
+    }
 
     res.status(201).json({
       department: {
@@ -364,6 +380,16 @@ export const updateOrganizationDepartment = async (req, res) => {
       where: { id: idParam },
       data: { name: trimmed },
     });
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'ORG_STRUCTURE_UPDATED',
+        title: 'Department updated',
+        body: `${updated.name} department was updated.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] department updated', notifyErr);
+    }
 
     res.json({
       department: {
@@ -417,6 +443,16 @@ export const deleteOrganizationDepartment = async (req, res) => {
     }
 
     await prisma.department.delete({ where: { id: idParam } });
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'ORG_STRUCTURE_UPDATED',
+        title: 'Department deleted',
+        body: `${dept.name} department was deleted.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] department deleted', notifyErr);
+    }
     res.status(204).send();
   } catch (error) {
     console.error(error);
@@ -470,6 +506,16 @@ export const createOrganizationTeam = async (req, res) => {
         _count: { select: { members: true } },
       },
     });
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'ORG_STRUCTURE_UPDATED',
+        title: 'Team created',
+        body: `${team.name} team was created in ${team.department.name}.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] team created', notifyErr);
+    }
 
     res.status(201).json({
       team: {
@@ -571,6 +617,16 @@ export const updateOrganizationTeam = async (req, res) => {
         }
       : null;
     const employeeCount = team._count.members;
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'ORG_STRUCTURE_UPDATED',
+        title: 'Team updated',
+        body: `${team.name} team settings were updated.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] team updated', notifyErr);
+    }
 
     res.json({
       team: {
@@ -627,6 +683,16 @@ export const deleteOrganizationTeam = async (req, res) => {
     }
 
     await prisma.team.delete({ where: { id: idParam } });
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'ORG_STRUCTURE_UPDATED',
+        title: 'Team deleted',
+        body: `${team.name} team was deleted.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] team deleted', notifyErr);
+    }
     res.status(204).send();
   } catch (error) {
     console.error(error);
@@ -763,6 +829,24 @@ export const createEmployeeUser = async (req, res) => {
     await prisma.leaveBalance.create({
       data: { userId: user.id },
     });
+
+    try {
+      await notifyEmployeeProfileEvent({
+        organizationId,
+        userId: user.id,
+        type: 'EMPLOYEE_ADDED',
+        title: 'Welcome onboard',
+        body: `Your ${getRoleLabel(user.role)} profile has been created.`,
+      });
+      await notifyAdmins({
+        organizationId,
+        type: 'EMPLOYEE_ADDED',
+        title: 'Employee added',
+        body: `${user.name} (${user.email}) joined as ${getRoleLabel(user.role)}.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] employee created', notifyErr);
+    }
 
     res.status(201).json({
       message: 'Employee created',
@@ -943,6 +1027,35 @@ export const updateEmployeeUser = async (req, res) => {
       },
     });
 
+    try {
+      await notifyEmployeeProfileEvent({
+        organizationId,
+        userId: user.id,
+        type: 'EMPLOYEE_UPDATED',
+        title: 'Profile updated',
+        body: 'Your profile details were updated by admin.',
+      });
+      if (existing.isActive !== user.isActive) {
+        await notifyEmployeeProfileEvent({
+          organizationId,
+          userId: user.id,
+          type: user.isActive ? 'EMPLOYEE_REACTIVATED' : 'EMPLOYEE_DEACTIVATED',
+          title: user.isActive ? 'Account reactivated' : 'Account deactivated',
+          body: user.isActive
+            ? 'Your account has been reactivated.'
+            : 'Your account has been deactivated by admin.',
+        });
+      }
+      await notifyAdmins({
+        organizationId,
+        type: 'EMPLOYEE_UPDATED',
+        title: 'Employee updated',
+        body: `${user.name} profile was updated.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] employee updated', notifyErr);
+    }
+
     res.json({
       message: 'Employee updated',
       user: {
@@ -983,6 +1096,7 @@ export const deleteEmployeeUser = async (req, res) => {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
+    const employeeName = existing.name ?? 'Employee';
     await prisma.$transaction([
       prisma.user.updateMany({
         where: { reportingManagerId: userId },
@@ -1000,6 +1114,17 @@ export const deleteEmployeeUser = async (req, res) => {
       }),
       prisma.user.delete({ where: { id: userId } }),
     ]);
+
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'EMPLOYEE_UPDATED',
+        title: 'Employee removed',
+        body: `${employeeName} was removed from organization.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] employee deleted', notifyErr);
+    }
 
     res.status(204).send();
   } catch (error) {
@@ -1359,6 +1484,24 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
       },
     });
 
+    try {
+      await notifyEmployeeProfileEvent({
+        organizationId,
+        userId,
+        type: 'SALARY_STRUCTURE_UPDATED',
+        title: 'Salary structure updated',
+        body: `Your salary structure was updated effective ${payload.effectiveFrom.toLocaleDateString('en-IN')}.`,
+      });
+      await notifyAdmins({
+        organizationId,
+        type: 'SALARY_STRUCTURE_UPDATED',
+        title: 'Salary structure updated',
+        body: `Salary structure updated for employee #${userId}.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] salary structure updated', notifyErr);
+    }
+
     res.status(201).json({
       salaryStructure: {
         ...created,
@@ -1475,6 +1618,16 @@ export const updateAdminSettings = async (req, res) => {
       },
     });
 
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'ADMIN_SETTINGS_UPDATED',
+        title: 'Admin settings updated',
+        body: `${req.user?.name ?? 'Admin'} updated organization settings.`,
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] admin settings updated', notifyErr);
+    }
     return res.json(serializeAdminSettingsResponse(updated));
   } catch (error) {
     console.error(error);
@@ -1514,6 +1667,16 @@ export const resetAdminSettings = async (req, res) => {
       },
     });
 
+    try {
+      await notifyAdmins({
+        organizationId,
+        type: 'ADMIN_SETTINGS_UPDATED',
+        title: 'Admin settings reset',
+        body: 'Organization admin settings were reset to defaults.',
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] admin settings reset', notifyErr);
+    }
     return res.json(serializeAdminSettingsResponse(updated));
   } catch (error) {
     console.error(error);
@@ -1577,6 +1740,17 @@ export const updateLeavePolicy = async (req, res) => {
       data: { leavePolicy: checked.value },
     });
 
+    try {
+      await notifyOrgWide({
+        organizationId,
+        type: 'LEAVE_POLICY_UPDATED',
+        title: 'Leave policy updated',
+        body: 'Leave policy has been updated. Please review latest rules.',
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] leave policy updated', notifyErr);
+    }
+
     res.json({ policy: checked.value, usingDefault: false });
   } catch (error) {
     console.error(error);
@@ -1599,6 +1773,17 @@ export const resetLeavePolicy = async (req, res) => {
       where: { id: organizationId },
       data: { leavePolicy: null },
     });
+
+    try {
+      await notifyOrgWide({
+        organizationId,
+        type: 'LEAVE_POLICY_UPDATED',
+        title: 'Leave policy reset',
+        body: 'Leave policy has been reset to default.',
+      });
+    } catch (notifyErr) {
+      console.error('[notifications] leave policy reset', notifyErr);
+    }
 
     res.json({ policy: DEFAULT_LEAVE_POLICY, usingDefault: true });
   } catch (error) {

@@ -2,10 +2,11 @@
 
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { formatPersonName } from '@/lib/personName';
 import api from '@/services/api';
 import type { OrganizationEmployee } from '@/types/employee';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 type TabId = 'LEAVE' | 'PAYROLL';
 
@@ -215,18 +216,20 @@ export default function EmployeeDetailsModal({
         className='absolute inset-0 bg-black/40 backdrop-blur-[2px]'
         onClick={onClose}
       />
-      <section className='relative z-10 w-full max-w-3xl rounded-2xl border border-gray-100 bg-white p-5 shadow-xl'>
+      <section className='relative z-10 w-full max-w-3xl rounded-2xl border border-border bg-card p-5 shadow-xl'>
         <div className='flex items-center justify-between gap-3'>
           <div>
-            <h2 className='text-lg font-bold text-gray-900'>Employee Details</h2>
-            <p className='text-sm text-gray-500'>{employee.name}</p>
+            <h2 className='text-lg font-bold text-card-foreground'>Employee Details</h2>
+            <p className='text-sm text-muted-foreground'>
+              {formatPersonName(employee.name) || 'Employee'}
+            </p>
           </div>
           <Button type='button' variant='outline' onClick={onClose}>
             Close
           </Button>
         </div>
 
-        <div className='mt-4 flex gap-2 border-b border-gray-100 pb-3'>
+        <div className='mt-4 flex gap-2 border-b border-border pb-3'>
           {TABS.map((tab) => (
             <Button
               key={tab.id}
@@ -241,53 +244,53 @@ export default function EmployeeDetailsModal({
         </div>
 
         {loading ? (
-          <div className='py-10 text-center text-sm text-gray-500'>Loading details...</div>
+          <div className='py-10 text-center text-sm text-muted-foreground'>Loading details...</div>
         ) : activeTab === 'LEAVE' ? (
           <div className='mt-4 space-y-3'>
             {leaveMonthLabel ? (
-              <p className='text-xs font-medium uppercase tracking-wide text-gray-500'>
+              <p className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
                 Monthly summary - {leaveMonthLabel}
               </p>
             ) : null}
             <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
-              <div className='rounded-lg border border-sky-100 bg-sky-50 p-3 text-center'>
-                <p className='text-xs uppercase text-sky-700'>Worked Days</p>
-                <p className='mt-1 text-lg font-bold text-sky-900'>
+              <div className='rounded-lg border border-border border-l-4 border-l-sky-400 bg-muted/80 p-3 text-center'>
+                <p className='text-xs uppercase text-muted-foreground'>Worked Days</p>
+                <p className='mt-1 text-lg font-bold text-card-foreground'>
                   {data?.leaveDaySummary?.workedDays ?? 0}
                 </p>
               </div>
-              <div className='rounded-lg border border-indigo-100 bg-indigo-50 p-3 text-center'>
-                <p className='text-xs uppercase text-indigo-700'>Leave Days</p>
-                <p className='mt-1 text-lg font-bold text-indigo-900'>
+              <div className='rounded-lg border border-border border-l-4 border-l-indigo-400 bg-muted/80 p-3 text-center'>
+                <p className='text-xs uppercase text-muted-foreground'>Leave Days</p>
+                <p className='mt-1 text-lg font-bold text-card-foreground'>
                   {data?.leaveDaySummary?.appliedLeaveDays ?? 0}
                 </p>
               </div>
-              <div className='rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-center'>
-                <p className='text-xs uppercase text-emerald-700'>Approved Days</p>
-                <p className='mt-1 text-lg font-bold text-emerald-900'>
+              <div className='rounded-lg border border-border border-l-4 border-l-emerald-400 bg-muted/80 p-3 text-center'>
+                <p className='text-xs uppercase text-muted-foreground'>Approved Days</p>
+                <p className='mt-1 text-lg font-bold text-card-foreground'>
                   {data?.leaveDaySummary?.approvedLeaveDays ?? 0}
                 </p>
               </div>
-              <div className='rounded-lg border border-amber-100 bg-amber-50 p-3 text-center'>
-                <p className='text-xs uppercase text-amber-700'>Pending Days</p>
-                <p className='mt-1 text-lg font-bold text-amber-900'>
+              <div className='rounded-lg border border-border border-l-4 border-l-amber-400 bg-muted/80 p-3 text-center'>
+                <p className='text-xs uppercase text-muted-foreground'>Pending Days</p>
+                <p className='mt-1 text-lg font-bold text-card-foreground'>
                   {data?.leaveDaySummary?.pendingLeaveDays ?? 0}
                 </p>
               </div>
             </div>
 
-            <div className='rounded-lg border border-gray-200 bg-gray-50 p-3'>
-              <p className='text-xs font-medium uppercase tracking-wide text-gray-500'>
+            <div className='rounded-lg border border-border bg-muted p-3'>
+              <p className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
                 Overall Requests
               </p>
               <div className='mt-2 flex flex-wrap gap-2 text-xs'>
-                <span className='rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700'>
+                <span className='rounded-full border border-warning-muted-foreground/30 bg-warning-muted px-2.5 py-1 text-warning-muted-foreground'>
                   Pending: {data?.leave.pending ?? 0}
                 </span>
-                <span className='rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700'>
+                <span className='rounded-full border border-success-muted-foreground/30 bg-success-muted px-2.5 py-1 text-success-muted-foreground'>
                   Approved: {data?.leave.approved ?? 0}
                 </span>
-                <span className='rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-rose-700'>
+                <span className='rounded-full border border-danger-muted-foreground/30 bg-danger-muted px-2.5 py-1 text-danger-muted-foreground'>
                   Rejected: {data?.leave.rejected ?? 0}
                 </span>
               </div>
@@ -308,7 +311,7 @@ export default function EmployeeDetailsModal({
                 ] as const
               ).map(([key, label]) => (
                 <label key={key} className='text-sm'>
-                  <span className='mb-1 block text-xs uppercase text-gray-500'>{label}</span>
+                  <span className='mb-1 block text-xs uppercase text-muted-foreground'>{label}</span>
                   <input
                     type='number'
                     value={salaryForm[key]}
@@ -316,12 +319,12 @@ export default function EmployeeDetailsModal({
                     onChange={(e) =>
                       setSalaryForm((prev) => ({ ...prev, [key]: e.target.value }))
                     }
-                    className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary'
+                    className='w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary'
                   />
                 </label>
               ))}
               <label className='text-sm'>
-                <span className='mb-1 block text-xs uppercase text-gray-500'>Salary Month</span>
+                <span className='mb-1 block text-xs uppercase text-muted-foreground'>Salary Month</span>
                 <input
                   type='month'
                   value={salaryForm.effectiveFrom}
@@ -329,15 +332,15 @@ export default function EmployeeDetailsModal({
                   onChange={(e) =>
                     setSalaryForm((prev) => ({ ...prev, effectiveFrom: e.target.value }))
                   }
-                  className='w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary'
+                  className='w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary'
                 />
                 {payoutDate ? (
-                  <p className='mt-1 text-xs text-gray-500'>
+                  <p className='mt-1 text-xs text-muted-foreground'>
                     Salary payout date: {payoutDate.toLocaleDateString('en-GB')}
                   </p>
                 ) : null}
               </label>
-              <div className='rounded-lg bg-indigo-50 p-3'>
+              <div className='rounded-lg border border-border bg-muted p-3'>
                 <p className='text-xs uppercase text-indigo-700'>Net Salary</p>
                 <p className='mt-1 text-lg font-bold text-indigo-900'>
                   Rs. {computedNetSalary.toLocaleString('en-IN')}
@@ -356,7 +359,7 @@ export default function EmployeeDetailsModal({
                 </Button>
               </div>
             ) : (
-              <p className='text-xs text-gray-500'>
+              <p className='text-xs text-muted-foreground'>
                 Only admin can edit salary structure in payroll tab.
               </p>
             )}
