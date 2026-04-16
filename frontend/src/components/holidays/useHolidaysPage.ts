@@ -3,26 +3,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { usePagination } from '@/hooks/usePagination';
 import api from '@/services/api';
 import type { Holiday } from '@/types/holiday';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { startOfLocalCalendarDay } from '@/utils/leave/leaveHelpers';
 
 import { HOLIDAYS_PAGE_SIZE } from './constants';
-import { holidaysPageCount, holidaysPageSlice } from './holidaysPageUtils';
 
 export function useHolidaysPage() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get<Holiday[]>('/holidays');
       setHolidays(Array.isArray(res.data) ? res.data : []);
-    } catch {
-      toast.error('Could not load holidays');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Could not load holidays'));
       setHolidays([]);
     } finally {
       setLoading(false);
@@ -39,21 +39,14 @@ export function useHolidaysPage() {
     return holidays.filter((h) => h.name.toLowerCase().includes(q));
   }, [holidays, searchTerm]);
 
+  const { page, setPage, pageCount, safePage, pageSlice } = usePagination({
+    items: filteredRows,
+    pageSize: HOLIDAYS_PAGE_SIZE,
+  });
+
   useEffect(() => {
     setPage(1);
-  }, [searchTerm]);
-
-  const pageCount = holidaysPageCount(filteredRows.length);
-
-  useEffect(() => {
-    setPage((p) => Math.min(p, pageCount));
-  }, [pageCount]);
-
-  const safePage = Math.min(page, pageCount);
-  const pageSlice = useMemo(
-    () => holidaysPageSlice(filteredRows, safePage, HOLIDAYS_PAGE_SIZE),
-    [filteredRows, safePage],
-  );
+  }, [searchTerm, setPage]);
 
   const summary = useMemo(() => {
     const todayStart = startOfLocalCalendarDay(new Date());

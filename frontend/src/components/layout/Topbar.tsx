@@ -1,13 +1,15 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import React, { useState } from 'react';
 import Button from '../ui/Button';
 import { Bell, Settings } from 'lucide-react';
-import RightPanel from './RightPanel';
 import { useNotifications } from '@/context/NotificationProvider';
 import { useAuth } from '@/context/AuthContext';
 import { formatPersonName, initialsFromPersonName } from '@/lib/personName';
+
+const RightPanel = dynamic(() => import('./RightPanel'), { ssr: false });
 
 /** Single map: easier to update labels and avoids a long if/else chain. */
 const ROUTE_TITLES: Record<string, string> = {
@@ -33,6 +35,12 @@ const resolvePageTitle = (pathname: string) => {
   return matchedPrefix ? ROUTE_TITLES[matchedPrefix] : 'Dashboard';
 };
 
+const formatLabel = (value?: string, fallback = 'Member') => {
+  if (!value) return fallback;
+  const label = value.toLowerCase().replace(/_/g, ' ');
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
+
 const Topbar = () => {
   const pathname = usePathname();
   const { unreadCount } = useNotifications();
@@ -40,15 +48,9 @@ const Topbar = () => {
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
 
-  useEffect(() => {
-    const openAiPanel = () => setActivePanel('aiChat');
-    window.addEventListener('open-ai-chat-panel', openAiPanel);
-    return () => window.removeEventListener('open-ai-chat-panel', openAiPanel);
-  }, []);
-
   const pageTitle = resolvePageTitle(pathname);
   const displayName = formatPersonName(user?.name) || 'User';
-  const roleLabel = String(user?.role ?? 'Member').toUpperCase();
+  const designationLabel = user?.designation?.trim() || formatLabel(user?.role);
   const initials = initialsFromPersonName(displayName);
 
   return (
@@ -94,7 +96,7 @@ const Topbar = () => {
                 {displayName}
               </span>
               <span className='block text-[11px] font-medium tracking-wide text-muted-foreground'>
-                {roleLabel}
+                {designationLabel}
               </span>
             </span>
           </div>

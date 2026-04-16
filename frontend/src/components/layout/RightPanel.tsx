@@ -21,7 +21,6 @@ import { useEffect, useState } from 'react';
 import Button from '../ui/Button';
 import SettingsToggle from '../settings/SettingsToggle';
 import ProfilePanel from './ProfilePanel';
-import AIChatPanel from '@/components/ai/AIChatPanel';
 
 interface RightPanelProps {
   activePanel: string | null;
@@ -32,7 +31,6 @@ const PANEL_TITLES: Record<string, string> = {
   notifications: 'Notifications',
   settings: 'Settings',
   profile: 'Profile',
-  aiChat: 'AI Assistant',
 };
 
 function formatWhen(iso: string) {
@@ -125,7 +123,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ activePanel, onClose }) => {
   return (
     <div
       className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-border bg-card p-4 text-card-foreground shadow-lg dark:shadow-xl sm:w-[420px] ${
-        activePanel === 'aiChat' ? 'max-w-full' : 'max-w-[26rem]'
+        'max-w-104'
       }`}
     >
       <div className='mb-4 flex items-center justify-between gap-2'>
@@ -359,7 +357,6 @@ const RightPanel: React.FC<RightPanelProps> = ({ activePanel, onClose }) => {
         )}
 
         {activePanel === 'profile' && <ProfilePanel />}
-        {activePanel === 'aiChat' && <AIChatPanel />}
       </div>
     </div>
   );

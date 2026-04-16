@@ -24,6 +24,7 @@ export default function AddEmployeeForm({
   const [departmentId, setDepartmentId] = useState('');
   const [teamId, setTeamId] = useState('');
   const [name, setName] = useState('');
+  const [designation, setDesignation] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -119,8 +120,10 @@ export default function AddEmployeeForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamId || !name || !email || !password || !passwordConfirm) {
-      toast.error('Fill in name, email, password, confirm password, and team');
+    if (!teamId || !name || !designation.trim() || !email || !password || !passwordConfirm) {
+      toast.error(
+        'Fill in name, designation, email, password, confirm password, and team',
+      );
       return;
     }
     if (password !== passwordConfirm) {
@@ -140,6 +143,7 @@ export default function AddEmployeeForm({
     try {
       await api.post('/organization/employees', {
         name,
+        designation: designation.trim(),
         email,
         password,
         teamId: Number(teamId),
@@ -154,6 +158,7 @@ export default function AddEmployeeForm({
       toast.success('Employee added');
       setName('');
       setEmail('');
+      setDesignation('');
       setPassword('');
       setPasswordConfirm('');
       setGender('');
@@ -205,6 +210,14 @@ export default function AddEmployeeForm({
         value={name}
         required
         onChange={(e) => setName(e.target.value)}
+      />
+      <Input
+        id='add-emp-designation'
+        type='text'
+        label='Designation'
+        value={designation}
+        required
+        onChange={(e) => setDesignation(e.target.value)}
       />
       <Input
         id='add-emp-email'

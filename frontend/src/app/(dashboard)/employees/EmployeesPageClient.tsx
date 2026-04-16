@@ -1,7 +1,6 @@
 'use client';
 
-import AddEmployeeModal from '@/components/employees/AddEmployeeModal';
-import EditEmployeeModal from '@/components/employees/EditEmployeeModal';
+import CommonPageShell from '@/components/common/CommonPageShell';
 import { EMPLOYEES_PAGE_SIZE } from '@/components/employees/constants';
 import EmployeesFilterBar from '@/components/employees/EmployeesFilterBar';
 import EmployeesNoAccess from '@/components/employees/EmployeesNoAccess';
@@ -14,8 +13,17 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import type { OrganizationEmployee } from '@/types/employee';
+import { getApiErrorMessage } from '@/utils/apiError';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+
+const AddEmployeeModal = dynamic(
+  () => import('@/components/employees/AddEmployeeModal'),
+);
+const EditEmployeeModal = dynamic(
+  () => import('@/components/employees/EditEmployeeModal'),
+);
 
 export default function EmployeesPageClient() {
   const { user } = useAuth();
@@ -40,11 +48,7 @@ export default function EmployeesPageClient() {
 
   return (
     <>
-      <section className='relative isolate flex flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xl'>
-        <div className='pointer-events-none absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl' />
-        <div className='pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl' />
-
-        <div className='relative z-10 flex flex-col gap-3 p-4 sm:gap-4 sm:p-5'>
+      <CommonPageShell bodyClassName='gap-3 p-4 sm:gap-4 sm:p-5'>
           <div className='flex min-w-0 flex-col gap-3'>
             <EmployeesPageHeader
               filteredCount={dir.filtered.length}
@@ -108,8 +112,7 @@ export default function EmployeesPageClient() {
               />
             </section>
           </div>
-        </div>
-      </section>
+      </CommonPageShell>
 
       {isAdmin ? (
         <AddEmployeeModal
@@ -159,10 +162,7 @@ export default function EmployeesPageClient() {
               setEmployeeToDelete(null);
               void dir.loadEmployees();
             } catch (err: unknown) {
-              const msg =
-                (err as { response?: { data?: { message?: string } } })
-                  ?.response?.data?.message ?? 'Could not delete employee';
-              toast.error(msg);
+              toast.error(getApiErrorMessage(err, 'Could not delete employee'));
             } finally {
               setEmployeeDeleteProcessing(false);
             }

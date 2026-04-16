@@ -146,7 +146,7 @@ const parseTimeToMinutes = (value) => {
   return hh * 60 + mm;
 };
 
-const getWorkingDays = async (startDate, endDate, organizationId) => {
+export const getWorkingDays = async (startDate, endDate, organizationId) => {
   const start = toLocalCalendarDate(startDate);
   const end = toLocalCalendarDate(endDate);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;

@@ -82,6 +82,7 @@ model User {
   email    String  @unique
   password String
   role     Role    @default(EMPLOYEE)
+  designation String?
   isActive Boolean @default(true)
   gender   Gender?
   /** Calendar date (time ignored) for upcoming birthdays on admin dashboard */
@@ -343,3 +344,4 @@ model HrPolicy {
 
   @@index([organizationId])
 }
+

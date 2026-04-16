@@ -1,8 +1,10 @@
 'use client';
 
+import { usePagination } from '@/hooks/usePagination';
 import api from '@/services/api';
 import type { OrganizationEmployee } from '@/types/employee';
 import type { OrgDepartment } from '@/types/organization';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -10,8 +12,6 @@ import { EMPLOYEES_PAGE_SIZE, type EmployeeStatusFilter } from './constants';
 import {
   computeEmployeeSummary,
   departmentSelectOptions,
-  employeesPageCount,
-  employeesPageSlice,
   filterEmployees,
   teamSelectOptions,
 } from './utils';
@@ -24,7 +24,6 @@ export function useEmployeesDirectory(enabled: boolean) {
   const [departmentFilter, setDepartmentFilter] = useState('ALL');
   const [teamFilter, setTeamFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState<EmployeeStatusFilter>('ALL');
-  const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
 
   const loadEmployees = useCallback(async () => {
@@ -34,9 +33,9 @@ export function useEmployeesDirectory(enabled: boolean) {
         '/organization/employees',
       );
       setEmployees(data.employees ?? []);
-    } catch {
+    } catch (error: unknown) {
       setEmployees([]);
-      toast.error('Could not load employees');
+      toast.error(getApiErrorMessage(error, 'Could not load employees'));
     } finally {
       setLoadingList(false);
     }
@@ -86,10 +85,6 @@ export function useEmployeesDirectory(enabled: boolean) {
     }
   }, [teamOptionsForFilter, teamFilter]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm, departmentFilter, teamFilter, statusFilter]);
-
   const summary = useMemo(
     () => computeEmployeeSummary(employees),
     [employees],
@@ -106,17 +101,14 @@ export function useEmployeesDirectory(enabled: boolean) {
     [employees, searchTerm, departmentFilter, teamFilter, statusFilter],
   );
 
-  const pageCount = employeesPageCount(filtered.length);
+  const { page, setPage, pageCount, safePage, pageSlice } = usePagination({
+    items: filtered,
+    pageSize: EMPLOYEES_PAGE_SIZE,
+  });
 
   useEffect(() => {
-    setPage((p) => Math.min(p, pageCount));
-  }, [pageCount]);
-
-  const safePage = Math.min(page, pageCount);
-  const pageSlice = useMemo(
-    () => employeesPageSlice(filtered, safePage, EMPLOYEES_PAGE_SIZE),
-    [filtered, safePage],
-  );
+    setPage(1);
+  }, [searchTerm, departmentFilter, teamFilter, statusFilter, setPage]);
 
   const hasActiveFilters =
     searchTerm.trim().length > 0 ||

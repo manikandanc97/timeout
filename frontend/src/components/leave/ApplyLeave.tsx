@@ -2,6 +2,7 @@
 
 import api from '@/services/api';
 import { leaveSchema, type LeaveFormData } from '@/utils/leave/leaveSchema';
+import { getApiErrorMessage } from '@/utils/apiError';
 import type { Leave, LeaveBalance, LeaveType, PermissionSummary } from '@/types/leave';
 import type { Holiday } from '@/types/holiday';
 import type { Gender } from '@/types/user';
@@ -183,13 +184,9 @@ const ApplyLeave = ({
       reset();
       onSuccess?.(response.data?.leave);
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string; error?: string } } })
-          ?.response?.data?.message ??
-        (err as { response?: { data?: { message?: string; error?: string } } })
-          ?.response?.data?.error ??
-        'Failed to submit leave request. Please try again.';
-      toast.error(msg);
+      toast.error(
+        getApiErrorMessage(err, 'Failed to submit leave request. Please try again.'),
+      );
     }
   };
 
@@ -208,13 +205,7 @@ const ApplyLeave = ({
       setCompOffDate('');
       setCompOffReason('');
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string; error?: string } } })
-          ?.response?.data?.message ??
-        (err as { response?: { data?: { message?: string; error?: string } } })
-          ?.response?.data?.error ??
-        'Failed to add comp off credit.';
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, 'Failed to add comp off credit.'));
     } finally {
       setCompOffSubmitting(false);
     }
@@ -306,13 +297,7 @@ const ApplyLeave = ({
         await loadPermissionSummary();
       }
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string; error?: string } } })
-          ?.response?.data?.message ??
-        (err as { response?: { data?: { message?: string; error?: string } } })
-          ?.response?.data?.error ??
-        'Failed to submit permission request.';
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, 'Failed to submit permission request.'));
     } finally {
       setPermissionSubmitting(false);
     }

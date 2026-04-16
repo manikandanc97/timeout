@@ -1,3 +1,4 @@
+import KpiCardGrid from '@/components/common/KpiCardGrid';
 import type { LucideIcon } from 'lucide-react';
 import { CalendarDays, CalendarRange, Sparkles } from 'lucide-react';
 
@@ -90,34 +91,18 @@ export default function HolidaysSummaryCards({
   }
 
   return (
-    <section
-      aria-label='Holiday summary'
-      className='grid w-full shrink-0 grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5'
-    >
-      {SUMMARY_CARDS.map((c) => {
-        const Icon = c.Icon;
-        const value = values[c.key];
-        return (
-          <div
-            key={c.key}
-            className={`rounded-2xl border border-border border-l-4 ${c.accent} bg-card p-3 shadow-sm sm:p-3.5`}
-          >
-            <div className='flex items-center justify-between gap-2'>
-              <span className='text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-xs'>
-                {c.label}
-              </span>
-              <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl ${c.iconBg}`}
-              >
-                <Icon size={17} strokeWidth={2} className={c.iconColor} />
-              </div>
-            </div>
-            <p className='mt-2 text-xl font-bold tabular-nums tracking-tight text-card-foreground sm:mt-2.5 sm:text-2xl'>
-              {value}
-            </p>
-          </div>
-        );
-      })}
-    </section>
+    <KpiCardGrid
+      ariaLabel='Holiday summary'
+      columnsClassName='grid w-full shrink-0 grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5'
+      items={SUMMARY_CARDS.map((c) => ({
+        key: c.key,
+        label: c.label,
+        value: values[c.key],
+        accent: c.accent,
+        Icon: c.Icon,
+        iconBg: c.iconBg,
+        iconColor: c.iconColor,
+      }))}
+    />
   );
 }

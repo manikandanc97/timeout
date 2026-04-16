@@ -85,10 +85,12 @@ export function filterEmployees(
     const name = row.name.toLowerCase();
     const email = row.email.toLowerCase();
     const rm = row.reportingManager?.name?.toLowerCase() ?? '';
+    const designation = row.designation?.toLowerCase() ?? '';
     const matchesSearch =
       q.length === 0 ||
       name.includes(q) ||
       email.includes(q) ||
+      (designation.length > 0 && designation.includes(q)) ||
       (rm.length > 0 && rm.includes(q));
 
     const rowDeptId = row.team?.department?.id ?? null;

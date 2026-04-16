@@ -23,6 +23,14 @@ const formatDate = (dateStr: string) => {
 };
 
 const LeaveHistory = ({ leaves = [], holidays = [] }: Props) => {
+  const recentLeaves = [...leaves]
+    .sort((a, b) => {
+      const aTime = new Date(a.createdAt ?? a.startDate).getTime();
+      const bTime = new Date(b.createdAt ?? b.startDate).getTime();
+      return bTime - aTime;
+    })
+    .slice(0, 5);
+
   return (
     <div className='flex h-full flex-col rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md'>
       <div className='mb-6 flex items-center justify-between'>
@@ -41,9 +49,9 @@ const LeaveHistory = ({ leaves = [], holidays = [] }: Props) => {
       </div>
 
       <div className='flex flex-1 flex-col text-left'>
-        {leaves.length > 0 ? (
+        {recentLeaves.length > 0 ? (
           <div className='space-y-1 text-left'>
-            {leaves.map((leave) => (
+            {recentLeaves.map((leave) => (
               <div
                 key={leave.id}
                 className='flex flex-col gap-2 border-b border-dashed border-border py-4 text-left last:border-0 sm:flex-row sm:items-center sm:gap-8'

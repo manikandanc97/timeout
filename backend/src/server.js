@@ -17,7 +17,6 @@ import organizationRoutes from './routes/organizationRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import { initSocketServer } from './socket/socketServer.js';
-import aiChatRoutes from './routes/aiChatRoutes.js';
 
 const app = express();
 
@@ -76,7 +75,6 @@ app.use('/api/organization', organizationRoutes);
 app.use('/api/payroll', payrollRoutes);
 
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/ai', aiChatRoutes);
 
 const httpServer = http.createServer(app);
 

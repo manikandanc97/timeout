@@ -8,7 +8,7 @@ import { clearAccessToken } from '@/lib/token';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Building2, IdCard, Mail, ShieldCheck, UserRound } from 'lucide-react';
+import { BriefcaseBusiness, Building2, IdCard, Mail, ShieldCheck, UserRound } from 'lucide-react';
 import { formatPersonName, initialsFromPersonName } from '@/lib/personName';
 
 const formatRole = (value?: string) => {
@@ -30,6 +30,7 @@ const ProfilePanel = () => {
   const displayName = formatPersonName(user?.name) || 'User';
   const displayEmail = user?.email?.trim() || 'Not available';
   const roleLabel = formatRole(user?.role);
+  const designationLabel = user?.designation?.trim() || roleLabel;
   const organizationLabel =
     typeof user?.organizationId === 'number'
       ? `ORG-${user.organizationId}`
@@ -120,6 +121,7 @@ const ProfilePanel = () => {
             <p className='truncate text-sm font-semibold text-card-foreground'>
               {displayName}
             </p>
+            <p className='truncate text-xs font-medium text-muted-foreground'>{designationLabel}</p>
             <p className='truncate text-xs text-muted-foreground'>{displayEmail}</p>
           </div>
         </div>
@@ -220,6 +222,15 @@ const ProfilePanel = () => {
           </span>
           <span className='max-w-[58%] truncate text-right text-sm font-medium text-card-foreground'>
             {displayEmail}
+          </span>
+        </div>
+        <div className='flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2'>
+          <span className='inline-flex items-center gap-2 text-xs font-medium text-muted-foreground'>
+            <BriefcaseBusiness size={14} />
+            Designation
+          </span>
+          <span className='max-w-[58%] truncate text-right text-sm font-medium text-card-foreground'>
+            {designationLabel}
           </span>
         </div>
         <div className='flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2'>

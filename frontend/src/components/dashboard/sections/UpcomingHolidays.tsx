@@ -19,7 +19,7 @@ const UpcomingHolidays = ({ holidays = [] }: Props) => {
 
       <div className="flex flex-1 flex-col text-left">
         {holidays.length > 0 ? (
-          <div className="space-y-1 text-left">
+          <div className="max-h-100 space-y-1 overflow-y-auto pr-1 text-left">
             {holidays.map((holiday) => (
               <div
                 key={holiday.id}

@@ -1,3 +1,4 @@
+import FilterBarShell from '@/components/common/FilterBarShell';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -29,7 +30,33 @@ export default function TeamsFilterBar({
   onAddTeam,
 }: Props) {
   return (
-    <div className='flex min-w-0 flex-nowrap items-center gap-3 overflow-x-auto py-1.5 [scrollbar-width:thin]'>
+    <FilterBarShell
+      actions={
+        <>
+          {isAdmin ? (
+            <Button
+              type='button'
+              onClick={onAddTeam}
+              className='flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-4 text-sm font-semibold shadow-sm'
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              Add Team
+            </Button>
+          ) : null}
+          <Button
+            type='button'
+            unstyled
+            disabled={!hasActiveFilters}
+            onClick={onClearFilters}
+            aria-label='Clear all filters'
+            className='flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-card-foreground/90 transition-colors hover:bg-danger-muted hover:text-danger-muted-foreground disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground'
+          >
+            <RotateCcw size={14} className='shrink-0' />
+            Clear filters
+          </Button>
+        </>
+      }
+    >
       <div className='relative min-w-[180px] flex-1 max-w-sm'>
         <Search
           size={14}
@@ -61,27 +88,6 @@ export default function TeamsFilterBar({
           selectClassName='h-10 focus:ring-inset'
         />
       </div>
-      {isAdmin ? (
-        <Button
-          type='button'
-          onClick={onAddTeam}
-          className='flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-4 text-sm font-semibold shadow-sm'
-        >
-          <Plus size={16} strokeWidth={2.5} />
-          Add Team
-        </Button>
-      ) : null}
-      <Button
-        type='button'
-        unstyled
-        disabled={!hasActiveFilters}
-        onClick={onClearFilters}
-        aria-label='Clear all filters'
-        className='ml-auto flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-card-foreground/90 transition-colors hover:bg-danger-muted hover:text-danger-muted-foreground disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground'
-      >
-        <RotateCcw size={14} className='shrink-0' />
-        Clear filters
-      </Button>
-    </div>
+    </FilterBarShell>
   );
 }

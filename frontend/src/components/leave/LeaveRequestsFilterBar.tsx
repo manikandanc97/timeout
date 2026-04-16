@@ -1,3 +1,4 @@
+import FilterBarShell from '@/components/common/FilterBarShell';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -39,7 +40,22 @@ export default function LeaveRequestsFilterBar({
   onClearFilters,
 }: Props) {
   return (
-    <div className='flex min-w-0 shrink-0 flex-nowrap items-center gap-3 overflow-x-auto py-0.5 [scrollbar-width:thin]'>
+    <FilterBarShell
+      className='shrink-0 py-0.5'
+      actions={
+        <Button
+          type='button'
+          unstyled
+          disabled={!hasActiveFilters}
+          onClick={onClearFilters}
+          aria-label='Clear all filters'
+          className='flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-danger-muted hover:text-danger-muted-foreground disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground'
+        >
+          <RotateCcw size={14} className='shrink-0' />
+          Clear filters
+        </Button>
+      }
+    >
       <div className='relative min-w-[180px] max-w-sm flex-1'>
         <Search
           size={14}
@@ -117,17 +133,6 @@ export default function LeaveRequestsFilterBar({
           min={dateFrom || undefined}
         />
       </div>
-      <Button
-        type='button'
-        unstyled
-        disabled={!hasActiveFilters}
-        onClick={onClearFilters}
-        aria-label='Clear all filters'
-        className='ml-auto flex h-10 shrink-0 items-center gap-1.5 self-center rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-danger-muted hover:text-danger-muted-foreground disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground'
-      >
-        <RotateCcw size={14} className='shrink-0' />
-        Clear filters
-      </Button>
-    </div>
+    </FilterBarShell>
   );
 }

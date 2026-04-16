@@ -63,6 +63,7 @@ const employeeDirectorySelectBase = {
   email: true,
   isActive: true,
   role: true,
+  designation: true,
   gender: true,
   createdAt: true,
   birthDate: true,
@@ -150,6 +151,7 @@ export const getOrganizationEmployees = async (req, res) => {
       name: u.name,
       email: u.email,
       role: u.role,
+      designation: u.designation ?? null,
       isActive: u.isActive ?? true,
       gender: u.gender ?? null,
       createdAt: u.createdAt.toISOString(),
@@ -712,6 +714,7 @@ export const createEmployeeUser = async (req, res) => {
       email,
       password,
       gender,
+      designation,
       teamId,
       birthDate,
       joiningDate,
@@ -723,6 +726,13 @@ export const createEmployeeUser = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'Name, email, password, and team are required' });
+    }
+    const designationValue = String(designation ?? '').trim();
+    if (!designationValue) {
+      return res.status(400).json({ message: 'Designation is required' });
+    }
+    if (designationValue.length > 100) {
+      return res.status(400).json({ message: 'Designation is too long' });
     }
 
     if (gender !== 'MALE' && gender !== 'FEMALE') {
@@ -803,6 +813,7 @@ export const createEmployeeUser = async (req, res) => {
         email,
         password: hashedPassword,
         role: userRole,
+        designation: designationValue,
         // Employee creation always starts as active; only admins can deactivate later.
         isActive: true,
         organizationId,
@@ -817,6 +828,7 @@ export const createEmployeeUser = async (req, res) => {
         name: true,
         email: true,
         role: true,
+        designation: true,
         isActive: true,
         teamId: true,
         gender: true,
@@ -893,6 +905,7 @@ export const updateEmployeeUser = async (req, res) => {
       joiningDate,
       role,
       reportingManagerId,
+      designation,
     } = req.body;
 
     const data = {};
@@ -933,6 +946,16 @@ export const updateEmployeeUser = async (req, res) => {
           .json({ message: 'Role must be Employee or Manager' });
       }
       data.role = role;
+    }
+    if (designation !== undefined) {
+      const designationValue = String(designation).trim();
+      if (!designationValue) {
+        return res.status(400).json({ message: 'Designation cannot be empty' });
+      }
+      if (designationValue.length > 100) {
+        return res.status(400).json({ message: 'Designation is too long' });
+      }
+      data.designation = designationValue;
     }
     if (status !== undefined) {
       if (status !== 'ACTIVE' && status !== 'DEACTIVATED') {
@@ -1018,6 +1041,7 @@ export const updateEmployeeUser = async (req, res) => {
         name: true,
         email: true,
         role: true,
+        designation: true,
         isActive: true,
         teamId: true,
         gender: true,
@@ -1256,6 +1280,7 @@ export const getEmployeeDetails = async (req, res) => {
         name: true,
         email: true,
         role: true,
+        designation: true,
         isActive: true,
         createdAt: true,
         team: {
@@ -1336,6 +1361,7 @@ export const getEmployeeDetails = async (req, res) => {
         name: employee.name,
         email: employee.email,
         role: employee.role,
+        designation: employee.designation ?? null,
         status: employee.isActive ? 'ACTIVE' : 'DEACTIVATED',
         department: employee.team?.department?.name ?? null,
         team: employee.team?.name ?? null,

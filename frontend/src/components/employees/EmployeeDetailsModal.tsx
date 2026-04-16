@@ -29,6 +29,7 @@ type EmployeeDetailsResponse = {
     name: string;
     email: string;
     role: string;
+    designation: string | null;
     status: string;
     department: string | null;
     team: string | null;
@@ -223,6 +224,11 @@ export default function EmployeeDetailsModal({
             <p className='text-sm text-muted-foreground'>
               {formatPersonName(employee.name) || 'Employee'}
             </p>
+            {employee.designation?.trim() ? (
+              <p className='text-xs font-medium text-muted-foreground'>
+                {employee.designation}
+              </p>
+            ) : null}
           </div>
           <Button type='button' variant='outline' onClick={onClose}>
             Close

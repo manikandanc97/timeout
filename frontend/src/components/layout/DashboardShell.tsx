@@ -21,8 +21,6 @@ import PayrollSkeleton from '@/components/dashboard/skeletons/PayrollSkeleton';
 import ReportsSkeleton from '@/components/dashboard/skeletons/ReportsSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
 import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
-import Button from '@/components/ui/Button';
-import { Sparkles } from 'lucide-react';
 
 type Props = {
   children: React.ReactNode;
@@ -144,20 +142,6 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
               )}
             </main>
           </div>
-          <Button
-            type='button'
-            variant='primary'
-            className='fixed bottom-6 right-6 z-40 rounded-full! px-4! py-3! shadow-lg'
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent('open-ai-chat-panel'));
-            }}
-            aria-label='Open AI assistant'
-          >
-            <span className='flex items-center gap-2 text-sm font-semibold'>
-              <Sparkles size={16} />
-              AI Assistant
-            </span>
-          </Button>
         </div>
       </NotificationProvider>
     </AuthProvider>

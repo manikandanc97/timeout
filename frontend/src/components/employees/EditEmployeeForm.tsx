@@ -31,6 +31,7 @@ export default function EditEmployeeForm({
   const [departmentId, setDepartmentId] = useState('');
   const [teamId, setTeamId] = useState('');
   const [name, setName] = useState('');
+  const [designation, setDesignation] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -51,6 +52,7 @@ export default function EditEmployeeForm({
     setDepartmentId(deptId != null ? String(deptId) : '');
     setTeamId(tmId != null ? String(tmId) : '');
     setName(employee.name);
+    setDesignation(employee.designation ?? '');
     setEmail(employee.email);
     setGender(employee.gender ?? '');
     setRole(employee.role === 'MANAGER' ? 'MANAGER' : 'EMPLOYEE');
@@ -120,8 +122,8 @@ export default function EditEmployeeForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamId || !name.trim() || !email.trim()) {
-      toast.error('Fill in name, email, and team');
+    if (!teamId || !name.trim() || !designation.trim() || !email.trim()) {
+      toast.error('Fill in name, designation, email, and team');
       return;
     }
     const pwd = password.trim();
@@ -145,6 +147,7 @@ export default function EditEmployeeForm({
     try {
       const body: Record<string, unknown> = {
         name: name.trim(),
+        designation: designation.trim(),
         email: email.trim().toLowerCase(),
         teamId: Number(teamId),
         gender,
@@ -204,6 +207,14 @@ export default function EditEmployeeForm({
         value={name}
         required
         onChange={(e) => setName(e.target.value)}
+      />
+      <Input
+        id={`edit-emp-designation-${employee.id}`}
+        type='text'
+        label='Designation'
+        value={designation}
+        required
+        onChange={(e) => setDesignation(e.target.value)}
       />
       <Input
         id={`edit-emp-email-${employee.id}`}

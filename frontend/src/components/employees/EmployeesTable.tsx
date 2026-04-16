@@ -33,7 +33,7 @@ export default function EmployeesTable({
               <th className='px-4 py-3.5 text-left'>Department</th>
               <th className='px-4 py-3.5 text-left'>Team</th>
               <th className='px-4 py-3.5 text-left'>Reporting manager</th>
-              <th className='px-4 py-3.5 text-left'>Role</th>
+              <th className='px-4 py-3.5 text-left'>Designation</th>
               <th className='px-4 py-3.5 text-left'>Status</th>
               <th className='px-4 py-3.5 text-left'>Joined</th>
               <th className='px-4 py-3.5 text-right'>Actions</th>
@@ -94,7 +94,7 @@ export default function EmployeesTable({
                       {formatPersonName(row.reportingManager?.name) || '—'}
                     </td>
                     <td className='whitespace-nowrap px-4 py-2 text-left align-top text-card-foreground/90'>
-                      {roleLabel(row.role)}
+                      {row.designation?.trim() || roleLabel(row.role)}
                     </td>
                     <td className='px-4 py-2 text-left align-top'>
                       <span

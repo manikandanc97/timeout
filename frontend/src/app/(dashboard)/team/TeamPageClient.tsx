@@ -1,10 +1,7 @@
 'use client';
 
-import AddDepartmentModal from '@/components/teams/AddDepartmentModal';
-import AddTeamModal from '@/components/teams/AddTeamModal';
+import CommonPageShell from '@/components/common/CommonPageShell';
 import DepartmentsPanel from '@/components/teams/DepartmentsPanel';
-import EditDepartmentModal from '@/components/teams/EditDepartmentModal';
-import EditTeamModal from '@/components/teams/EditTeamModal';
 import TeamsFilterBar from '@/components/teams/TeamsFilterBar';
 import TeamsNoAccess from '@/components/teams/TeamsNoAccess';
 import TeamsPageHeader from '@/components/teams/TeamsPageHeader';
@@ -18,8 +15,19 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import type { OrgDepartment } from '@/types/organization';
 import type { OrganizationTeamRow } from '@/types/organizationTeam';
+import { getApiErrorMessage } from '@/utils/apiError';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+
+const AddDepartmentModal = dynamic(
+  () => import('@/components/teams/AddDepartmentModal'),
+);
+const EditDepartmentModal = dynamic(
+  () => import('@/components/teams/EditDepartmentModal'),
+);
+const AddTeamModal = dynamic(() => import('@/components/teams/AddTeamModal'));
+const EditTeamModal = dynamic(() => import('@/components/teams/EditTeamModal'));
 
 export default function TeamPageClient() {
   const { user } = useAuth();
@@ -47,11 +55,7 @@ export default function TeamPageClient() {
 
   return (
     <>
-      <section className='relative isolate flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xl'>
-        <div className='pointer-events-none absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl' />
-        <div className='pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl' />
-
-        <div className='relative z-10 flex min-h-0 flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5'>
+      <CommonPageShell className='min-h-0 flex-1' bodyClassName='min-h-0 flex-1 gap-3 p-4 sm:gap-4 sm:p-5'>
           <div className='flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4'>
             <div className='flex min-h-0 min-w-0 flex-1 flex-col gap-3'>
               <TeamsPageHeader
@@ -132,8 +136,7 @@ export default function TeamPageClient() {
               />
             </aside>
           </div>
-        </div>
-      </section>
+      </CommonPageShell>
 
       {isAdmin ? (
         <>
@@ -196,13 +199,8 @@ export default function TeamPageClient() {
                 setTeamToDelete(null);
                 void dir.loadStructure();
                 void dir.loadTeams();
-              } catch (error) {
-                const axiosLike = error as {
-                  response?: { data?: { message?: string } };
-                };
-                toast.error(
-                  axiosLike.response?.data?.message ?? 'Could not delete team',
-                );
+              } catch (error: unknown) {
+                toast.error(getApiErrorMessage(error, 'Could not delete team'));
               } finally {
                 setTeamDeleteProcessing(false);
               }

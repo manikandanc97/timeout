@@ -1,9 +1,11 @@
 'use client';
 
 import { departmentSelectOptions } from '@/components/employees/utils';
+import { usePagination } from '@/hooks/usePagination';
 import api from '@/services/api';
 import type { OrgDepartment } from '@/types/organization';
 import type { OrganizationTeamRow } from '@/types/organizationTeam';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -11,8 +13,6 @@ import { TEAMS_PAGE_SIZE } from './constants';
 import {
   computeTeamsSummary,
   filterTeams,
-  teamsPageCount,
-  teamsPageSlice,
 } from './utils';
 
 export function useTeamsDirectory(enabled: boolean) {
@@ -22,7 +22,6 @@ export function useTeamsDirectory(enabled: boolean) {
   const [departments, setDepartments] = useState<OrgDepartment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('ALL');
-  const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
   const [addDepartmentOpen, setAddDepartmentOpen] = useState(false);
   const [structureLoading, setStructureLoading] = useState(false);
@@ -52,10 +51,10 @@ export function useTeamsDirectory(enabled: boolean) {
       setDepartmentCount(
         typeof data.departmentCount === 'number' ? data.departmentCount : 0,
       );
-    } catch {
+    } catch (error: unknown) {
       setTeams([]);
       setDepartmentCount(0);
-      toast.error('Could not load teams');
+      toast.error(getApiErrorMessage(error, 'Could not load teams'));
     } finally {
       setLoadingList(false);
     }
@@ -79,10 +78,6 @@ export function useTeamsDirectory(enabled: boolean) {
     [departments],
   );
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm, departmentFilter]);
-
   const summary = useMemo(
     () => computeTeamsSummary(teams, departmentCount),
     [teams, departmentCount],
@@ -97,17 +92,14 @@ export function useTeamsDirectory(enabled: boolean) {
     [teams, searchTerm, departmentFilter],
   );
 
-  const pageCount = teamsPageCount(filtered.length);
+  const { page, setPage, pageCount, safePage, pageSlice } = usePagination({
+    items: filtered,
+    pageSize: TEAMS_PAGE_SIZE,
+  });
 
   useEffect(() => {
-    setPage((p) => Math.min(p, pageCount));
-  }, [pageCount]);
-
-  const safePage = Math.min(page, pageCount);
-  const pageSlice = useMemo(
-    () => teamsPageSlice(filtered, safePage, TEAMS_PAGE_SIZE),
-    [filtered, safePage],
-  );
+    setPage(1);
+  }, [searchTerm, departmentFilter, setPage]);
 
   const hasActiveFilters =
     searchTerm.trim().length > 0 || departmentFilter !== 'ALL';
