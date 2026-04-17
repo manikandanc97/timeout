@@ -10,6 +10,7 @@
     "dev": "nodemon src/server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
+    "db:seed": "node prisma/seed.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -27,5 +28,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
 }

@@ -491,8 +491,6 @@ export const applyLeave = async (req, res) => {
       });
     }
 
-    console.log('Leave applied:', totalDays, leave);
-
     try {
       await notifyLeaveAppliedRecipients({
         leave,

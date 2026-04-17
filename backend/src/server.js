@@ -17,15 +17,14 @@ import organizationRoutes from './routes/organizationRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import { initSocketServer } from './socket/socketServer.js';
+import { env, requireEnv } from './config/env.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
-const clientOrigin =
-  process.env.CLIENT_ORIGIN?.trim() || 'http://localhost:3000';
-
 app.use(
   cors({
-    origin: clientOrigin,
+    origin: env.clientOrigin,
     credentials: true,
   }),
 );
@@ -78,23 +77,12 @@ app.use('/api/notifications', notificationRoutes);
 
 const httpServer = http.createServer(app);
 
-function requireEnv(name) {
-  const v = process.env[name];
-  if (v == null || String(v).trim() === '') {
-    console.error(
-      `[config] Missing or empty environment variable: ${name}\n` +
-        `  Copy backend/.env.example to backend/.env and set all values.`,
-    );
-    process.exit(1);
-  }
-}
-
 async function start() {
-  requireEnv('DATABASE_URL');
-  requireEnv('ACCESS_SECRET');
-  requireEnv('REFRESH_SECRET');
-
   try {
+    requireEnv('DATABASE_URL');
+    requireEnv('ACCESS_SECRET');
+    requireEnv('REFRESH_SECRET');
+
     await prisma.$connect();
   } catch (e) {
     console.error(
@@ -104,10 +92,13 @@ async function start() {
     process.exit(1);
   }
 
-  initSocketServer(httpServer, { clientOrigin });
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
-  httpServer.listen(5000, () => {
-    console.log('Server running on port 5000 (HTTP + Socket.IO)');
+  initSocketServer(httpServer, { clientOrigin: env.clientOrigin });
+
+  httpServer.listen(env.port, () => {
+    console.log(`Server running on port ${env.port} (HTTP + Socket.IO)`);
   });
 }
 
