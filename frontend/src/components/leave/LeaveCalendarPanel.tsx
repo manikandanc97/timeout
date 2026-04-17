@@ -1,17 +1,13 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import {
-  ChevronLeft,
-  ChevronRight,
-  CalendarDays,
-  MapPin,
-  Sun,
-} from 'lucide-react';
 import type { Holiday } from '@/types/holiday';
 import type { Leave } from '@/types/leave';
-import Button from '@/components/ui/Button';
-
+import { getMonthDays, isSameDay } from './leaveCalendarUtils';
+import LeaveCalendarBanner from './LeaveCalendarBanner';
+import LeaveCalendarMonthNav from './LeaveCalendarMonthNav';
+import LeaveCalendarLegend from './LeaveCalendarLegend';
+import LeaveCalendarGrid from './LeaveCalendarGrid';
 type Props = {
   holidays: Holiday[];
   history: Leave[];
@@ -27,42 +23,6 @@ type Props = {
   /** Extra classes on the outer shell (e.g. `h-full min-h-0` in admin column). */
   rootClassName?: string;
 };
-
-const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-function isSameDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function getMonthDays(year: number, month: number) {
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const days: (Date | null)[] = Array(firstDay).fill(null);
-  for (let d = 1; d <= daysInMonth; d++) {
-    days.push(new Date(year, month, d));
-  }
-  while (days.length % 7 !== 0) days.push(null);
-  return days;
-}
 
 const LeaveCalendarPanel = ({
   holidays = [],
@@ -258,172 +218,33 @@ const LeaveCalendarPanel = ({
     <div
       className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-md ${rootClassName}`.trim()}
     >
-      {/* Top banner */}
-      <div className='shrink-0 bg-linear-to-br from-primary-dark via-primary to-accent px-5 pt-5 pb-6 text-primary-foreground'>
-        <div className='flex flex-col gap-2'>
-          <div>
-            <div className='mb-1 flex items-center gap-1.5'>
-              <CalendarDays size={13} className='text-primary-foreground/80' />
-              <span className='text-[11px] font-semibold uppercase tracking-widest text-primary-foreground/85'>
-                {bannerEyebrow}
-              </span>
-            </div>
-            <h2 className='text-xl font-bold leading-tight text-primary-foreground'>
-              {bannerTitle}
-            </h2>
-          </div>
-
-          {upcomingHoliday && (
-            <div className='mt-1 flex shrink-0 flex-col gap-2 rounded-xl border border-primary-foreground/25 bg-card/15 px-3 py-2.5 text-primary-foreground backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between'>
-              <div className='flex items-center gap-1.5'>
-                <MapPin size={10} className='shrink-0 text-amber-200' aria-hidden />
-                <p className='text-[10px] font-semibold uppercase tracking-wide text-amber-200'>
-                  Next holiday
-                </p>
-              </div>
-              <div className='min-w-0 sm:text-right'>
-                <p className='text-sm font-bold leading-tight text-primary-foreground'>
-                  {upcomingHoliday.name}
-                </p>
-                <p className='text-[11px] text-primary-foreground/85'>
-                  {upcomingHoliday.date.toLocaleDateString('en-US', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <LeaveCalendarBanner
+        bannerEyebrow={bannerEyebrow}
+        bannerTitle={bannerTitle}
+        upcomingHoliday={upcomingHoliday}
+      />
 
       {/* Calendar body */}
       <div className='flex min-h-0 flex-1 flex-col px-4 pt-4 pb-5'>
-        {/* Month nav */}
-        <div className='flex justify-between items-center mb-4'>
-          <Button
-            onClick={prevMonth}
-            className='flex h-8 w-8 items-center justify-center !rounded-lg !bg-transparent !p-0 !text-muted-foreground transition-colors hover:!bg-muted hover:!text-primary'
-          >
-            <ChevronLeft size={18} />
-          </Button>
+        <LeaveCalendarMonthNav
+          viewMonth={viewMonth}
+          viewYear={viewYear}
+          isCurrentMonth={isCurrentMonth}
+          onPrev={prevMonth}
+          onNext={nextMonth}
+          onToday={goToday}
+        />
 
-          <div className='flex flex-col items-center'>
-            <span className='text-base font-bold text-card-foreground'>
-              {MONTHS[viewMonth]} {viewYear}
-            </span>
-            {!isCurrentMonth && (
-              <Button
-                onClick={goToday}
-                className='flex items-center gap-1 !bg-transparent hover:!bg-transparent mt-0.5 !p-0 !h-auto !text-primary text-[11px] hover:underline'
-              >
-                <Sun size={10} />
-                Back to today
-              </Button>
-            )}
-          </div>
+        <LeaveCalendarGrid
+          days={days}
+          getDayStyle={getDayStyle}
+          onDayMouseEnter={handleDayMouseEnter}
+          onDayMouseLeave={handleDayMouseLeave}
+          containerRef={containerRef}
+          tooltip={tooltip}
+        />
 
-          <Button
-            onClick={nextMonth}
-            className='flex h-8 w-8 items-center justify-center !rounded-lg !bg-transparent !p-0 !text-muted-foreground transition-colors hover:!bg-muted hover:!text-primary'
-          >
-            <ChevronRight size={18} />
-          </Button>
-        </div>
-
-        {/* Grid */}
-        <div ref={containerRef} className='relative flex-1'>
-          {/* Day headers */}
-          <div className='grid grid-cols-7 mb-1'>
-            {DAYS_OF_WEEK.map((d) => (
-              <div
-                key={d}
-                className={`py-1 text-center text-[11px] font-semibold ${
-                  d === 'Su' || d === 'Sa'
-                    ? 'text-muted-foreground/75'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* Days */}
-          <div className='gap-y-1 grid grid-cols-7'>
-            {days.map((date, i) => {
-              if (!date) return <div key={`empty-${i}`} />;
-              const { cell } = getDayStyle(date);
-              return (
-                <div
-                  key={date.toISOString()}
-                  className={`relative flex items-center justify-center mx-auto w-9 h-9 rounded-xl text-sm cursor-default select-none transition-all duration-100 ${cell}`}
-                  onMouseEnter={(e) => handleDayMouseEnter(date, e)}
-                  onMouseLeave={handleDayMouseLeave}
-                >
-                  {date.getDate()}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Tooltip */}
-          {tooltip && (
-            <div
-              className='pointer-events-none absolute z-50 rounded-lg border border-border bg-foreground px-2.5 py-1.5 text-xs whitespace-nowrap text-background shadow-lg'
-              style={{
-                left: tooltip.x,
-                top: tooltip.y,
-                transform: 'translate(-50%, calc(-100% - 6px))',
-              }}
-            >
-              {tooltip.text}
-              <div
-                className='absolute h-2 w-2 rotate-45 bg-foreground'
-                style={{
-                  left: '50%',
-                  bottom: '-4px',
-                  transform: 'translateX(-50%)',
-                }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Legend */}
-        <div className='mt-4 border-t border-border pt-3'>
-          <div
-            className={
-              showLeaveDays
-                ? 'grid grid-cols-2 gap-x-4 gap-y-2'
-                : 'flex flex-nowrap items-center justify-center gap-5 sm:gap-6'
-            }
-          >
-            {(showLeaveDays
-              ? [
-                  { color: 'bg-primary', label: 'Today' },
-                  { color: 'bg-amber-400', label: 'Holiday' },
-                  { color: 'bg-blue-400', label: 'Pending leave' },
-                  { color: 'bg-emerald-400', label: 'Approved leave' },
-                  { color: 'bg-red-400', label: 'Rejected leave' },
-                  { color: 'bg-border', label: 'Weekend' },
-                ]
-              : [
-                  { color: 'bg-primary', label: 'Today' },
-                  { color: 'bg-amber-400', label: 'Holiday' },
-                  { color: 'bg-border', label: 'Weekend' },
-                ]
-            ).map((item) => (
-              <div key={item.label} className='flex shrink-0 items-center gap-2'>
-                <span
-                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${item.color}`}
-                />
-                <span className='text-xs text-muted-foreground'>{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <LeaveCalendarLegend showLeaveDays={showLeaveDays} />
       </div>
     </div>
   );

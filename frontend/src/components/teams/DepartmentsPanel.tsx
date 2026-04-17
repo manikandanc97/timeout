@@ -5,16 +5,11 @@ import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import api from '@/services/api';
 import type { OrgDepartment } from '@/types/organization';
-import {
-  Building2,
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { Building2, Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import DepartmentsPagination from './DepartmentsPagination';
+import DepartmentsTable from './DepartmentsTable';
 
 type Props = {
   departments: OrgDepartment[];
@@ -115,145 +110,32 @@ export default function DepartmentsPanel({
             variant='outline'
             onClick={onAddDepartment}
             aria-label='Add department'
-            className='inline-flex !h-9 !w-9 shrink-0 items-center justify-center !rounded-xl !p-0 shadow-sm [&>svg]:block [&>svg]:shrink-0'
+            className='inline-flex h-9! w-9! shrink-0 items-center justify-center rounded-xl! p-0! shadow-sm [&>svg]:block [&>svg]:shrink-0'
           >
             <Plus size={18} strokeWidth={2.5} className='text-primary' />
           </Button>
         ) : null}
       </div>
 
-      <div className='flex min-h-0 max-h-[min(56vh,32rem)] flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-muted/40 sm:max-h-[min(60vh,36rem)]'>
-        <table className='w-full table-fixed border-collapse text-left text-sm'>
-          <thead className='sticky top-0 z-10'>
-            <tr className='border-b border-border bg-muted/95 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
-              <th className='min-w-0 px-2.5 py-2.5 text-left sm:px-3'>
-                Department
-              </th>
-              {isAdmin ? (
-                <th className='w-[5.5rem] px-2 py-2.5 text-right sm:w-24 sm:px-3'>
-                  Actions
-                </th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td
-                  colSpan={isAdmin ? 2 : 1}
-                  className='px-3 py-16 text-center align-middle text-sm text-muted-foreground sm:py-20'
-                >
-                  Loading departments…
-                </td>
-              </tr>
-            ) : departments.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={isAdmin ? 2 : 1}
-                  className='px-3 py-16 text-center align-middle text-sm text-muted-foreground sm:py-20'
-                >
-                  No departments yet.
-                  {isAdmin ? ' Use + to add one.' : null}
-                </td>
-              </tr>
-            ) : (
-              departmentsSlice.map((d) => {
-                const activeFilter = departmentFilter === String(d.id);
-                return (
-                  <tr
-                    key={d.id}
-                    className='border-b border-border/80 last:border-0'
-                  >
-                    <td className='min-w-0 px-2.5 py-2.5 text-left align-top sm:px-3'>
-                      <button
-                        type='button'
-                        onClick={() => onFilterByDepartment(String(d.id))}
-                        className={`w-full min-w-0 text-left text-sm font-medium leading-snug wrap-break-word transition-colors hover:text-primary ${
-                          activeFilter ? 'text-primary' : 'text-card-foreground'
-                        }`}
-                      >
-                        <span className='block'>{d.name}</span>
-                        {activeFilter ? (
-                          <span className='mt-0.5 block text-xs font-normal text-primary'>
-                            (filtered)
-                          </span>
-                        ) : null}
-                      </button>
-                    </td>
-                    {isAdmin ? (
-                      <td className='whitespace-nowrap px-2 py-2.5 text-right align-top sm:px-3'>
-                        <div className='flex justify-end gap-1'>
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            aria-label={`Edit ${d.name}`}
-                            onClick={() => onEdit(d)}
-                            className='!rounded-lg !p-2 text-muted-foreground hover:!bg-skeleton'
-                          >
-                            <Pencil size={16} />
-                          </Button>
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            aria-label={`Delete ${d.name}`}
-                            onClick={() => requestDelete(d)}
-                            className='!rounded-lg !p-2 text-muted-foreground hover:!bg-danger-muted hover:!text-danger-muted-foreground'
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                      </td>
-                    ) : null}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DepartmentsTable
+        loading={loading}
+        isAdmin={isAdmin}
+        departments={departments}
+        departmentsSlice={departmentsSlice}
+        departmentFilter={departmentFilter}
+        onFilterByDepartment={onFilterByDepartment}
+        onEdit={onEdit}
+        onDelete={requestDelete}
+      />
 
       {showDeptPagination ? (
-        <div className='mt-2 flex shrink-0 flex-col items-stretch justify-between gap-2 border-t border-border pt-2 sm:flex-row sm:items-center'>
-          <p className='text-[11px] text-muted-foreground'>
-            Showing{' '}
-            <span className='font-semibold text-card-foreground/90'>
-              {(safeDeptPage - 1) * TEAMS_PAGE_SIZE + 1}
-            </span>
-            –
-            <span className='font-semibold text-card-foreground/90'>
-              {Math.min(safeDeptPage * TEAMS_PAGE_SIZE, departments.length)}
-            </span>{' '}
-            of{' '}
-            <span className='font-semibold text-card-foreground/90'>
-              {departments.length}
-            </span>
-          </p>
-          <div className='flex items-center justify-center gap-1.5 sm:justify-end'>
-            <button
-              type='button'
-              disabled={safeDeptPage <= 1}
-              onClick={() => setDeptPage((p) => Math.max(1, p - 1))}
-              className='inline-flex items-center gap-0.5 rounded-lg border border-border bg-card px-2 py-1 text-[11px] font-semibold text-card-foreground/90 shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40'
-            >
-              <ChevronLeft size={12} />
-              Prev
-            </button>
-            <span className='text-[11px] font-medium text-muted-foreground'>
-              {safeDeptPage} / {deptPageCount}
-            </span>
-            <button
-              type='button'
-              disabled={safeDeptPage >= deptPageCount}
-              onClick={() =>
-                setDeptPage((p) => Math.min(deptPageCount, p + 1))
-              }
-              className='inline-flex items-center gap-0.5 rounded-lg border border-border bg-card px-2 py-1 text-[11px] font-semibold text-card-foreground/90 shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40'
-            >
-              Next
-              <ChevronRight size={12} />
-            </button>
-          </div>
-        </div>
+        <DepartmentsPagination
+          safeDeptPage={safeDeptPage}
+          deptPageCount={deptPageCount}
+          departmentsLength={departments.length}
+          onPrev={() => setDeptPage((p) => Math.max(1, p - 1))}
+          onNext={() => setDeptPage((p) => Math.min(deptPageCount, p + 1))}
+        />
       ) : null}
 
       <ConfirmModal

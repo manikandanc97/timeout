@@ -1,7 +1,7 @@
 'use client';
 
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import EmployeeFormFields from '@/components/employees/EmployeeFormFields';
 import Select from '@/components/ui/Select';
 import api from '@/services/api';
 import type { OrganizationEmployee } from '@/types/employee';
@@ -181,86 +181,39 @@ export default function EditEmployeeForm({
 
   return (
     <form onSubmit={handleSubmit} className={gridClass}>
-      <Select
-        id={`edit-emp-dept-${employee.id}`}
-        label='Department'
-        placeholder='Select department'
-        value={departmentId}
-        options={departmentOptions}
-        onChange={(e) => {
-          setDepartmentId(e.target.value);
+      <EmployeeFormFields
+        idPrefix={`edit-emp-${employee.id}`}
+        departmentId={departmentId}
+        teamId={teamId}
+        name={name}
+        designation={designation}
+        email={email}
+        password={password}
+        passwordConfirm={passwordConfirm}
+        gender={gender}
+        role={role}
+        reportingManagerId={reportingManagerId}
+        joiningDate={joiningDate}
+        birthDate={birthDate}
+        departmentOptions={departmentOptions}
+        teamOptions={teamOptions}
+        reportingManagerOptions={reportingManagerOptions}
+        requirePassword={false}
+        onDepartmentChange={(value) => {
+          setDepartmentId(value);
           setTeamId('');
         }}
-      />
-      <Select
-        id={`edit-emp-team-${employee.id}`}
-        label='Team'
-        placeholder='Select team'
-        value={teamId}
-        options={teamOptions}
-        onChange={(e) => setTeamId(e.target.value)}
-      />
-      <Input
-        id={`edit-emp-name-${employee.id}`}
-        type='text'
-        label='Full name'
-        value={name}
-        required
-        onChange={(e) => setName(e.target.value)}
-      />
-      <Input
-        id={`edit-emp-designation-${employee.id}`}
-        type='text'
-        label='Designation'
-        value={designation}
-        required
-        onChange={(e) => setDesignation(e.target.value)}
-      />
-      <Input
-        id={`edit-emp-email-${employee.id}`}
-        type='email'
-        label='Work email'
-        value={email}
-        required
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <Input
-        id={`edit-emp-password-${employee.id}`}
-        type='password'
-        label='New password (optional)'
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <Input
-        id={`edit-emp-password-confirm-${employee.id}`}
-        type='password'
-        label='Confirm new password'
-        value={passwordConfirm}
-        onChange={(e) => setPasswordConfirm(e.target.value)}
-      />
-      <Select
-        id={`edit-emp-gender-${employee.id}`}
-        label='Gender'
-        placeholder='Select gender'
-        value={gender}
-        options={[
-          { label: 'Male', value: 'MALE' },
-          { label: 'Female', value: 'FEMALE' },
-        ]}
-        onChange={(e) => setGender(e.target.value)}
-      />
-      <Select
-        id={`edit-emp-role-${employee.id}`}
-        label='Role'
-        placeholder='Select role'
-        value={role}
-        options={[
-          { label: 'Employee', value: 'EMPLOYEE' },
-          { label: 'Manager', value: 'MANAGER' },
-        ]}
-        onChange={(e) =>
-          setRole(e.target.value === 'MANAGER' ? 'MANAGER' : 'EMPLOYEE')
-        }
+        onTeamChange={setTeamId}
+        onNameChange={setName}
+        onDesignationChange={setDesignation}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onPasswordConfirmChange={setPasswordConfirm}
+        onGenderChange={setGender}
+        onRoleChange={setRole}
+        onReportingManagerChange={setReportingManagerId}
+        onJoiningDateChange={setJoiningDate}
+        onBirthDateChange={setBirthDate}
       />
       <Select
         id={`edit-emp-status-${employee.id}`}
@@ -275,29 +228,6 @@ export default function EditEmployeeForm({
             e.target.value === 'DEACTIVATED' ? 'DEACTIVATED' : 'ACTIVE',
           )
         }
-      />
-      <Select
-        id={`edit-emp-reporting-manager-${employee.id}`}
-        label='Reporting manager (optional)'
-        placeholder='None'
-        value={reportingManagerId}
-        options={reportingManagerOptions}
-        onChange={(e) => setReportingManagerId(e.target.value)}
-      />
-      <Input
-        id={`edit-emp-joiningdate-${employee.id}`}
-        type='date'
-        label='Joining date (DOJ)'
-        value={joiningDate}
-        required
-        onChange={(e) => setJoiningDate(e.target.value)}
-      />
-      <Input
-        id={`edit-emp-birthdate-${employee.id}`}
-        type='date'
-        label='Date of birth (optional)'
-        value={birthDate}
-        onChange={(e) => setBirthDate(e.target.value)}
       />
       <div className='sm:col-span-2'>
         <Button

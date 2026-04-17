@@ -2,11 +2,6 @@
 
 import { useNotifications } from '@/context/NotificationProvider';
 import {
-  ACCENT_THEME_PRESETS,
-  applyAccentTheme,
-  applyFontTheme,
-  applyTheme,
-  FONT_THEME_PRESETS,
   isThemeAccentId,
   isThemeFontId,
   THEME_ACCENT_STORAGE_KEY,
@@ -14,13 +9,13 @@ import {
   THEME_STORAGE_KEY,
   type ThemeAccentId,
   type ThemeFontId,
-  type ThemeMode,
 } from '@/lib/theme';
-import { MousePointerClick, Palette, Type, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Button from '../ui/Button';
-import SettingsToggle from '../settings/SettingsToggle';
 import ProfilePanel from './ProfilePanel';
+import NotificationsPanel from './right-panel/NotificationsPanel';
+import AppearanceSettingsPanel from './right-panel/AppearanceSettingsPanel';
 
 interface RightPanelProps {
   activePanel: string | null;
@@ -90,10 +85,6 @@ const RightPanel: React.FC<RightPanelProps> = ({ activePanel, onClose }) => {
   if (!activePanel) return null;
 
   const title = PANEL_TITLES[activePanel] ?? 'Panel';
-  const firstRowPresets = ACCENT_THEME_PRESETS.slice(0, 3);
-  const secondRowPresets = ACCENT_THEME_PRESETS.slice(3);
-  const firstRowFonts = FONT_THEME_PRESETS.slice(0, 2);
-  const secondRowFonts = FONT_THEME_PRESETS.slice(2, 4);
   const ThemeSwatchIcon = ({ color }: { color: string }) => (
     <svg
       focusable='false'
@@ -140,220 +131,25 @@ const RightPanel: React.FC<RightPanelProps> = ({ activePanel, onClose }) => {
       </div>
       <div className='min-h-0 flex-1 overflow-y-auto pr-1'>
         {activePanel === 'notifications' && (
-          <div className='flex min-h-0 flex-col gap-3'>
-            <div className='flex items-center justify-between gap-2'>
-              <p className='text-xs text-muted-foreground'>
-                {unreadCount > 0
-                  ? `${unreadCount} unread`
-                  : 'You are all caught up'}
-              </p>
-              {unreadCount > 0 ? (
-                <Button
-                  type='button'
-                  variant='ghost'
-                  className='h-auto! px-2! py-1! text-xs! text-primary!'
-                  onClick={() => void markAllRead()}
-                >
-                  Mark all read
-                </Button>
-              ) : null}
-            </div>
-            <div className='max-h-[calc(100vh-8rem)] space-y-2 overflow-y-auto pr-1'>
-              {notifications.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No notifications</p>
-              ) : (
-                notifications.map((n) => (
-                  <button
-                    key={n.id}
-                    type='button'
-                    onClick={() => {
-                      if (!n.readAt) void markAsRead(n.id);
-                    }}
-                    className={`w-full rounded-lg border border-border p-3 text-left text-sm transition-colors hover:bg-muted/50 ${
-                      n.readAt ? 'opacity-80' : 'border-primary/25 bg-primary/5'
-                    }`}
-                  >
-                    <div className='font-medium text-card-foreground'>
-                      {n.title}
-                    </div>
-                    {n.body ? (
-                      <p className='mt-1 text-xs text-muted-foreground'>
-                        {n.body}
-                      </p>
-                    ) : null}
-                    <p className='mt-2 text-[10px] text-muted-foreground'>
-                      {formatWhen(n.createdAt)}
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
+          <NotificationsPanel
+            notifications={notifications}
+            unreadCount={unreadCount}
+            markAsRead={markAsRead}
+            markAllRead={markAllRead}
+            formatWhen={formatWhen}
+          />
         )}
 
         {activePanel === 'settings' && (
-          <div className='space-y-4'>
-            <section className='rounded-xl border border-border bg-muted/40 p-3'>
-              <div className='mb-3 flex items-start gap-2'>
-                <Palette size={16} className='mt-0.5 text-primary' />
-                <div>
-                  <p className='text-sm font-semibold text-card-foreground'>Appearance</p>
-                  <p className='text-xs text-muted-foreground'>Control dashboard look and feel.</p>
-                </div>
-              </div>
-              <div className='space-y-3'>
-                <div className='flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2'>
-                  <div>
-                    <p className='text-sm font-medium text-card-foreground'>Dark mode</p>
-                    <p className='text-xs text-muted-foreground'>Switch between light and dark surfaces.</p>
-                  </div>
-                  <SettingsToggle
-                    checked={darkMode}
-                    onChange={(next) => {
-                      setDarkMode(next);
-                      const mode: ThemeMode = next ? 'dark' : 'light';
-                      applyTheme(mode);
-                    }}
-                  />
-                </div>
-                <div className='rounded-lg border border-border bg-card p-3'>
-                  <p className='text-sm font-medium text-card-foreground'>Theme color</p>
-                  <p className='mb-3 mt-1 text-xs text-muted-foreground'>
-                    Pick a primary brand color for buttons and highlights.
-                  </p>
-                  <div className='rounded-xl border border-border bg-muted/50 p-2'>
-                    <div className='grid grid-cols-3 gap-2'>
-                      {firstRowPresets.map((preset) => {
-                        const selected = preset.id === accentColor;
-                        return (
-                          <button
-                            key={preset.id}
-                            type='button'
-                            aria-label={`Use ${preset.label} accent`}
-                            title={preset.label}
-                            onClick={() => {
-                              setAccentColor(preset.id);
-                              applyAccentTheme(preset.id);
-                            }}
-                            className={`rounded-xl border p-1.5 transition ${
-                              selected
-                                ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/25'
-                                : 'border-border bg-card hover:border-primary/40'
-                            }`}
-                          >
-                            <ThemeSwatchIcon color={preset.primary} />
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className='mt-2 grid grid-cols-3 gap-2'>
-                      {secondRowPresets.map((preset) => {
-                        const selected = preset.id === accentColor;
-                        return (
-                          <button
-                            key={preset.id}
-                            type='button'
-                            aria-label={`Use ${preset.label} accent`}
-                            title={preset.label}
-                            onClick={() => {
-                              setAccentColor(preset.id);
-                              applyAccentTheme(preset.id);
-                            }}
-                            className={`rounded-xl border p-1.5 transition ${
-                              selected
-                                ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/25'
-                                : 'border-border bg-card hover:border-primary/40'
-                            }`}
-                          >
-                            <ThemeSwatchIcon color={preset.primary} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <div className='rounded-lg border border-border bg-card p-3'>
-                  <div className='mb-3 flex items-start gap-2'>
-                    <Type size={15} className='mt-0.5 text-primary' />
-                    <div>
-                      <p className='text-sm font-medium text-card-foreground'>Font style</p>
-                      <p className='text-xs text-muted-foreground'>Choose from popular free Google fonts.</p>
-                    </div>
-                  </div>
-                  <div className='rounded-xl border border-border bg-muted/50 p-2'>
-                    <div className='grid grid-cols-2 gap-2'>
-                      {firstRowFonts.map((preset) => {
-                        const selected = preset.id === fontStyle;
-                        return (
-                          <button
-                            key={preset.id}
-                            type='button'
-                            aria-label={`Use ${preset.label} font`}
-                            title={preset.label}
-                            onClick={() => {
-                              setFontStyle(preset.id);
-                              applyFontTheme(preset.id);
-                            }}
-                            className={`w-full min-h-[82px] rounded-xl border px-2 py-2 text-center transition focus-visible:outline-none ${
-                              selected
-                                ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/25'
-                                : 'border-border bg-card hover:border-primary/40'
-                            }`}
-                            style={{ fontFamily: preset.fontFamily }}
-                          >
-                            <span className='block min-h-[2.2rem] text-[11px] leading-tight font-semibold text-card-foreground'>
-                              {preset.label}
-                            </span>
-                            <span className='mt-0.5 block text-[11px] text-muted-foreground'>Aa</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className='mt-2 grid grid-cols-2 gap-2'>
-                      {secondRowFonts.map((preset) => {
-                        const selected = preset.id === fontStyle;
-                        return (
-                          <button
-                            key={preset.id}
-                            type='button'
-                            aria-label={`Use ${preset.label} font`}
-                            title={preset.label}
-                            onClick={() => {
-                              setFontStyle(preset.id);
-                              applyFontTheme(preset.id);
-                            }}
-                            className={`w-full min-h-[82px] rounded-xl border px-2 py-2 text-center transition focus-visible:outline-none ${
-                              selected
-                                ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/25'
-                                : 'border-border bg-card hover:border-primary/40'
-                            }`}
-                            style={{ fontFamily: preset.fontFamily }}
-                          >
-                            <span className='block min-h-[2.2rem] text-[11px] leading-tight font-semibold text-card-foreground'>
-                              {preset.label}
-                            </span>
-                            <span className='mt-0.5 block text-[11px] text-muted-foreground'>Aa</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <div className='rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground'>
-              <div className='flex items-start gap-2'>
-                <MousePointerClick size={14} className='mt-0.5 text-primary' />
-                <p>
-                  Quick settings apply instantly to this browser with the default brand theme style.
-                </p>
-              </div>
-            </div>
-          </div>
+          <AppearanceSettingsPanel
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            accentColor={accentColor}
+            setAccentColor={setAccentColor}
+            fontStyle={fontStyle}
+            setFontStyle={setFontStyle}
+            ThemeSwatchIcon={ThemeSwatchIcon}
+          />
         )}
 
         {activePanel === 'profile' && <ProfilePanel />}
