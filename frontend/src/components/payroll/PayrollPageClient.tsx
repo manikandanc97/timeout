@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import KpiCardGrid from '@/components/common/KpiCardGrid';
 import { useAuth } from '@/context/AuthContext';
@@ -7,6 +7,7 @@ import { WalletCards } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { usePayrollPage } from './usePayrollPage';
 import { usePayrollActions } from './usePayrollActions';
+import type { PayrollRow } from '@/types/payroll';
 
 const PayrollTableSection = dynamic(() => import('./PayrollTableSection'));
 const PayslipPreviewModal = dynamic(() => import('./PayslipPreviewModal'));
@@ -152,28 +153,30 @@ export default function PayrollPageClient() {
           bulkMarkPaidEligibleCount={bulkMarkPaidEligibleCount}
           canMarkPaid={Boolean(canMarkPaid)}
           onMarkAllAsPaid={() => void markAllAsPaid()}
-          onMarkAsPaid={(row) => void markAsPaid(row)}
-          onOpenEditPayroll={(row) => void openEditPayroll(row)}
+          onMarkAsPaid={(row: PayrollRow) => void markAsPaid(row)}
+          onOpenEditPayroll={(row: PayrollRow) => void openEditPayroll(row)}
           onOpenPayslip={setActivePayslip}
-          onDownloadPayslip={(row) => downloadPayslipPdf(row, summary.currentMonth)}
+          onDownloadPayslip={(row: PayrollRow) => downloadPayslipPdf(row, summary.currentMonth)}
           formatTableAmount={formatTableAmount}
           isAdmin={Boolean(isAdmin)}
         />
       </div>
 
-      <PayslipPreviewModal
-        row={activePayslip}
-        monthLabel={summary.currentMonth}
-        onClose={() => setActivePayslip(null)}
-        onDownload={(row) => downloadPayslipPdf(row, summary.currentMonth)}
-      />
+      {activePayslip && (
+        <PayslipPreviewModal
+          row={activePayslip}
+          monthLabel={summary.currentMonth}
+          onClose={() => setActivePayslip(null)}
+          onDownload={(row: PayrollRow) => downloadPayslipPdf(row, summary.currentMonth)}
+        />
+      )}
 
       <PayrollEditModal
         open={editRow != null}
         editLoading={editLoading}
         editSaving={editSaving}
         form={editForm}
-        onChange={(key, value) => setEditForm((prev) => ({ ...prev, [key]: value }))}
+        onChange={(key: string, value: number) => setEditForm((prev) => ({ ...prev, [key]: value }))}
         onClose={() => {
           if (!editSaving) setEditRow(null);
         }}

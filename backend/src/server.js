@@ -19,6 +19,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import { initSocketServer } from './socket/socketServer.js';
 import { env, requireEnv } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 const app = express();
 
@@ -30,16 +31,6 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-
-app.get('/users', async (req, res) => {
-  try {
-    const users = await prisma.user.findMany();
-    res.json(users);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server Error' });
-  }
-});
 
 app.use('/api/auth', authRoutes);
 
@@ -74,6 +65,7 @@ app.use('/api/organization', organizationRoutes);
 app.use('/api/payroll', payrollRoutes);
 
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/ai', aiRoutes);
 
 const httpServer = http.createServer(app);
 

@@ -46,15 +46,15 @@ const AdminDashboard = () => {
       </section>
 
       {/* Main Content + Right Sidebar */}
-      <section className='xl:items-start gap-6 grid grid-cols-1 xl:grid-cols-3'>
+      <section className='lg:items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>
         {/* Left: Pending Requests + HR Insights */}
-        <div className='space-y-6 xl:col-span-2'>
+        <div className='grow space-y-6 lg:col-span-2'>
           <PendingLeaveRequests />
           <AdminHrInsights />
         </div>
 
         {/* Right: Calendar — sticky within main scroll (needs self-start in grid) */}
-        <div className='top-2 z-10 self-start xl:sticky xl:col-span-1'>
+        <div className='top-2 z-10 self-start lg:sticky lg:col-span-1'>
           <AdminCalendarSidebar />
         </div>
       </section>

@@ -54,6 +54,19 @@ export const DEFAULT_ADMIN_SETTINGS = {
     notificationEmail: true,
     browserNotification: false,
   },
+  smtpSettings: {
+    host: '',
+    port: 587,
+    user: '',
+    pass: '',
+    secure: false,
+    fromEmail: '',
+  },
+  alertPreferences: {
+    leaveRequests: true,
+    payrollPaid: true,
+    employeeUpdates: true,
+  },
 };
 
 export const DEFAULT_ORG_SETTINGS = {
@@ -181,6 +194,19 @@ export function sanitizeAdminSettings(raw) {
         theme.browserNotification,
         DEFAULT_ADMIN_SETTINGS.themePreferences.browserNotification,
       ),
+    },
+    smtpSettings: {
+      host: toTrimmedString(source.smtpSettings?.host, DEFAULT_ADMIN_SETTINGS.smtpSettings.host),
+      port: toPositiveInt(source.smtpSettings?.port, DEFAULT_ADMIN_SETTINGS.smtpSettings.port),
+      user: toTrimmedString(source.smtpSettings?.user, DEFAULT_ADMIN_SETTINGS.smtpSettings.user),
+      pass: toTrimmedString(source.smtpSettings?.pass, DEFAULT_ADMIN_SETTINGS.smtpSettings.pass),
+      secure: toBoolean(source.smtpSettings?.secure, DEFAULT_ADMIN_SETTINGS.smtpSettings.secure),
+      fromEmail: toTrimmedString(source.smtpSettings?.fromEmail, DEFAULT_ADMIN_SETTINGS.smtpSettings.fromEmail),
+    },
+    alertPreferences: {
+      leaveRequests: toBoolean(source.alertPreferences?.leaveRequests, DEFAULT_ADMIN_SETTINGS.alertPreferences.leaveRequests),
+      payrollPaid: toBoolean(source.alertPreferences?.payrollPaid, DEFAULT_ADMIN_SETTINGS.alertPreferences.payrollPaid),
+      employeeUpdates: toBoolean(source.alertPreferences?.employeeUpdates, DEFAULT_ADMIN_SETTINGS.alertPreferences.employeeUpdates),
     },
   };
 }

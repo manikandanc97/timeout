@@ -23,6 +23,7 @@ import {
   getAdminSettings,
   updateAdminSettings,
   resetAdminSettings,
+  testSmtpConfiguration,
 } from '../controllers/organizationController.js';
 
 const router = express.Router();
@@ -35,15 +36,16 @@ router.post('/leave-policy/reset', roleMiddleware('ADMIN'), resetLeavePolicy);
 router.get('/admin-settings', roleMiddleware('ADMIN'), getAdminSettings);
 router.put('/admin-settings', roleMiddleware('ADMIN'), updateAdminSettings);
 router.post('/admin-settings/reset', roleMiddleware('ADMIN'), resetAdminSettings);
+router.post('/test-smtp', roleMiddleware('ADMIN'), testSmtpConfiguration);
 
 router.get(
   '/structure',
-  roleMiddleware('ADMIN', 'MANAGER', 'HR'),
+  roleMiddleware('ADMIN', 'MANAGER'),
   getOrganizationStructure,
 );
 router.get(
   '/employees',
-  roleMiddleware('ADMIN', 'MANAGER', 'HR'),
+  roleMiddleware('ADMIN', 'MANAGER'),
   getOrganizationEmployees,
 );
 router.get(
@@ -53,7 +55,7 @@ router.get(
 );
 router.get(
   '/teams',
-  roleMiddleware('ADMIN', 'MANAGER', 'HR'),
+  roleMiddleware('ADMIN', 'MANAGER'),
   getOrganizationTeams,
 );
 router.post(
@@ -90,7 +92,7 @@ router.patch(
 );
 router.get(
   '/employees/:userId/details',
-  roleMiddleware('ADMIN', 'MANAGER', 'HR'),
+  roleMiddleware('ADMIN', 'MANAGER'),
   getEmployeeDetails,
 );
 router.post(

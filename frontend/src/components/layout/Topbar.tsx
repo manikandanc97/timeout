@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import React, { useState } from 'react';
 import Button from '../ui/Button';
-import { Bell, Settings } from 'lucide-react';
+import { Bell, Menu, Settings } from 'lucide-react';
 import { useNotifications } from '@/context/NotificationProvider';
 import { useAuth } from '@/context/AuthContext';
 import { formatPersonName, initialsFromPersonName } from '@/lib/personName';
@@ -41,7 +41,11 @@ const formatLabel = (value?: string, fallback = 'Member') => {
   return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
-const Topbar = () => {
+type TopbarProps = {
+  onMenuClick?: () => void;
+};
+
+const Topbar = ({ onMenuClick }: TopbarProps) => {
   const pathname = usePathname();
   const { unreadCount } = useNotifications();
   const { user } = useAuth();
@@ -55,7 +59,20 @@ const Topbar = () => {
 
   return (
     <div className='flex items-center justify-between border-b border-border bg-card p-4 shadow-sm dark:shadow-none'>
-      <h1 className='text-2xl font-bold text-card-foreground'>{pageTitle}</h1>
+      <div className='flex items-center gap-4'>
+        <Button
+          type='button'
+          variant='ghost'
+          aria-label='Open menu'
+          onClick={onMenuClick}
+          className='lg:hidden -ml-2 p-2'
+        >
+          <Menu size={20} />
+        </Button>
+        <h1 className='text-xl md:text-2xl font-bold text-card-foreground truncate max-w-[150px] sm:max-w-none'>
+          {pageTitle}
+        </h1>
+      </div>
       <div className='flex items-center gap-1'>
         <Button
           type='button'

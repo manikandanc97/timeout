@@ -46,8 +46,10 @@ export function NotificationProvider({
 }): React.JSX.Element {
   const { user } = useAuth();
   const userRoleRef = useRef<string | undefined>(undefined);
-  userRoleRef.current =
-    typeof user?.role === 'string' ? user.role : undefined;
+  
+  useEffect(() => {
+    userRoleRef.current = typeof user?.role === 'string' ? user.role : undefined;
+  }, [user?.role]);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -80,7 +82,7 @@ export function NotificationProvider({
     let cancelled = false;
 
     const ensureToken = async (): Promise<string | null> => {
-      let token = getAccessToken();
+      const token = getAccessToken();
       if (token) return token;
       try {
         const r = await api.post<{ accessToken?: string }>('/auth/refresh');

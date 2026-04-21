@@ -24,7 +24,7 @@ type Props = {
   onOpenEditPayroll: (row: PayrollRow) => void;
   onOpenPayslip: (row: PayrollRow) => void;
   onDownloadPayslip: (row: PayrollRow) => void;
-  formatTableAmount: (value: number) => JSX.Element;
+  formatTableAmount: (value: number) => React.ReactNode;
   isAdmin: boolean;
 };
 
@@ -65,11 +65,49 @@ export default function PayrollTableSection(props: Props) {
                       <td className='px-4 py-2 text-left align-top font-semibold text-card-foreground'>{props.formatTableAmount(row.netSalary)}</td>
                       <td className='px-4 py-2 text-left align-top'>{row.status}</td>
                       <td className='px-4 py-2 text-right align-top'>
-                        <div className='flex justify-end gap-1'>
-                          <Button type='button' variant='outline' className='rounded-md! px-2! py-1.5! text-xs!' disabled={row.payrollAdded === false || isDeactivated} onClick={() => props.onOpenPayslip(row)}><span className='flex items-center gap-1'><Eye size={14} />View payslip</span></Button>
-                          <Button type='button' variant='outline' className='rounded-md! px-2! py-1.5! text-xs!' disabled={row.payrollAdded === false || isDeactivated || !props.isAdmin} onClick={() => props.onOpenEditPayroll(row)}>Edit</Button>
-                          <Button type='button' variant='outline' className='rounded-md! px-2! py-1.5! text-xs!' disabled={row.status === 'PAID' || !props.canMarkPaid || row.payrollAdded === false || isDeactivated} onClick={() => props.onMarkAsPaid(row)}>Mark paid</Button>
-                          <Button type='button' variant='outline' className='rounded-md! px-2! py-1.5! text-xs!' disabled={row.payrollAdded === false || isDeactivated} onClick={() => props.onDownloadPayslip(row)}><span className='flex items-center gap-1'><Download size={14} />PDF</span></Button>
+                        <div className='flex flex-wrap justify-end gap-1.5 min-w-[120px]'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            className='rounded-md! px-2! py-1.5! text-[10px] sm:text-xs!'
+                            disabled={row.payrollAdded === false || isDeactivated}
+                            onClick={() => props.onOpenPayslip(row)}
+                          >
+                            <span className='flex items-center gap-1'>
+                              <Eye size={12} className='sm:size-[14px]' />
+                              <span className='hidden xs:inline'>View</span>
+                            </span>
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            className='rounded-md! px-2! py-1.5! text-[10px] sm:text-xs!'
+                            disabled={row.payrollAdded === false || isDeactivated || !props.isAdmin}
+                            onClick={() => props.onOpenEditPayroll(row)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            className='rounded-md! px-2! py-1.5! text-[10px] sm:text-xs!'
+                            disabled={row.status === 'PAID' || !props.canMarkPaid || row.payrollAdded === false || isDeactivated}
+                            onClick={() => props.onMarkAsPaid(row)}
+                          >
+                            Mark paid
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            className='rounded-md! px-2! py-1.5! text-[10px] sm:text-xs!'
+                            disabled={row.payrollAdded === false || isDeactivated}
+                            onClick={() => props.onDownloadPayslip(row)}
+                          >
+                            <span className='flex items-center gap-1'>
+                              <Download size={12} className='sm:size-[14px]' />
+                              <span className='hidden xs:inline'>PDF</span>
+                            </span>
+                          </Button>
                         </div>
                       </td>
                     </tr>

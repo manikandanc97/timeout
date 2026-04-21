@@ -15,6 +15,7 @@ import {
   notifyEmployeeProfileEvent,
   notifyOrgWide,
 } from '../services/notificationService.js';
+import { sendEmail } from '../services/emailService.js';
 
 export const getOrganizationStructure = async (req, res) => {
   try {
@@ -1815,5 +1816,47 @@ export const resetLeavePolicy = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to reset leave policy' });
+  }
+};
+
+
+export const testSmtpConfiguration = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can test SMTP settings' });
+    }
+
+    const { targetEmail } = req.body;
+    if (!targetEmail) {
+      return res.status(400).json({ message: 'Target email is required for the test' });
+    }
+
+    const organizationId = req.user.organizationId;
+    const adminName = req.user.name || 'Administrator';
+
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <h2 style="color: #0d9488;">SMTP Test Successful!</h2>
+        <p>Hello <strong>${adminName}</strong>,</p>
+        <p>This is a test email from your <strong>Timeout HRM</strong> instance. If you are reading this, your SMTP settings are correctly configured and ready for production.</p>
+        <p style="margin-top: 20px; color: #64748b; font-size: 0.875rem;">
+          Sent at: ${new Date().toLocaleString()}
+        </p>
+      </div>
+    `;
+
+    await sendEmail({
+      to: targetEmail,
+      subject: 'SMTP Test - Timeout HRM',
+      html,
+    });
+
+    return res.json({ message: `Test email sent successfully to ${targetEmail}. Please check your inbox (and spam folder).` });
+  } catch (error) {
+    console.error('[testSmtpConfiguration]', error);
+    return res.status(500).json({ 
+      message: `SMTP Test failed: ${error.message}`,
+      code: 'SMTP_ERROR'
+    });
   }
 };

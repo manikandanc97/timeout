@@ -42,6 +42,9 @@ model Organization {
   permissionRequests PermissionRequest[]
   notifications Notification[]
   hrPolicies    HrPolicy[]
+  aiSettings    AiSettings?
+  aiAuditLogs   AiAuditLog[]
+  hrDocumentChunks HrDocumentChunk[]
 }
 
 model Department {
@@ -81,6 +84,8 @@ model User {
   name     String
   email    String  @unique
   password String
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
   role     Role    @default(EMPLOYEE)
   designation String?
   isActive Boolean @default(true)
@@ -110,6 +115,7 @@ model User {
   compOffWorkLogs CompOffWorkLog[]
   permissionRequests PermissionRequest[]
   notifications Notification[]
+  aiAuditLogs   AiAuditLog[]
 
   @@index([reportingManagerId])
 }
@@ -340,8 +346,58 @@ model HrPolicy {
   content        String
   createdAt      DateTime @default(now())
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  hrDocumentChunks HrDocumentChunk[]
 
   @@index([organizationId])
 }
 
+model AiSettings {
+  id             Int      @id @default(autoincrement())
+  organizationId Int      @unique
+  provider       String   @default("demo")
+  model          String?
+  apiKey         String?
+  baseUrl        String?
+  systemPrompt   String?
+  isEnabled      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model AiAuditLog {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  userId         Int
+  userName       String
+  userRole       String
+  intent         String
+  action         String
+  payload        Json?
+  result         Json?
+  status         String   @default("SUCCESS")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model HrDocumentChunk {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  hrPolicyId     Int?
+  content        String
+  embedding      Unsupported("vector(1536)")?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  hrPolicy       HrPolicy?    @relation(fields: [hrPolicyId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+}

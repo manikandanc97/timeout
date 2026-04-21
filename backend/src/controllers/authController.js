@@ -1,7 +1,10 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import prisma from '../prismaClient.js';
 import { createOrganizationStructure } from '../lib/defaultOrgStructure.js';
+import { sendEmail } from '../services/emailService.js';
+import { env } from '../config/env.js';
 
 export const register = async (req, res) => {
   try {
@@ -252,4 +255,94 @@ export const logout = (req, res) => {
     path: '/',
   });
   res.json({ message: 'Logged out successfully' });
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.json({ message: 'If an account with that email exists, we have sent a password reset link.' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires,
+      },
+    });
+
+    const appUrl = env.frontendUrl;
+    const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 32px 24px; border-radius: 12px;">
+        <h2 style="color: #0f172a; margin-bottom: 8px;">Reset Your Password</h2>
+        <p style="color: #475569; margin-bottom: 24px;">We received a request to reset the password for your <strong>Timeout HRM</strong> account associated with <strong>${email}</strong>.</p>
+        <p style="color: #475569; margin-bottom: 24px;">Click the button below to reset your password. This link is valid for <strong>1 hour</strong>.</p>
+        <a href="${resetLink}" style="display: inline-block; background: #0d9488; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 15px;">Reset Password</a>
+        <p style="color: #94a3b8; font-size: 13px; margin-top: 28px;">If you did not request a password reset, please ignore this email. Your password will remain unchanged.</p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+        <p style="color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} Timeout HRM. All rights reserved.</p>
+      </div>
+    `;
+
+    await sendEmail({
+      to: email,
+      subject: 'Password Reset Request – Timeout HRM',
+      html,
+    });
+
+    return res.json({ message: 'If an account with that email exists, we have sent a password reset link.' });
+  } catch (error) {
+    console.error('[auth] forgotPassword', error?.message ?? error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired password reset token' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    return res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('[auth] resetPassword', error?.message ?? error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
 };

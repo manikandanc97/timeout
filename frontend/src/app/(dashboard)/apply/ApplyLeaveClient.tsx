@@ -44,8 +44,8 @@ const ApplyLeaveClient = ({
   };
 
   return (
-    <div className='gap-6 grid grid-cols-1 xl:grid-cols-3'>
-      <div className='xl:col-span-2'>
+    <div className='gap-6 grid grid-cols-1 lg:grid-cols-3'>
+      <div className='lg:col-span-2'>
         <ApplyLeave
           userGender={initialProfile?.gender ?? ''}
           balance={initialDashboard?.balance ?? null}
@@ -54,7 +54,7 @@ const ApplyLeaveClient = ({
           onSuccess={handleLeaveCreated}
         />
       </div>
-      <div className='top-2 xl:sticky self-start xl:col-span-1'>
+      <div className='top-2 lg:sticky self-start lg:col-span-1'>
         <LeaveCalendarPanel
           holidays={initialHolidays ?? []}
           history={history}

@@ -169,9 +169,9 @@ const LeaveSummaryCards = ({ balance, monthlyUsage, chartData }: Props) => {
     <div className='relative'>
       <div
         ref={scrollRef}
-        className='flex snap-x snap-mandatory gap-5 overflow-x-auto pb-1 [scrollbar-width:none] md:grid md:grid-cols-3 md:overflow-visible'
+        className='flex snap-x snap-mandatory gap-5 overflow-x-auto pb-1 [scrollbar-width:none] lg:grid lg:grid-cols-3 lg:overflow-visible'
       >
-        <div className='min-w-[280px] snap-start md:min-w-0'>
+        <div className='min-w-[280px] snap-start lg:min-w-0'>
           <LeaveCard
             label='Annual Leave'
             count={balance.annual}

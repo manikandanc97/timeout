@@ -65,11 +65,11 @@ export default function EmployeeDashboardShell({
 
   return (
     <div className='space-y-6'>
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-        <div className='md:col-span-2'>
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+        <div className='lg:col-span-2'>
           <Fragment key='welcome-slot'>{welcome}</Fragment>
         </div>
-        <div className='min-h-0 min-w-0 md:col-span-1'>
+        <div className='min-h-0 min-w-0 lg:col-span-1'>
           <LeaveBalance balance={dashboard.balance} />
         </div>
       </div>

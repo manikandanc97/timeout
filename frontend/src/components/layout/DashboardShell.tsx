@@ -21,6 +21,7 @@ import PayrollSkeleton from '@/components/dashboard/skeletons/PayrollSkeleton';
 import ReportsSkeleton from '@/components/dashboard/skeletons/ReportsSkeleton';
 import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
 import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
+import { AIAssistant } from '@/components/ai-assistant/AIAssistant';
 
 type Props = {
   children: React.ReactNode;
@@ -36,7 +37,13 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [roleHint, setRoleHint] = useState<string | null>(initialRole);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const fillMainHeight = MAIN_VIEWPORT_FILL_PATHS.has(pathname);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,9 +132,9 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
     <AuthProvider user={user}>
       <NotificationProvider>
         <div className='flex h-screen overflow-hidden bg-background'>
-          <Sidebar />
+          <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
           <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
-            <Topbar />
+            <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
             <main
               className={
                 fillMainHeight
@@ -143,6 +150,8 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
             </main>
           </div>
         </div>
+        {/* AI Assistant floating widget — available on every page */}
+        <AIAssistant userRole={user?.role || 'EMPLOYEE'} />
       </NotificationProvider>
     </AuthProvider>
   );

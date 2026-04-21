@@ -90,6 +90,9 @@ const ApplyLeavePermissionTab = ({
     permissionStartTime,
     permissionEndTime,
     permissionSummary,
+    permissionDate,
+    todayIso,
+    tomorrowIso,
   ]);
 
   const projectedRemaining = useMemo(() => {

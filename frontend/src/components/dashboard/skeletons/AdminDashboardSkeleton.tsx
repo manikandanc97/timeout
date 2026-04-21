@@ -38,7 +38,7 @@ const AdminDashboardSkeleton = () => {
 
       {/* Summary KPI row — matches AdminSummaryCards (icon + value + label) */}
       <section>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
           {(
             [
               'border-l-sky-200',
@@ -62,8 +62,8 @@ const AdminDashboardSkeleton = () => {
       </section>
 
       {/* Main grid + sticky calendar — matches AdminDashboard section */}
-      <section className='grid grid-cols-1 gap-6 xl:grid-cols-3 xl:items-start'>
-        <div className='space-y-6 xl:col-span-2'>
+      <section className='grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start'>
+        <div className='space-y-6 lg:col-span-2'>
           {/* Pending leave requests — loading state mirrors PendingLeaveRequests */}
           <PanelShell>
             <div className='space-y-3'>
@@ -106,7 +106,7 @@ const AdminDashboardSkeleton = () => {
         </div>
 
         {/* Calendar column — same shell as apply/loading calendar (LeaveCalendarPanel) */}
-        <div className='top-2 z-10 self-start xl:sticky xl:col-span-1'>
+        <div className='top-2 z-10 self-start lg:sticky lg:col-span-1'>
           <div className='flex flex-col overflow-hidden rounded-2xl bg-card shadow-md'>
             <div className='bg-linear-to-br from-primary-dark via-primary to-accent px-5 pb-6 pt-5'>
               <div className='flex flex-col gap-2'>

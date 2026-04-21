@@ -96,7 +96,7 @@ export default function EditEmployeeForm({
     return () => {
       cancelled = true;
     };
-  }, [employee.id, employee.reportingManager?.id, employee.reportingManager?.name]);
+  }, [employee.id, employee.reportingManager]);
 
   const departmentOptions = useMemo(
     () =>

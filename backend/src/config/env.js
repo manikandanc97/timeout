@@ -2,6 +2,8 @@ export const env = {
   nodeEnv: process.env.NODE_ENV?.trim() || 'development',
   port: Number(process.env.PORT || 5000),
   clientOrigin: process.env.CLIENT_ORIGIN?.trim() || 'http://localhost:3000',
+  apiBaseUrl: process.env.API_BASE_URL?.trim() || `http://localhost:${process.env.PORT || 5000}/api`,
+  frontendUrl: process.env.FRONTEND_URL?.trim() || 'http://localhost:3000',
 };
 
 export function requireEnv(name) {

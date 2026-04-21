@@ -1,5 +1,6 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
+import { roleMiddleware } from '../middleware/roleMiddleware.js';
 import {
   listPayroll,
   listMyPayslips,
@@ -11,9 +12,9 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router.get('/', listPayroll);
+router.get('/', roleMiddleware('ADMIN'), listPayroll);
 router.get('/my-payslips', listMyPayslips);
-router.patch('/mark-paid/bulk', markPayrollPaidBulk);
-router.patch('/:payrollId/mark-paid', markPayrollPaid);
+router.patch('/mark-paid/bulk', roleMiddleware('ADMIN'), markPayrollPaidBulk);
+router.patch('/:payrollId/mark-paid', roleMiddleware('ADMIN'), markPayrollPaid);
 
 export default router;

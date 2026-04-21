@@ -230,3 +230,24 @@ body {
 .dark .hrm-shell-inner {
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.2);
 }
+
+/* Ensure all interactive elements show a pointer cursor on hover */
+button,
+a,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select {
+  cursor: pointer;
+}
+
+button:disabled,
+a.disabled,
+[role="button"]:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+select:disabled {
+  cursor: not-allowed;
+}

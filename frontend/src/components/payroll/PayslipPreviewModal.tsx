@@ -16,6 +16,8 @@ type Props = {
 };
 
 export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownload }: Props) {
+  if (!row) return null;
+
   const hra = row.hra ?? 0;
   const bonus = row.bonus ?? 0;
   const pf = row.pf ?? 0;

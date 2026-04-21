@@ -2,7 +2,7 @@ import React from 'react';
 
 const SidebarSkeleton = () => {
   return (
-    <aside className='flex h-full w-40 flex-col bg-sidebar text-sidebar-foreground'>
+    <aside className='hidden h-full w-40 flex-col bg-sidebar text-sidebar-foreground lg:flex'>
       <div className='flex shrink-0 items-center gap-2 p-5'>
         <div className='size-6 animate-pulse rounded-md bg-card-foreground/20' />
         <div className='h-7 w-24 animate-pulse rounded bg-card-foreground/20' />

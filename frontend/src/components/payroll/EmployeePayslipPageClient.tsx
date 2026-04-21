@@ -6,7 +6,7 @@ import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
 import { formatPersonName } from '@/lib/personName';
 import api from '@/services/api';
 import type { PayrollRow } from '@/types/payroll';
-import { Download, Eye, EyeOff, ReceiptText } from 'lucide-react';
+import { Download, Eye, EyeOff } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -44,6 +44,7 @@ export default function EmployeePayslipPageClient() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadPayslips();
   }, [loadPayslips]);
 
@@ -109,25 +110,25 @@ export default function EmployeePayslipPageClient() {
 
   return (
     <section className='rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-5'>
-      <div className='mb-4 flex items-center justify-between'>
-        <div>
-          <h2 className='text-xl font-bold text-card-foreground'>My Payslips</h2>
-          <p className='text-sm text-muted-foreground'>Only paid payrolls are available for view/download.</p>
+      <div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
+        <div className='min-w-0 flex-1'>
+          <h2 className='text-xl font-bold text-card-foreground sm:text-2xl'>My Payslips</h2>
+          <p className='mt-1 text-sm text-muted-foreground'>Only paid payrolls are available for view/download.</p>
         </div>
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-3 sm:justify-end'>
           <Button
             type='button'
             variant='outline'
             onClick={() => setShowSalaryAmounts((prev) => !prev)}
-            className='h-8 px-3 text-xs'
+            className='h-9 px-3.5 text-xs sm:h-10'
           >
-            <span className='flex items-center gap-1'>
+            <span className='flex items-center gap-1.5'>
               {showSalaryAmounts ? <EyeOff size={14} /> : <Eye size={14} />}
               {showSalaryAmounts ? 'Hide Salary' : 'View Salary'}
             </span>
           </Button>
           <div className='text-right text-xs text-muted-foreground'>
-            <p>Latest paid: {latestPaidMonth}</p>
+            <p className='font-medium text-card-foreground'>Latest: {latestPaidMonth}</p>
           </div>
         </div>
       </div>
