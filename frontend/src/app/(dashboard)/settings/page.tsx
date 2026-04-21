@@ -15,6 +15,7 @@ import {
   resetAdminSettings,
   type AdminSettings,
 } from '@/services/organizationService';
+import { FormSkeleton } from '@/components/common/SkeletonLoaders';
 
 const AI_PROVIDERS = [
   {
@@ -290,9 +291,19 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="settings-page">
-        <div className="settings-loading">
-          <div className="loading-spinner" />
-          <span>Loading organization settings...</span>
+         <div className="settings-header">
+          <div className="h-8 w-48 animate-pulse rounded-lg bg-muted/20 mb-2" />
+          <div className="h-4 w-96 animate-pulse rounded-lg bg-muted/10" />
+        </div>
+        <div className="settings-layout" style={{ marginTop: '24px' }}>
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-10 w-32 animate-pulse rounded-xl bg-muted/20 shrink-0" />
+            ))}
+          </div>
+          <div className="settings-content">
+            <FormSkeleton />
+          </div>
         </div>
       </div>
     );

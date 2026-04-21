@@ -9,7 +9,10 @@
   "scripts": {
     "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "build": "npm run build -w frontend",
-    "seed": "npm run db:seed -w backend"
+    "seed": "npm run db:seed -w backend",
+    "setup": "npm install && npm run db:migrate -w backend && npm run seed",
+    "test": "npm test -w backend",
+    "test:coverage": "npm run test:coverage -w backend"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.5",

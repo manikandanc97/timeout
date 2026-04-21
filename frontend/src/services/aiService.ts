@@ -59,8 +59,9 @@ export interface AuditLog {
 export const sendMessage = async (
   message: string,
   sessionId: string,
+  otp?: string,
 ): Promise<ChatResponse> => {
-  const response = await api.post('/ai/chat', { message, sessionId });
+  const response = await api.post('/ai/chat', { message, sessionId, otp });
   return response.data;
 };
 

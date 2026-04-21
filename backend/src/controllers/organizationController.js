@@ -16,6 +16,8 @@ import {
   notifyOrgWide,
 } from '../services/notificationService.js';
 import { sendEmail } from '../services/emailService.js';
+import { calculatePayroll } from '../services/payroll/payrollCalculator.js';
+import { logSalaryChange } from '../services/payroll/payrollAuditService.js';
 
 export const getOrganizationStructure = async (req, res) => {
   try {
@@ -98,52 +100,80 @@ export const getOrganizationEmployees = async (req, res) => {
       return res.status(400).json({ message: 'Missing organization' });
     }
 
-    const today = new Date();
-    const startOfDay = new Date(today);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999);
+    const {
+      page = 1,
+      limit = 50,
+      search = '',
+      departmentId,
+      teamId,
+      status,
+    } = req.query;
 
-    const employeeWhere = {
+    const pageNum = Math.max(1, Number(page));
+    const limitNum = Math.max(1, Math.min(Number(limit), 100));
+    const skip = (pageNum - 1) * limitNum;
+
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+    const where = {
       organizationId,
       role: { not: 'ADMIN' },
+      AND: [],
     };
 
-    const leavesPromise = prisma.leave.findMany({
-      where: {
-        organizationId,
-        status: 'APPROVED',
-        startDate: { lte: endOfDay },
-        endDate: { gte: startOfDay },
-      },
-      select: { userId: true },
-    });
+    if (req.user.role === 'MANAGER') {
+      where.reportingManagerId = req.user.id;
+    }
 
-    let users;
-    try {
-      users = await prisma.user.findMany({
-        where: employeeWhere,
+    if (search) {
+      where.AND.push({
+        OR: [
+          { name: { contains: String(search), mode: 'insensitive' } },
+          { email: { contains: String(search), mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (departmentId && departmentId !== 'ALL') {
+      where.AND.push({
+        team: { departmentId: Number(departmentId) },
+      });
+    }
+
+    if (teamId && teamId !== 'ALL') {
+      where.AND.push({ teamId: Number(teamId) });
+    }
+
+    if (status && status !== 'ALL') {
+      where.isActive = status === 'ACTIVE';
+    }
+
+    const [users, totalCount, leavesToday] = await Promise.all([
+      prisma.user.findMany({
+        where,
         orderBy: { name: 'asc' },
+        skip,
+        take: limitNum,
         select: {
           ...employeeDirectorySelectBase,
           reportingManager: {
             select: { id: true, name: true },
           },
         },
-      });
-    } catch (err) {
-      if (!isMissingReportingManagerColumn(err)) throw err;
-      console.warn(
-        '[employees] reportingManager column missing; run: npx prisma migrate deploy. Listing employees without reporting manager.',
-      );
-      users = await prisma.user.findMany({
-        where: employeeWhere,
-        orderBy: { name: 'asc' },
-        select: { ...employeeDirectorySelectBase },
-      });
-    }
-
-    const leavesToday = await leavesPromise;
+      }),
+      prisma.user.count({ where }),
+      prisma.leave.findMany({
+        where: {
+          organizationId,
+          status: 'APPROVED',
+          startDate: { lte: endOfDay },
+          endDate: { gte: startOfDay },
+        },
+        select: { userId: true },
+      }),
+    ]);
 
     const onLeaveUserIds = new Set(leavesToday.map((l) => l.userId));
 
@@ -167,21 +197,25 @@ export const getOrganizationEmployees = async (req, res) => {
             id: u.team.id,
             name: u.team.name,
             department: u.team.department
-              ? {
-                  id: u.team.department.id,
-                  name: u.team.department.name,
-                }
+              ? { id: u.team.department.id, name: u.team.department.name }
               : null,
           }
         : null,
-      // Deactivated users should not surface as "On leave" in directory status.
       onLeaveToday: (u.isActive ?? true) && onLeaveUserIds.has(u.id),
     }));
 
-    res.json({ employees });
+    return res.json({
+      employees,
+      meta: {
+        total: totalCount,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalCount / limitNum),
+      },
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Failed to load employees' });
+    return res.status(500).json({ message: 'Failed to load employees' });
   }
 };
 
@@ -1206,35 +1240,37 @@ const monthlyTaxFromYearlyGross = (yearlyGrossSalary) => {
 };
 
 const deriveSalaryFromYearlyGross = (yearlyGrossSalary) => {
-  const monthlyGross = yearlyGrossSalary / 12;
+  const monthlyGross = (yearlyGrossSalary || 0) / 12;
   const basicSalary = monthlyGross * 0.5;
   const hra = basicSalary * 0.4;
-  const allowance = Math.max(monthlyGross - basicSalary - hra, 0);
-  const bonus = 0;
   const pf = basicSalary * 0.12;
   const tax = monthlyTaxFromYearlyGross(yearlyGrossSalary);
   const professionalTax = 200;
+  const allowance = Math.max(monthlyGross - basicSalary - hra, 0);
+
   return {
     yearlyGrossSalary,
     basicSalary,
     hra,
     allowance,
-    bonus,
+    bonus: 0,
     pf,
     tax,
     professionalTax,
+    esi: (monthlyGross * 0.75) / 100,
+    tds: tax,
+    pfRate: 12.0,
+    esiRate: 0.75,
+    conveyance: 0,
+    specialAllowance: 0,
+    overtimeRate: (monthlyGross / (22 * 8)) * 1.5, // 1.5x OT rate as default
   };
 };
 
-const computeNetSalary = (salary) =>
-  toNumberOrZero(salary.basicSalary) +
-  toNumberOrZero(salary.hra) +
-  toNumberOrZero(salary.allowance) +
-  toNumberOrZero(salary.bonus) -
-  toNumberOrZero(salary.pf) -
-  toNumberOrZero(salary.tax) -
-  toNumberOrZero(salary.professionalTax) -
-  toNumberOrZero(salary.lopAmount);
+const computeNetSalary = (salary) => {
+  const result = calculatePayroll(salary, { workingDays: 30 });
+  return result.netSalary;
+};
 
 const startOfDay = (d) => {
   const x = new Date(d);
@@ -1434,6 +1470,10 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
       return res.status(400).json({ message: 'Basic salary must be valid' });
     }
 
+    const oldStructure = await prisma.salaryStructure.findFirst({
+      where: { userId, organizationId, isActive: true },
+    });
+
     const payload = {
       yearlyGrossSalary,
       basicSalary: Number(basicSalary),
@@ -1442,20 +1482,22 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
       bonus: toFiniteOrNull(req.body.bonus) ?? derived?.bonus ?? 0,
       pf: toFiniteOrNull(req.body.pf) ?? derived?.pf ?? 0,
       tax: toFiniteOrNull(req.body.tax) ?? derived?.tax ?? 0,
-      professionalTax:
-        toFiniteOrNull(req.body.professionalTax) ?? derived?.professionalTax ?? 0,
+      professionalTax: toFiniteOrNull(req.body.professionalTax) ?? derived?.professionalTax ?? 0,
+      esi: Number(req.body.esi ?? derived?.esi ?? 0),
+      tds: Number(req.body.tds ?? derived?.tds ?? 0),
+      pfRate: Number(req.body.pfRate ?? derived?.pfRate ?? 12),
+      esiRate: Number(req.body.esiRate ?? derived?.esiRate ?? 0.75),
+      conveyance: Number(req.body.conveyance ?? derived?.conveyance ?? 0),
+      specialAllowance: Number(req.body.specialAllowance ?? derived?.specialAllowance ?? 0),
+      overtimeRate: Number(req.body.overtimeRate ?? derived?.overtimeRate ?? 0),
       lopDays: Math.max(toNumberOrZero(req.body.lopDays), 0),
       lopAmount: Math.max(toNumberOrZero(req.body.lopAmount), 0),
       effectiveFrom: resolveSalaryEffectiveDate(req.body.effectiveFrom),
     };
+
     if (!payload.effectiveFrom) {
       return res.status(400).json({ message: 'Invalid salary month/effective date' });
     }
-
-    await prisma.salaryStructure.updateMany({
-      where: { userId, organizationId, isActive: true },
-      data: { isActive: false },
-    });
 
     const created = await prisma.salaryStructure.create({
       data: {
@@ -1466,29 +1508,34 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
       },
     });
 
-    const netSalary = computeNetSalary(payload);
-    const payrollDate = payload.effectiveFrom;
+    if (oldStructure) {
+      await prisma.salaryStructure.update({
+        where: { id: oldStructure.id },
+        data: { isActive: false },
+      });
+      await logSalaryChange(oldStructure, created, req.user.id);
+    }
+
+    const netSalary = computeNetSalary(created);
+    const payrollDate = created.effectiveFrom;
     const payrollMonth = payrollDate.getMonth() + 1;
     const payrollYear = payrollDate.getFullYear();
+
     await prisma.payroll.upsert({
-      where: {
-        userId_month_year: {
-          userId,
-          month: payrollMonth,
-          year: payrollYear,
-        },
-      },
+      where: { userId_month_year: { userId, month: payrollMonth, year: payrollYear } },
       update: {
-        yearlyGrossSalary: payload.yearlyGrossSalary,
-        basicSalary: payload.basicSalary,
-        hra: payload.hra,
-        allowance: payload.allowance,
-        bonus: payload.bonus,
-        pf: payload.pf,
-        tax: payload.tax,
-        professionalTax: payload.professionalTax,
-        lopDays: payload.lopDays,
-        lopAmount: payload.lopAmount,
+        yearlyGrossSalary: created.yearlyGrossSalary || 0,
+        basicSalary: created.basicSalary,
+        hra: created.hra,
+        allowance: created.allowance,
+        bonus: created.bonus,
+        pf: created.pf,
+        tax: created.tax,
+        professionalTax: created.professionalTax,
+        esi: created.esi,
+        tds: created.tds,
+        lopDays: created.lopDays,
+        lopAmount: created.lopAmount,
         netSalary,
       },
       create: {
@@ -1496,18 +1543,20 @@ export const upsertEmployeeSalaryStructure = async (req, res) => {
         organizationId,
         month: payrollMonth,
         year: payrollYear,
-        yearlyGrossSalary: payload.yearlyGrossSalary,
-        basicSalary: payload.basicSalary,
-        hra: payload.hra,
-        allowance: payload.allowance,
-        bonus: payload.bonus,
-        pf: payload.pf,
-        tax: payload.tax,
-        professionalTax: payload.professionalTax,
-        lopDays: payload.lopDays,
-        lopAmount: payload.lopAmount,
+        yearlyGrossSalary: created.yearlyGrossSalary || 0,
+        basicSalary: created.basicSalary,
+        hra: created.hra,
+        allowance: created.allowance,
+        bonus: created.bonus,
+        pf: created.pf,
+        tax: created.tax,
+        professionalTax: created.professionalTax,
+        esi: created.esi,
+        tds: created.tds,
+        lopDays: created.lopDays,
+        lopAmount: created.lopAmount,
         netSalary,
-        status: 'PENDING',
+        status: 'DRAFT',
       },
     });
 
@@ -1849,6 +1898,7 @@ export const testSmtpConfiguration = async (req, res) => {
       to: targetEmail,
       subject: 'SMTP Test - Timeout HRM',
       html,
+      organizationId,
     });
 
     return res.json({ message: `Test email sent successfully to ${targetEmail}. Please check your inbox (and spam folder).` });

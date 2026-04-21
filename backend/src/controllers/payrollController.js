@@ -1,56 +1,35 @@
 import prisma from '../prismaClient.js';
-import {
-  notifyAdmins,
-  notifyEmployeePayslipPaid,
-} from '../services/notificationService.js';
+import { calculatePayroll } from '../services/payroll/payrollCalculator.js';
+import { updatePayrollStatus } from '../services/payroll/payrollWorkflowService.js';
+import { generatePayslipPDF } from '../services/payroll/payslipService.js';
+import { logPayrollAudit } from '../services/payroll/payrollAuditService.js';
+import { logger } from '../services/loggerService.js';
 
-const VIEW_ROLES = new Set(['ADMIN', 'MANAGER', 'HR']);
-const MARK_PAID_ROLES = new Set(['ADMIN', 'MANAGER']);
+const ADMIN_ROLES = new Set(['ADMIN', 'MANAGER', 'HR']);
 
-const toNumber = (value) => Number(value ?? 0);
-const toMoney = (value) => Math.round((toNumber(value) + Number.EPSILON) * 100) / 100;
-
+/**
+ * List all payroll records for an organization/month/year
+ */
 export const listPayroll = async (req, res) => {
   try {
-    if (!VIEW_ROLES.has(String(req.user.role ?? ''))) {
-      return res.status(403).json({ message: 'Not allowed to view payroll' });
-    }
-
     const organizationId = req.user.organizationId;
-    if (organizationId == null) {
-      return res.status(400).json({ message: 'Missing organization' });
-    }
+    const { month: m, year: y, page = 1, limit = 50 } = req.query;
+    
+    const month = Number(m || new Date().getMonth() + 1);
+    const year = Number(y || new Date().getFullYear());
+    const skip = (Number(page) - 1) * Number(limit);
 
-    const now = new Date();
-    const month = Number(req.query.month ?? now.getMonth() + 1);
-    const year = Number(req.query.year ?? now.getFullYear());
-    if (!Number.isFinite(month) || !Number.isFinite(year)) {
-      return res.status(400).json({ message: 'Invalid month or year' });
-    }
+    const userFilter = {
+      organizationId,
+      role: { not: 'ADMIN' },
+      ...(req.user.role === 'MANAGER' ? { reportingManagerId: req.user.id } : {}),
+    };
 
-    const monthStart = new Date(year, month - 1, 1, 0, 0, 0, 0);
-    const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
-    const [users, existingRows, salaryStructures, lopByUser] = await Promise.all([
-      prisma.user.findMany({
-        where: {
-          organizationId,
-          role: { not: 'ADMIN' },
-        },
-        orderBy: [{ name: 'asc' }],
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          isActive: true,
-          team: {
-            select: {
-              department: { select: { name: true } },
-            },
-          },
-        },
-      }),
+    const [rows, totalCount, summaryData] = await Promise.all([
       prisma.payroll.findMany({
-        where: { organizationId, month, year },
+        where: { organizationId, month, year, user: userFilter },
+        skip,
+        take: Number(limit),
         orderBy: [{ user: { name: 'asc' } }],
         include: {
           user: {
@@ -58,422 +37,216 @@ export const listPayroll = async (req, res) => {
               id: true,
               name: true,
               email: true,
-              team: {
-                select: {
-                  department: { select: { name: true } },
-                },
-              },
-              isActive: true,
+              designation: true,
+              team: { select: { name: true, department: { select: { name: true } } } },
             },
           },
         },
       }),
-      prisma.salaryStructure.findMany({
-        where: {
-          organizationId,
-          isActive: true,
-          effectiveFrom: { lte: monthEnd },
-        },
-        orderBy: [{ effectiveFrom: 'desc' }],
+      prisma.payroll.count({
+        where: { organizationId, month, year, user: userFilter },
       }),
-      prisma.leave.groupBy({
-        by: ['userId'],
-        where: {
-          organizationId,
-          status: 'APPROVED',
-          startDate: { lte: monthEnd },
-          endDate: { gte: monthStart },
-        },
-        _sum: {
-          lopDays: true,
-          lopAmount: true,
-        },
+      prisma.payroll.aggregate({
+        where: { organizationId, month, year, user: userFilter },
+        _sum: { netSalary: true },
+        _count: { id: true },
       }),
     ]);
 
-    const payrollByUser = new Map(existingRows.map((row) => [row.userId, row]));
-    const salaryByUser = new Map();
-    salaryStructures.forEach((row) => {
-      if (!salaryByUser.has(row.userId)) {
-        salaryByUser.set(row.userId, row);
-      }
+    const paidCount = await prisma.payroll.count({
+      where: { organizationId, month, year, status: 'PAID', user: userFilter },
     });
-    const lopByUserMap = new Map(
-      lopByUser.map((row) => [
-        row.userId,
-        {
-          lopDays: toNumber(row._sum?.lopDays),
-          lopAmount: toNumber(row._sum?.lopAmount),
-        },
-      ]),
-    );
 
-    const rowsToCreate = users
-      .filter((user) => user.isActive && !payrollByUser.has(user.id) && salaryByUser.has(user.id))
-      .map((user) => {
-        const salary = salaryByUser.get(user.id);
-        const lop = lopByUserMap.get(user.id) ?? { lopDays: 0, lopAmount: 0 };
-        const basicSalary = toNumber(salary?.basicSalary);
-        const hra = toNumber(salary?.hra);
-        const allowance = toNumber(salary?.allowance);
-        const bonus = toNumber(salary?.bonus);
-        const pf = toNumber(salary?.pf);
-        const tax = toNumber(salary?.tax);
-        const professionalTax = toNumber(salary?.professionalTax);
-        const yearlyGrossSalary = toNumber(salary?.yearlyGrossSalary);
-        const lopAmount = toNumber(lop.lopAmount);
-        const deductions = pf + tax + professionalTax + lopAmount;
-        const netSalary = Math.max(basicSalary + hra + allowance + bonus - deductions, 0);
-        return {
-          userId: user.id,
-          organizationId,
-          month,
-          year,
-          yearlyGrossSalary,
-          basicSalary,
-          hra,
-          allowance,
-          bonus,
-          pf,
-          tax,
-          professionalTax,
-          lopDays: toNumber(lop.lopDays),
-          lopAmount,
-          netSalary,
-          status: 'PENDING',
-        };
-      });
-
-    if (rowsToCreate.length > 0) {
-      await prisma.payroll.createMany({
-        data: rowsToCreate,
-        skipDuplicates: true,
-      });
-    }
-
-    const rows = await prisma.payroll.findMany({
-      where: { organizationId, month, year },
-      orderBy: [{ user: { name: 'asc' } }],
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            team: {
-              select: {
-                department: { select: { name: true } },
-              },
-            },
-            isActive: true,
-          },
-        },
+    res.json({
+      payroll: rows,
+      summary: {
+        totalEmployees: summaryData._count.id,
+        paidEmployees: paidCount,
+        totalNetSalary: summaryData._sum.netSalary || 0,
+      },
+      pagination: {
+        total: totalCount,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(totalCount / Number(limit)),
       },
     });
-
-    const refreshedPayrollByUser = new Map(rows.map((row) => [row.userId, row]));
-
-    const payroll = users.map((user) => {
-      const row = refreshedPayrollByUser.get(user.id);
-      if (!row) {
-        return {
-          id: -user.id,
-          userId: user.id,
-          employeeName: user.name ?? 'Employee',
-          email: user.email ?? null,
-          department: user.team?.department?.name ?? null,
-          employeeActive: Boolean(user.isActive),
-          yearlyGrossSalary: 0,
-          basicSalary: 0,
-          hra: 0,
-          allowance: 0,
-          deductions: 0,
-          bonus: 0,
-          pf: 0,
-          tax: 0,
-          professionalTax: 0,
-          lopDays: 0,
-          lopAmount: 0,
-          netSalary: 0,
-          status: 'NOT_ADDED',
-          paidDate: null,
-          month,
-          year,
-          payrollAdded: false,
-        };
-      }
-      const lopAmount = toNumber(row.lopAmount);
-      const deductions =
-        toNumber(row.pf) +
-        toNumber(row.tax) +
-        toNumber(row.professionalTax) +
-        lopAmount;
-      return {
-        id: row.id,
-        userId: row.userId,
-        employeeName: row.user?.name ?? 'Employee',
-        email: row.user?.email ?? null,
-        department: row.user?.team?.department?.name ?? null,
-        employeeActive: Boolean(row.user?.isActive ?? true),
-        yearlyGrossSalary: toNumber(row.yearlyGrossSalary),
-        basicSalary: toNumber(row.basicSalary),
-        hra: toNumber(row.hra),
-        allowance: toNumber(row.allowance),
-        deductions: toMoney(deductions),
-        bonus: toNumber(row.bonus),
-        pf: toNumber(row.pf),
-        tax: toNumber(row.tax),
-        professionalTax: toNumber(row.professionalTax),
-        lopDays: toNumber(row.lopDays),
-        lopAmount,
-        netSalary: toMoney(
-          Math.max(
-            toNumber(row.basicSalary) +
-              toNumber(row.hra) +
-              toNumber(row.allowance) +
-              toNumber(row.bonus) -
-              deductions,
-            0,
-          ),
-        ),
-        status: row.status,
-        paidDate: row.paidDate ? row.paidDate.toISOString() : null,
-        month: row.month,
-        year: row.year,
-        payrollAdded: true,
-      };
-    });
-
-    res.json({ payroll, month, year });
   } catch (error) {
-    console.error(error);
+    logger.error('[PayrollController] Failed to list payroll', error);
     res.status(500).json({ message: 'Failed to load payroll' });
   }
 };
 
-export const listMyPayslips = async (req, res) => {
+/**
+ * Generate (or recalculate) payroll for a month
+ */
+export const generatePayroll = async (req, res) => {
   try {
     const organizationId = req.user.organizationId;
-    const userId = req.user.id;
-    if (organizationId == null || userId == null) {
-      return res.status(400).json({ message: 'Missing organization or user' });
-    }
+    const { month: m, year: y } = req.body;
+    const month = Number(m || new Date().getMonth() + 1);
+    const year = Number(y || new Date().getFullYear());
 
-    const rows = await prisma.payroll.findMany({
-      where: {
-        organizationId,
-        userId,
-        status: 'PAID',
-      },
-      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0, 23, 59, 59);
+
+    // 1. Fetch Users & Their Active Salary Structures
+    const users = await prisma.user.findMany({
+      where: { organizationId, role: { not: 'ADMIN' }, isActive: true },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            isActive: true,
-          },
+        salaryStructures: {
+          where: { isActive: true, effectiveFrom: { lte: monthEnd } },
+          orderBy: { effectiveFrom: 'desc' },
+          take: 1,
         },
       },
     });
 
-    const payslips = rows.map((row) => {
-      const lopAmount = toNumber(row.lopAmount);
-      const deductions =
-        toNumber(row.pf) +
-        toNumber(row.tax) +
-        toNumber(row.professionalTax) +
-        lopAmount;
-      return {
-        id: row.id,
-        userId: row.userId,
-        employeeName: row.user?.name ?? 'Employee',
-        email: row.user?.email ?? null,
-        employeeActive: Boolean(row.user?.isActive ?? true),
-        yearlyGrossSalary: toNumber(row.yearlyGrossSalary),
-        basicSalary: toNumber(row.basicSalary),
-        hra: toNumber(row.hra),
-        allowance: toNumber(row.allowance),
-        deductions: toMoney(deductions),
-        bonus: toNumber(row.bonus),
-        pf: toNumber(row.pf),
-        tax: toNumber(row.tax),
-        professionalTax: toNumber(row.professionalTax),
-        lopDays: toNumber(row.lopDays),
-        lopAmount,
-        netSalary: toMoney(
-          Math.max(
-            toNumber(row.basicSalary) +
-              toNumber(row.hra) +
-              toNumber(row.allowance) +
-              toNumber(row.bonus) -
-              deductions,
-            0,
-          ),
-        ),
-        status: row.status,
-        paidDate: row.paidDate ? row.paidDate.toISOString() : null,
-        month: row.month,
-        year: row.year,
-        payrollAdded: true,
-      };
-    });
-
-    return res.json({ payslips });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to load payslips' });
-  }
-};
-
-export const markPayrollPaid = async (req, res) => {
-  try {
-    if (!MARK_PAID_ROLES.has(String(req.user.role ?? ''))) {
-      return res.status(403).json({ message: 'Not allowed to mark payroll paid' });
-    }
-    const organizationId = req.user.organizationId;
-    if (organizationId == null) {
-      return res.status(400).json({ message: 'Missing organization' });
-    }
-
-    const payrollId = Number(req.params.payrollId);
-    if (Number.isNaN(payrollId)) {
-      return res.status(400).json({ message: 'Invalid payroll id' });
-    }
-
-    const existing = await prisma.payroll.findFirst({
-      where: { id: payrollId, organizationId },
-      include: { user: { select: { name: true } } },
-    });
-    if (!existing) {
-      return res.status(404).json({ message: 'Payroll record not found' });
-    }
-
-    if (existing.status === 'PAID') {
-      return res.json({
-        payroll: {
-          id: existing.id,
-          status: existing.status,
-          paidDate: existing.paidDate ? existing.paidDate.toISOString() : null,
-          employeeName: existing.user?.name ?? null,
-        },
-      });
-    }
-
-    const updated = await prisma.payroll.update({
-      where: { id: payrollId },
-      data: { status: 'PAID', paidDate: new Date() },
-      include: { user: { select: { name: true } } },
-    });
-
-    try {
-      await notifyEmployeePayslipPaid({
-        userId: updated.userId,
-        organizationId,
-        month: updated.month,
-        year: updated.year,
-      });
-      await notifyAdmins({
-        organizationId,
-        type: 'PAYROLL_UPDATED',
-        title: 'Payroll marked paid',
-        body: `${updated.user?.name ?? 'Employee'} payroll marked as paid.`,
-      });
-    } catch (notifyErr) {
-      console.error('[notifications] payslip paid', notifyErr);
-    }
-
-    res.json({
-      payroll: {
-        id: updated.id,
-        status: updated.status,
-        paidDate: updated.paidDate ? updated.paidDate.toISOString() : null,
-        employeeName: updated.user?.name ?? null,
-      },
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to update payroll status' });
-  }
-};
-
-export const markPayrollPaidBulk = async (req, res) => {
-  try {
-    if (!MARK_PAID_ROLES.has(String(req.user.role ?? ''))) {
-      return res.status(403).json({ message: 'Not allowed to mark payroll paid' });
-    }
-    const organizationId = req.user.organizationId;
-    if (organizationId == null) {
-      return res.status(400).json({ message: 'Missing organization' });
-    }
-
-    const now = new Date();
-    const month = Number(req.body?.month ?? now.getMonth() + 1);
-    const year = Number(req.body?.year ?? now.getFullYear());
-    if (!Number.isFinite(month) || !Number.isFinite(year)) {
-      return res.status(400).json({ message: 'Invalid month or year' });
-    }
-
-    const pendingRows = await prisma.payroll.findMany({
+    // 2. Fetch LOP data from Leaves
+    const lopData = await prisma.leave.groupBy({
+      by: ['userId'],
       where: {
         organizationId,
-        month,
-        year,
-        status: { not: 'PAID' },
-        user: { isActive: true },
+        status: 'APPROVED',
+        startDate: { lte: monthEnd },
+        endDate: { gte: monthStart },
       },
-      select: { id: true, userId: true },
+      _sum: { lopDays: true },
     });
 
-    const result = await prisma.payroll.updateMany({
-      where: {
-        organizationId,
-        month,
-        year,
-        status: { not: 'PAID' },
-        user: { isActive: true },
-      },
-      data: {
-        status: 'PAID',
-        paidDate: new Date(),
-      },
-    });
+    const lopMap = new Map(lopData.map(d => [d.userId, d._sum.lopDays || 0]));
 
-    for (const row of pendingRows) {
-      try {
-        await notifyEmployeePayslipPaid({
-          userId: row.userId,
+    let created = 0;
+    let updated = 0;
+
+    for (const user of users) {
+      if (user.salaryStructures.length === 0) continue;
+
+      const salary = user.salaryStructures[0];
+      const lopDays = lopMap.get(user.id) || 0;
+      
+      const calculated = calculatePayroll(salary, { lopDays });
+
+      await prisma.payroll.upsert({
+        where: { userId_month_year: { userId: user.id, month, year } },
+        create: {
+          userId: user.id,
           organizationId,
           month,
           year,
-        });
-      } catch (notifyErr) {
-        console.error('[notifications] payslip paid bulk', notifyErr);
-      }
-    }
-    if (pendingRows.length > 0) {
-      try {
-        await notifyAdmins({
-          organizationId,
-          type: 'PAYROLL_UPDATED',
-          title: 'Payroll marked paid (bulk)',
-          body: `${pendingRows.length} payroll record(s) were marked as paid.`,
-        });
-      } catch (notifyErr) {
-        console.error('[notifications] payroll updated bulk', notifyErr);
-      }
+          yearlyGrossSalary: salary.yearlyGrossSalary || 0,
+          ...calculated.components,
+          ...calculated.deductions,
+          ...calculated.overtime,
+          netSalary: calculated.netSalary,
+          status: 'DRAFT',
+        },
+        update: {
+          yearlyGrossSalary: salary.yearlyGrossSalary || 0,
+          ...calculated.components,
+          ...calculated.deductions,
+          ...calculated.overtime,
+          netSalary: calculated.netSalary,
+        },
+      });
+      
+      user.payrollId ? updated++ : created++;
     }
 
-    return res.json({
-      message: `Marked ${result.count} payroll record(s) as paid`,
-      updatedCount: result.count,
-      month,
-      year,
+    await logPayrollAudit({
+      organizationId,
+      actorId: req.user.id,
+      entityType: 'PAYROLL_BULK',
+      entityId: 0,
+      action: 'GENERATE',
+      newValue: { month, year, created, updated },
     });
+
+    res.json({ message: `Payroll processed: ${created} created, ${updated} updated` });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to update payroll status' });
+    logger.error('[PayrollController] Generation failed', error);
+    res.status(500).json({ message: 'Failed to generate payroll' });
   }
 };
 
+/**
+ * Handle Workflow Status Updates
+ */
+export const updatePayrollWorkflowStatus = async (req, res) => {
+  try {
+    const { payrollId } = req.params;
+    const { status, comment } = req.body;
+    
+    const result = await updatePayrollStatus({
+      payrollId: Number(payrollId),
+      organizationId: req.user.organizationId,
+      status,
+      comment,
+      actorId: req.user.id,
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+/**
+ * Download Payslip PDF
+ */
+export const downloadPayslip = async (req, res) => {
+  try {
+    const { payrollId } = req.params;
+    const organizationId = req.user.organizationId;
+
+    const payroll = await prisma.payroll.findUnique({
+      where: { id: Number(payrollId) },
+      include: {
+        user: { 
+          select: { 
+            name: true, 
+            designation: true,
+            team: { select: { department: { select: { name: true } } } }
+          } 
+        }
+      }
+    });
+
+    if (!payroll || payroll.organizationId !== organizationId) {
+      return res.status(404).json({ message: 'Payroll record not found' });
+    }
+
+    // Security check: Employees can only download their own
+    if (req.user.role === 'EMPLOYEE' && payroll.userId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId }
+    });
+
+    const pdfBuffer = await generatePayslipPDF(payroll, organization);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=payslip_${payroll.month}_${payroll.year}.pdf`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    logger.error('[PayrollController] PDF generation failed', error);
+    res.status(500).json({ message: 'Failed to generate PDF' });
+  }
+};
+
+/**
+ * List My Payslips (Employee View)
+ */
+export const listMyPayslips = async (req, res) => {
+  try {
+    const rows = await prisma.payroll.findMany({
+      where: { userId: req.user.id, status: 'PAID' },
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+    });
+    res.json({ payslips: rows });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to load payslips' });
+  }
+};

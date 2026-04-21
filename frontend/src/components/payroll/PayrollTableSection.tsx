@@ -1,10 +1,11 @@
-import Button from '@/components/ui/Button';
-import { formatPersonName } from '@/lib/personName';
 import type { PayrollRow } from '@/types/payroll';
-import { Download, Eye, RotateCcw } from 'lucide-react';
+import { Download, Eye, RotateCcw, WalletCards } from 'lucide-react';
+import { TableSkeleton } from '@/components/common/SkeletonLoaders';
+import EmptyState from '@/components/ui/EmptyState';
 
 type Props = {
   loading: boolean;
+// ... (rest of props)
   visibleRows: PayrollRow[];
   searchTerm: string;
   setSearchTerm: (value: string) => void;
@@ -26,9 +27,13 @@ type Props = {
   onDownloadPayslip: (row: PayrollRow) => void;
   formatTableAmount: (value: number) => React.ReactNode;
   isAdmin: boolean;
+  pagination: { total: number; page: number; limit: number; totalPages: number };
+  onPageChange: (page: number) => void;
 };
 
 export default function PayrollTableSection(props: Props) {
+  const { pagination, onPageChange } = props;
+
   return (
     <section className='flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-muted/25 p-3 shadow-sm sm:gap-3.5 sm:p-4'>
       <div className='flex flex-wrap items-center justify-end gap-2'>
@@ -49,9 +54,29 @@ export default function PayrollTableSection(props: Props) {
             <thead className='sticky top-0 z-10'><tr className='border-b border-border bg-muted/90 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'><th className='px-4 py-3.5 text-left'>Employee Name</th><th className='px-4 py-3.5 text-left'>Basic</th><th className='px-4 py-3.5 text-left'>Allowance</th><th className='px-4 py-3.5 text-left'>LOP</th><th className='px-4 py-3.5 text-left'>Deductions</th><th className='px-4 py-3.5 text-left'>Net Salary</th><th className='px-4 py-3.5 text-left'>Status</th><th className='px-4 py-3.5 text-right'>Action</th></tr></thead>
             <tbody>
               {props.loading ? (
-                <tr><td colSpan={8} className='px-4 py-16 text-center text-sm text-muted-foreground'>Loading payroll...</td></tr>
+                <tr>
+                  <td colSpan={8} className='p-0'>
+                    <TableSkeleton rows={8} columns={8} />
+                  </td>
+                </tr>
               ) : props.visibleRows.length === 0 ? (
-                <tr><td colSpan={8} className='px-4 py-16 text-center text-sm text-muted-foreground'>No employees match the selected filters.</td></tr>
+                <tr>
+                  <td colSpan={8} className='px-4 py-8'>
+                    <EmptyState 
+                      icon={WalletCards}
+                      title="No payroll records found"
+                      description={props.hasActiveFilters 
+                        ? "No employees match your current filters. Try adjust your search or filters." 
+                        : "There are no payroll records for this period. Click 'Generate Payroll' to get started."
+                      }
+                      action={props.hasActiveFilters ? (
+                        <Button variant="outline" size="sm" onClick={props.onClearFilters}>
+                          Clear all filters
+                        </Button>
+                      ) : undefined}
+                    />
+                  </td>
+                </tr>
               ) : (
                 props.visibleRows.map((row) => {
                   const isDeactivated = row.employeeActive === false;
@@ -116,6 +141,36 @@ export default function PayrollTableSection(props: Props) {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+      {/* Pagination Controls */}
+      <div className='flex items-center justify-between px-2 py-3'>
+        <div className='text-sm text-muted-foreground'>
+          Showing <span className='font-medium text-foreground'>{props.visibleRows.length}</span> of{' '}
+          <span className='font-medium text-foreground'>{pagination.total}</span> records
+        </div>
+        <div className='flex items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            className='h-9 rounded-lg! px-3! text-xs!'
+            disabled={pagination.page <= 1 || props.loading}
+            onClick={() => onPageChange(pagination.page - 1)}
+          >
+            Previous
+          </Button>
+          <div className='flex h-9 min-w-9 items-center justify-center rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground'>
+            Page {pagination.page} of {pagination.totalPages || 1}
+          </div>
+          <Button
+            type='button'
+            variant='outline'
+            className='h-9 rounded-lg! px-3! text-xs!'
+            disabled={pagination.page >= pagination.totalPages || props.loading}
+            onClick={() => onPageChange(pagination.page + 1)}
+          >
+            Next
+          </Button>
         </div>
       </div>
     </section>

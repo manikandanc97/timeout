@@ -1,8 +1,10 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Users } from 'lucide-react';
 
 import Button from '@/components/ui/Button';
 import { formatPersonName } from '@/lib/personName';
 import type { OrganizationEmployee } from '@/types/employee';
+import { TableSkeleton } from '@/components/common/SkeletonLoaders';
+import EmptyState from '@/components/common/EmptyState';
 
 import { formatJoined, roleLabel } from './utils';
 
@@ -42,20 +44,18 @@ export default function EmployeesTable({
           <tbody>
             {loading ? (
               <tr>
-                <td
-                  colSpan={9}
-                  className='px-4 py-16 text-center align-middle text-sm text-muted-foreground sm:py-24'
-                >
-                  Loading…
+                <td colSpan={9} className='p-0'>
+                  <TableSkeleton rows={10} columns={9} />
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={9}
-                  className='px-4 py-16 text-center align-middle text-sm text-muted-foreground sm:py-24'
-                >
-                  No employees match your filters.
+                <td colSpan={9} className='p-8'>
+                  <EmptyState
+                    icon={Users}
+                    title='No employees found'
+                    description="We couldn't find any employees matching your current filters or search query."
+                  />
                 </td>
               </tr>
             ) : (

@@ -82,7 +82,8 @@ export function useAIChat(userRole?: string) {
     setMessages((prev) => [...prev, loadingMsg]);
 
     try {
-      const response = await sendMessage(message, sessionId.current);
+      const isOtpPhase = phase === 'AWAITING_OTP';
+      const response = await sendMessage(message, sessionId.current, isOtpPhase ? message : undefined);
       applyResponse(response);
     } catch {
       removeLoading();

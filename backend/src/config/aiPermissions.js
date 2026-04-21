@@ -100,6 +100,17 @@ export const CONFIRMATION_REQUIRED_ACTIONS = new Set([
 ]);
 
 /**
+ * Actions that require a secondary SMTP OTP verification.
+ * These are high-risk operations that modify core organizational structure.
+ */
+export const SENSITIVE_ACTIONS = new Set([
+  AI_ACTIONS.DELETE_EMPLOYEE,
+  AI_ACTIONS.ADD_EMPLOYEE,
+  AI_ACTIONS.ASSIGN_ROLE,
+  AI_ACTIONS.UPDATE_AI_SETTINGS,
+]);
+
+/**
  * Check if a role is allowed to perform an action.
  * @param {string} role - User's role (EMPLOYEE | MANAGER | ADMIN)
  * @param {string} action - Action constant from AI_ACTIONS

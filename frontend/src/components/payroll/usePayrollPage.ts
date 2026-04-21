@@ -12,8 +12,17 @@ import toast from 'react-hot-toast';
 export function usePayrollPage(canView: boolean) {
   const [rows, setRows] = useState<PayrollRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 50, totalPages: 0 });
+  const [summaryData, setSummaryData] = useState({
+    totalEmployees: '0',
+    payrollProcessed: '0',
+    pendingPayroll: '0',
+    totalSalaryPaid: '₹0.00',
+    currentMonth: '',
+  });
   const [bulkMarkingPaid, setBulkMarkingPaid] = useState(false);
   const [showAmounts, setShowAmounts] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,11 +33,42 @@ export function usePayrollPage(canView: boolean) {
     if (!canView) return Promise.resolve();
     setLoading(true);
     return api
-      .get<{ payroll: PayrollRow[] }>(`/payroll?month=${selectedMonth}&year=${selectedYear}`)
-      .then((res) => setRows(Array.isArray(res.data?.payroll) ? res.data.payroll : []))
+      .get<{ 
+        payroll: PayrollRow[]; 
+        summary: any; 
+        pagination: { total: number; page: number; limit: number; totalPages: number } 
+      }>(`/payroll?month=${selectedMonth}&year=${selectedYear}&page=${pagination.page}`)
+      .then((res) => {
+        setRows(Array.isArray(res.data?.payroll) ? res.data.payroll : []);
+        if (res.data?.summary) {
+          setSummaryData({
+            totalEmployees: String(res.data.summary.totalEmployees),
+            payrollProcessed: String(res.data.summary.payrollProcessed),
+            pendingPayroll: String(res.data.summary.pendingPayroll),
+            totalSalaryPaid: formatCurrencyINR(res.data.summary.totalSalaryPaid),
+            currentMonth: res.data.summary.currentMonth,
+          });
+        }
+        if (res.data?.pagination) {
+          setPagination(res.data.pagination);
+        }
+      })
       .catch((error: unknown) => toast.error(getApiErrorMessage(error, 'Failed to load payroll')))
       .finally(() => setLoading(false));
-  }, [canView, selectedMonth, selectedYear]);
+  }, [canView, selectedMonth, selectedYear, pagination.page]);
+
+  const generateMonthlyPayroll = async () => {
+    setGenerating(true);
+    try {
+      const res = await api.post('/payroll/generate', { month: selectedMonth, year: selectedYear });
+      toast.success(res.data?.message || 'Payroll generated successfully');
+      await loadPayroll();
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to generate payroll'));
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -42,25 +82,6 @@ export function usePayrollPage(canView: boolean) {
       void loadPayroll();
     });
   }, [loadPayroll]);
-
-  const summary = useMemo(() => {
-    const totalEmployees = rows.length;
-    const payrollProcessed = rows.filter((row) => row.status === 'PAID').length;
-    const pendingPayroll = totalEmployees - payrollProcessed;
-    const totalSalaryPaid = rows
-      .filter((row) => row.status === 'PAID')
-      .reduce((sum, row) => sum + row.netSalary, 0);
-    return {
-      totalEmployees: String(totalEmployees),
-      payrollProcessed: String(payrollProcessed),
-      pendingPayroll: String(pendingPayroll),
-      totalSalaryPaid: formatCurrencyINR(totalSalaryPaid),
-      currentMonth: new Date(selectedYear, selectedMonth - 1, 1).toLocaleString('en-IN', {
-        month: 'short',
-        year: 'numeric',
-      }),
-    };
-  }, [rows, selectedMonth, selectedYear]);
 
   const visibleRows = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -105,6 +126,8 @@ export function usePayrollPage(canView: boolean) {
     rows,
     setRows,
     loading,
+    generating,
+    generateMonthlyPayroll,
     selectedMonth,
     setSelectedMonth,
     selectedYear,
@@ -120,9 +143,11 @@ export function usePayrollPage(canView: boolean) {
     sortBy,
     setSortBy,
     loadPayroll,
-    summary,
+    summary: summaryData,
     visibleRows,
     hasActiveFilters,
     bulkMarkPaidEligibleCount,
+    pagination,
+    setPage: (page: number) => setPagination(prev => ({ ...prev, page })),
   };
 }

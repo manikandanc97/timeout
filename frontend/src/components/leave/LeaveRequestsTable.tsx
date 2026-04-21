@@ -8,6 +8,8 @@ import type { LeaveWithEmployee } from '@/types/leave';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
 import { formatPersonName } from '@/lib/personName';
 import { useState } from 'react';
+import { Calendar } from 'lucide-react';
+import EmptyState from '@/components/common/EmptyState';
 
 type Props = {
   rows: LeaveWithEmployee[];
@@ -78,11 +80,12 @@ export default function LeaveRequestsTable({
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td
-                colSpan={7}
-                className='px-3 py-16 text-center align-middle text-sm text-muted-foreground sm:px-4 sm:py-24'
-              >
-                No leave requests match your filters.
+              <td colSpan={7} className='p-8'>
+                <EmptyState
+                  icon={Calendar}
+                  title='No leave requests'
+                  description="All caught up! There are no leave requests matching your current filters."
+                />
               </td>
             </tr>
           ) : (

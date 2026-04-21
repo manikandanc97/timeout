@@ -84,9 +84,11 @@ export const login = async (req, res) => {
       expiresIn: '1d',
     });
 
+    const isProd = process.env.NODE_ENV === 'production';
+
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: 15 * 60 * 1000,
@@ -94,7 +96,7 @@ export const login = async (req, res) => {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: 24 * 60 * 60 * 1000,
@@ -131,7 +133,7 @@ export const refreshTokenHandler = (req, res) => {
 
     res.cookie('accessToken', newAccessToken, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 15 * 60 * 1000,
@@ -241,16 +243,17 @@ export const changePassword = async (req, res) => {
 };
 
 export const logout = (req, res) => {
+  const isProd = process.env.NODE_ENV === 'production';
   res.clearCookie('refreshToken', {
     httpOnly: true,
-    secure: false,
+    secure: isProd,
     sameSite: 'lax',
     path: '/',
   });
 
   res.clearCookie('accessToken', {
     httpOnly: true,
-    secure: false,
+    secure: isProd,
     sameSite: 'lax',
     path: '/',
   });
@@ -299,6 +302,7 @@ export const forgotPassword = async (req, res) => {
       to: email,
       subject: 'Password Reset Request – Timeout HRM',
       html,
+      organizationId: user.organizationId,
     });
 
     return res.json({ message: 'If an account with that email exists, we have sent a password reset link.' });

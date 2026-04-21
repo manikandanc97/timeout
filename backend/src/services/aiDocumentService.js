@@ -5,6 +5,7 @@
 
 import { storeChunk } from './aiVectorService.js';
 import prisma from '../prismaClient.js';
+import { logger } from './loggerService.js';
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 200;
@@ -60,7 +61,7 @@ export const ingestPolicy = async (organizationId, hrPolicyId) => {
   const fullText = `# ${policy.title}\nCategory: ${policy.category}\n\n${policy.content}`;
   const chunks = splitText(fullText);
 
-  console.log(`[RAG] Chunking policy "${policy.title}" into ${chunks.length} segments...`);
+  logger.info(`[RAG] Chunking policy "${policy.title}" into ${chunks.length} segments...`);
 
   for (let i = 0; i < chunks.length; i++) {
     await storeChunk({
@@ -76,7 +77,7 @@ export const ingestPolicy = async (organizationId, hrPolicyId) => {
     });
   }
 
-  console.log(`[RAG] Policy "${policy.title}" ingestion complete.`);
+  logger.info(`[RAG] Policy "${policy.title}" ingestion complete.`);
 };
 
 /**

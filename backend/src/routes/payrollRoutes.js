@@ -4,17 +4,28 @@ import { roleMiddleware } from '../middleware/roleMiddleware.js';
 import {
   listPayroll,
   listMyPayslips,
-  markPayrollPaidBulk,
-  markPayrollPaid,
+  generatePayroll,
+  updatePayrollWorkflowStatus,
+  downloadPayslip,
 } from '../controllers/payrollController.js';
+
+import { validate } from '../middleware/validationMiddleware.js';
+import {
+  payrollGenerationSchema,
+  updatePayrollStatusSchema,
+} from '../validations/payrollSchemas.js';
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
-router.get('/', roleMiddleware('ADMIN'), listPayroll);
+// Admin/Manager/HR Routes
+router.get('/', roleMiddleware('ADMIN', 'MANAGER', 'HR'), listPayroll);
+router.post('/generate', roleMiddleware('ADMIN', 'MANAGER'), validate(payrollGenerationSchema), generatePayroll);
+router.patch('/:payrollId/status', roleMiddleware('ADMIN', 'MANAGER', 'HR'), validate(updatePayrollStatusSchema), updatePayrollWorkflowStatus);
+
+// Common/Employee Routes
 router.get('/my-payslips', listMyPayslips);
-router.patch('/mark-paid/bulk', roleMiddleware('ADMIN'), markPayrollPaidBulk);
-router.patch('/:payrollId/mark-paid', roleMiddleware('ADMIN'), markPayrollPaid);
+router.get('/:payrollId/pdf', downloadPayslip);
 
 export default router;

@@ -17,8 +17,11 @@ import {
   canPerformAction,
   ACTION_REQUIRED_FIELDS,
   CONFIRMATION_REQUIRED_ACTIONS,
+  SENSITIVE_ACTIONS,
 } from '../config/aiPermissions.js';
 import { getAiSettings } from '../services/aiProviderService.js';
+import { generateAndSendOTP, verifyOTP } from '../services/otpService.js';
+import { logger } from '../services/loggerService.js';
 
 // ─── Helper: Get full user from DB ──────────────────────────────────────────
 async function getFullUser(authUser) {
@@ -87,6 +90,18 @@ export const handleChat = async (req, res) => {
 
       updateSession(sessionId, { phase: 'EXECUTING' });
 
+      // Check if this action required OTP and we're actually in OTP phase
+      if (SENSITIVE_ACTIONS.has(intent) && session.phase === 'AWAITING_OTP') {
+        const { otp } = req.body;
+        if (!otp) return res.status(400).json({ message: 'OTP is required for this action' });
+        
+        const v = await verifyOTP(user.id, otp);
+        if (!v.valid) {
+          updateSession(sessionId, { phase: 'AWAITING_OTP' });
+          return res.json({ response: `❌ ${v.message}`, phase: 'AWAITING_OTP' });
+        }
+      }
+
       const result = await executeAction({
         action: intent,
         user,
@@ -110,6 +125,22 @@ export const handleChat = async (req, res) => {
           suggestions: getRoleSuggestions(user.role),
         });
       }
+    }
+
+    // ── Handle OTP request ──────────────────────────────────────────────────
+    if (confirm && session.phase === 'AWAITING_CONFIRMATION' && SENSITIVE_ACTIONS.has(session.intent)) {
+       await generateAndSendOTP({
+         userId: user.id,
+         organizationId: user.organizationId,
+         email: user.email,
+         action: session.intent
+       });
+       updateSession(sessionId, { phase: 'AWAITING_OTP' });
+       return res.json({
+         response: "🔐 For security, I've sent a 6-digit verification code to your email. Please enter it below to proceed.",
+         phase: 'AWAITING_OTP',
+         intent: session.intent
+       });
     }
 
     // ── Normal message handling ────────────────────────────────────────────
@@ -392,10 +423,10 @@ export const reindexKnowledgeBase = async (req, res) => {
     // Run in background to avoid timeout
     reindexAllPolicies(req.user.organizationId)
       .then(() => {
-        console.log(`[AI Knowledge] Re-indexing complete for org ${req.user.organizationId}`);
+        logger.info(`[AI Knowledge] Re-indexing complete for org ${req.user.organizationId}`);
       })
       .catch((err) => {
-        console.error(`[AI Knowledge] Re-indexing failed for org ${req.user.organizationId}:`, err);
+        logger.error(`[AI Knowledge] Re-indexing failed for org ${req.user.organizationId}`, err);
       });
 
     await logAIAction({

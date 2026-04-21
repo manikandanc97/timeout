@@ -25,29 +25,42 @@ export function useEmployeesDirectory(enabled: boolean) {
   const [teamFilter, setTeamFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState<EmployeeStatusFilter>('ALL');
   const [addOpen, setAddOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
 
   const loadEmployees = useCallback(async () => {
+    if (!enabled) return;
     setLoadingList(true);
     try {
-      const { data } = await api.get<{ employees: OrganizationEmployee[] }>(
+      const { data } = await api.get<{ 
+        employees: OrganizationEmployee[],
+        meta: { total: number, totalPages: number }
+      }>(
         '/organization/employees',
+        {
+          params: {
+            page,
+            limit: EMPLOYEES_PAGE_SIZE,
+            search: searchTerm,
+            departmentId: departmentFilter,
+            teamId: teamFilter,
+            status: statusFilter,
+          }
+        }
       );
       setEmployees(data.employees ?? []);
+      setMeta(data.meta ?? { total: (data.employees ?? []).length, totalPages: 1 });
     } catch (error: unknown) {
       setEmployees([]);
       toast.error(getApiErrorMessage(error, 'Could not load employees'));
     } finally {
       setLoadingList(false);
     }
-  }, []);
+  }, [enabled, page, searchTerm, departmentFilter, teamFilter, statusFilter]);
 
   useEffect(() => {
-    if (!enabled) {
-      setLoadingList(false);
-      return;
-    }
     void loadEmployees();
-  }, [enabled, loadEmployees]);
+  }, [loadEmployees]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -85,30 +98,17 @@ export function useEmployeesDirectory(enabled: boolean) {
     }
   }, [teamOptionsForFilter, teamFilter]);
 
+  // Summary might need adjustments if it's supposed to be global.
+  // For now, it will summarize only the CURRENT page, which is a common limitation of server-side paging
+  // unless a separate summary API is provided. To be perfect, we'd need another API call.
   const summary = useMemo(
     () => computeEmployeeSummary(employees),
     [employees],
   );
 
-  const filtered = useMemo(
-    () =>
-      filterEmployees(employees, {
-        searchTerm,
-        departmentFilter,
-        teamFilter,
-        statusFilter,
-      }),
-    [employees, searchTerm, departmentFilter, teamFilter, statusFilter],
-  );
-
-  const { page, setPage, pageCount, safePage, pageSlice } = usePagination({
-    items: filtered,
-    pageSize: EMPLOYEES_PAGE_SIZE,
-  });
-
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, departmentFilter, teamFilter, statusFilter, setPage]);
+  }, [searchTerm, departmentFilter, teamFilter, statusFilter]);
 
   const hasActiveFilters =
     searchTerm.trim().length > 0 ||
@@ -121,11 +121,13 @@ export function useEmployeesDirectory(enabled: boolean) {
     setDepartmentFilter('ALL');
     setTeamFilter('ALL');
     setStatusFilter('ALL');
+    setPage(1);
   }, []);
 
   const setDepartmentFilterAndResetTeam = useCallback((value: string) => {
     setDepartmentFilter(value);
     setTeamFilter('ALL');
+    setPage(1);
   }, []);
 
   return {
@@ -148,10 +150,10 @@ export function useEmployeesDirectory(enabled: boolean) {
     departmentOptionsForFilter,
     teamOptionsForFilter,
     summary,
-    filtered,
-    pageCount,
-    safePage,
-    pageSlice,
+    filtered: employees, // In server-side paging, filtered result is just the employees returned
+    pageCount: meta.totalPages,
+    safePage: page,
+    pageSlice: employees, // No slicing needed on client side
     hasActiveFilters,
     clearFilters,
   };

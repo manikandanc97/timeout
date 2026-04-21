@@ -12,16 +12,26 @@ import {
 } from '../controllers/authController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
+import { validate } from '../middleware/validationMiddleware.js';
+import {
+  registerSchema,
+  loginSchema,
+  changePasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  updateProfileNameSchema,
+} from '../validations/authSchemas.js';
+
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', validate(registerSchema), register);
+router.post('/login', validate(loginSchema), login);
 router.post('/refresh', refreshTokenHandler);
 router.post('/logout', logout);
 router.get('/me', authMiddleware, getCurrentUser);
-router.patch('/me/name', authMiddleware, updateProfileName);
-router.patch('/me/password', authMiddleware, changePassword);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.patch('/me/name', authMiddleware, validate(updateProfileNameSchema), updateProfileName);
+router.patch('/me/password', authMiddleware, validate(changePasswordSchema), changePassword);
+router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
+router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
 
 export default router;

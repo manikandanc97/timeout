@@ -132,204 +132,42 @@ export const applyLeave = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    const normalizedstartDate = new Date(`${startDate}T00:00:00`);
-    const normalizedendDate = new Date(`${endDate}T00:00:00`);
-
-    if (
-      Number.isNaN(normalizedstartDate.getTime()) ||
-      Number.isNaN(normalizedendDate.getTime())
-    ) {
-      return res.status(400).json({ message: 'Invalid leave dates provided' });
-    }
-
-    if (normalizedstartDate > normalizedendDate) {
-      return res
-        .status(400)
-        .json({ message: 'From date cannot be after To date' });
-    }
-
-    const userId = req.user.id;
-
-    const applicant = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { organizationId: true, teamId: true, name: true },
-    });
-
-    if (!applicant) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    if (applicant.organizationId !== req.user.organizationId) {
-      return res.status(403).json({ message: 'Forbidden' });
-    }
-
-    let balance = await prisma.leaveBalance.findUnique({
-      where: { userId },
-    });
-
-    if (!balance) {
-      balance = await prisma.leaveBalance.create({
-        data: getDefaultLeaveBalance(req.user),
-      });
-    }
-
-    const leaveType = type.toUpperCase();
-    const totalDays = await getWorkingDays(
+    const { leave, impact } = await leaveService.applyLeave({
+      userId: req.user.id,
+      organizationId: req.user.organizationId,
+      type,
       startDate,
       endDate,
-      req.user.organizationId,
-    );
-
-    const existingLeave = await prisma.leave.findFirst({
-      where: {
-        userId,
-        status: {
-          in: ['PENDING', 'APPROVED'],
-        },
-        startDate: {
-          lte: normalizedendDate,
-        },
-        endDate: {
-          gte: normalizedstartDate,
-        },
-      },
+      reason,
     });
 
-    if (existingLeave) {
-      return res.status(400).json({
-        message: 'You already have a leave request for the selected dates',
-      });
-    }
-
-    const isBalanceManagedType = leaveType === 'SICK' || leaveType === 'ANNUAL';
-    let balanceAvailable = 0;
-    let balanceDeductedDays = 0;
-    let lopDays = 0;
-    let lopAmount = 0;
-    let activeSalaryStructureId = null;
-
-    if (leaveType === 'SICK') {
-      balanceAvailable = Number(balance.sick ?? 0);
-      balanceDeductedDays = Math.min(balanceAvailable, totalDays);
-      lopDays = Math.max(totalDays - balanceDeductedDays, 0);
-    }
-
-    if (leaveType === 'ANNUAL') {
-      balanceAvailable = Number(balance.annual ?? 0);
-      balanceDeductedDays = Math.min(balanceAvailable, totalDays);
-      lopDays = Math.max(totalDays - balanceDeductedDays, 0);
-    }
-
-    if (leaveType === 'COMP_OFF' && (balance.compOff ?? 0) < totalDays) {
-      return res.status(400).json({ message: 'No comp off balance left' });
-    }
-
-    if (isBalanceManagedType && lopDays > 0) {
-      const monthDays = new Date(
-        normalizedstartDate.getFullYear(),
-        normalizedstartDate.getMonth() + 1,
-        0,
-      ).getDate();
-      const salaryStructure = await prisma.salaryStructure.findFirst({
-        where: {
-          userId,
-          organizationId: applicant.organizationId,
-          isActive: true,
-          effectiveFrom: { lte: normalizedstartDate },
-        },
-        orderBy: [{ effectiveFrom: 'desc' }],
-      });
-
-      const monthlyNet = getMonthlyNetFromSalaryStructure(salaryStructure);
-      activeSalaryStructureId = salaryStructure?.id ?? null;
-      if (monthlyNet != null && Number.isFinite(monthlyNet) && monthDays > 0) {
-        const dailyRate = monthlyNet / monthDays;
-        lopAmount = round2(lopDays * dailyRate);
-      }
-    }
-
-    const leave = await prisma.leave.create({
-      data: {
-        type: leaveType,
-        startDate: normalizedstartDate,
-        endDate: normalizedendDate,
-        reason,
-        balanceDeductedDays: isBalanceManagedType ? balanceDeductedDays : totalDays,
-        lopDays: isBalanceManagedType ? lopDays : 0,
-        lopAmount: isBalanceManagedType ? lopAmount : 0,
-        userId,
-        organizationId: applicant.organizationId,
-        teamId: applicant.teamId ?? undefined,
-      },
-    });
-
-    if (leaveType === 'SICK' && balanceDeductedDays > 0) {
-      await prisma.leaveBalance.update({
-        where: { userId },
-        data: { sick: { decrement: balanceDeductedDays } },
-      });
-    }
-
-    if (leaveType === 'ANNUAL' && balanceDeductedDays > 0) {
-      await prisma.leaveBalance.update({
-        where: { userId },
-        data: { annual: { decrement: balanceDeductedDays } },
-      });
-    }
-
-    if (leaveType === 'COMP_OFF') {
-      await prisma.leaveBalance.update({
-        where: { userId },
-        data: { compOff: { decrement: totalDays } },
-      });
-    }
-
-    if (isBalanceManagedType && lopDays > 0 && activeSalaryStructureId != null) {
-      await prisma.salaryStructure.update({
-        where: { id: activeSalaryStructureId },
-        data: {
-          lopDays: { increment: lopDays },
-          lopAmount: { increment: lopAmount },
-        },
-      });
-    }
-
-    if (leaveType === 'SICK' || leaveType === 'ANNUAL') {
-      await recalculatePayrollForLeaveRange({
-        userId,
-        organizationId: applicant.organizationId,
-        startDate: normalizedstartDate,
-        endDate: normalizedendDate,
-      });
-    }
-
+    // Side effect: Notifications
     try {
+      const applicant = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { name: true },
+      });
       await notifyLeaveAppliedRecipients({
         leave,
-        applicantId: userId,
-        applicantName: applicant.name ?? 'Employee',
-        organizationId: applicant.organizationId,
+        applicantId: req.user.id,
+        applicantName: applicant?.name ?? 'Employee',
+        organizationId: req.user.organizationId,
       });
     } catch (notifyErr) {
       console.error('[notifications] leave applied', notifyErr);
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       message:
-        isBalanceManagedType && lopDays > 0
-          ? `Leave applied. ${lopDays} day(s) will be treated as Loss of Pay.`
+        impact.lopDays > 0
+          ? `Leave applied. ${impact.lopDays} day(s) will be treated as Loss of Pay.`
           : 'Leave applied successfully',
       leave,
-      leaveImpact: {
-        totalDays,
-        balanceDeductedDays: isBalanceManagedType ? balanceDeductedDays : totalDays,
-        lopDays: isBalanceManagedType ? lopDays : 0,
-        lopAmount: isBalanceManagedType ? lopAmount : 0,
-      },
+      leaveImpact: impact,
     });
   } catch (error) {
     console.error('ERROR:', error);
-    res.status(500).json({ message: 'Server Error' });
+    return res.status(400).json({ message: error.message || 'Server Error' });
   }
 };
 
@@ -625,15 +463,32 @@ export const getPermissionRequests = async (req, res) => {
       where = { userId: user.id };
     }
 
-    const rows = await prisma.permissionRequest.findMany({
-      where,
-      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
-      include: {
-        user: { select: { id: true, name: true, email: true } },
+    const page = Number(req.query.page ?? 1);
+    const limit = Number(req.query.limit ?? 50);
+    const skip = (page - 1) * limit;
+
+    const [rows, total] = await Promise.all([
+      prisma.permissionRequest.findMany({
+        where,
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.permissionRequest.count({ where }),
+    ]);
+
+    return res.json({
+      data: rows,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
     });
-
-    return res.json(rows);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Server Error' });
@@ -656,15 +511,32 @@ export const getCompOffRequests = async (req, res) => {
       where = { userId: user.id };
     }
 
-    const rows = await prisma.compOffWorkLog.findMany({
-      where,
-      orderBy: [{ workDate: 'desc' }, { createdAt: 'desc' }],
-      include: {
-        user: { select: { id: true, name: true, email: true } },
+    const page = Number(req.query.page ?? 1);
+    const limit = Number(req.query.limit ?? 50);
+    const skip = (page - 1) * limit;
+
+    const [rows, total] = await Promise.all([
+      prisma.compOffWorkLog.findMany({
+        where,
+        orderBy: [{ workDate: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.compOffWorkLog.count({ where }),
+    ]);
+
+    return res.json({
+      data: rows,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
     });
-
-    return res.json(rows);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Server Error' });
@@ -835,49 +707,47 @@ const leaveListIncludeUser = {
 export const getLeaves = async (req, res) => {
   try {
     const user = await resolveActorContext(req.user);
-    let leaves;
+    const page = Number(req.query.page ?? 1);
+    const limit = Number(req.query.limit ?? 50);
+    const skip = (page - 1) * limit;
 
+    let where;
     if (user.role === 'EMPLOYEE') {
-      leaves = await prisma.leave.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-      });
+      where = { userId: user.id };
     } else if (user.role === 'ADMIN') {
-      leaves = await prisma.leave.findMany({
-        where: { organizationId: user.organizationId },
-        include: leaveListIncludeUser,
-        orderBy: { createdAt: 'desc' },
-      });
+      where = { organizationId: user.organizationId };
     } else if (user.role === 'MANAGER') {
-      try {
-        leaves = await prisma.leave.findMany({
-          where: {
-            organizationId: user.organizationId,
-            OR: [
-              { userId: user.id },
-              { user: { reportingManagerId: user.id } },
-            ],
-          },
-          include: leaveListIncludeUser,
-          orderBy: { createdAt: 'desc' },
-        });
-      } catch (error) {
-        if (!isMissingReportingManagerColumn(error)) throw error;
-        // Backward-compatible fallback when Prisma client/db is behind reporting-manager schema.
-        leaves = await prisma.leave.findMany({
-          where: { userId: user.id },
-          include: leaveListIncludeUser,
-          orderBy: { createdAt: 'desc' },
-        });
-      }
+      where = {
+        organizationId: user.organizationId,
+        OR: [
+          { userId: user.id },
+          { user: { reportingManagerId: user.id } },
+        ],
+      };
     } else {
-      leaves = await prisma.leave.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-      });
+      where = { userId: user.id };
     }
 
-    res.json(leaves);
+    const [leaves, total] = await Promise.all([
+      prisma.leave.findMany({
+        where,
+        include: user.role !== 'EMPLOYEE' ? leaveListIncludeUser : undefined,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.leave.count({ where }),
+    ]);
+
+    res.json({
+      data: leaves,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('ERROR:', error);
     res.status(500).json({ message: 'Server Error' });

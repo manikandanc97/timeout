@@ -26,17 +26,29 @@ import {
   testSmtpConfiguration,
 } from '../controllers/organizationController.js';
 
+import { validate } from '../middleware/validationMiddleware.js';
+import {
+  departmentSchema,
+  teamSchema,
+  employeeCreateSchema,
+  employeeUpdateSchema,
+  salaryStructureSchema,
+  leavePolicySchema,
+  adminSettingsSchema,
+  testSmtpSchema,
+} from '../validations/organizationSchemas.js';
+
 const router = express.Router();
 
 router.use(authMiddleware);
 
 router.get('/leave-policy', getLeavePolicy);
-router.put('/leave-policy', roleMiddleware('ADMIN'), updateLeavePolicy);
+router.put('/leave-policy', roleMiddleware('ADMIN'), validate(leavePolicySchema), updateLeavePolicy);
 router.post('/leave-policy/reset', roleMiddleware('ADMIN'), resetLeavePolicy);
 router.get('/admin-settings', roleMiddleware('ADMIN'), getAdminSettings);
-router.put('/admin-settings', roleMiddleware('ADMIN'), updateAdminSettings);
+router.put('/admin-settings', roleMiddleware('ADMIN'), validate(adminSettingsSchema), updateAdminSettings);
 router.post('/admin-settings/reset', roleMiddleware('ADMIN'), resetAdminSettings);
-router.post('/test-smtp', roleMiddleware('ADMIN'), testSmtpConfiguration);
+router.post('/test-smtp', roleMiddleware('ADMIN'), validate(testSmtpSchema), testSmtpConfiguration);
 
 router.get(
   '/structure',
@@ -61,11 +73,13 @@ router.get(
 router.post(
   '/departments',
   roleMiddleware('ADMIN'),
+  validate(departmentSchema),
   createOrganizationDepartment,
 );
 router.patch(
   '/departments/:departmentId',
   roleMiddleware('ADMIN'),
+  validate(departmentSchema),
   updateOrganizationDepartment,
 );
 router.delete(
@@ -73,10 +87,16 @@ router.delete(
   roleMiddleware('ADMIN'),
   deleteOrganizationDepartment,
 );
-router.post('/teams', roleMiddleware('ADMIN'), createOrganizationTeam);
+router.post(
+  '/teams',
+  roleMiddleware('ADMIN'),
+  validate(teamSchema),
+  createOrganizationTeam,
+);
 router.patch(
   '/teams/:teamId',
   roleMiddleware('ADMIN'),
+  validate(teamSchema),
   updateOrganizationTeam,
 );
 router.delete(
@@ -84,10 +104,16 @@ router.delete(
   roleMiddleware('ADMIN'),
   deleteOrganizationTeam,
 );
-router.post('/employees', roleMiddleware('ADMIN'), createEmployeeUser);
+router.post(
+  '/employees',
+  roleMiddleware('ADMIN'),
+  validate(employeeCreateSchema),
+  createEmployeeUser,
+);
 router.patch(
   '/employees/:userId',
   roleMiddleware('ADMIN'),
+  validate(employeeUpdateSchema),
   updateEmployeeUser,
 );
 router.get(
@@ -98,6 +124,7 @@ router.get(
 router.post(
   '/employees/:userId/salary-structure',
   roleMiddleware('ADMIN'),
+  validate(salaryStructureSchema),
   upsertEmployeeSalaryStructure,
 );
 router.delete(

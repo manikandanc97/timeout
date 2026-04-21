@@ -6,6 +6,11 @@
 
 import prisma from '../prismaClient.js';
 import { logAIAction } from './aiAuditService.js';
+import {
+  updateLeaveStatus,
+  updatePermissionStatus,
+  updateCompOffStatus,
+} from './leaveService.js';
 
 // ─── Helper: format date for display ────────────────────────────────────────
 const fmt = (d) => {
@@ -176,96 +181,79 @@ async function executeApproveLeave({ user, fields }) {
   const leaveId = Number(fields.leaveId);
   if (!leaveId) return { success: false, data: { message: 'Invalid leave ID' } };
 
-  const leave = await prisma.leave.findFirst({
-    where: { id: leaveId, organizationId: user.organizationId, status: 'PENDING' },
+  const updated = await updateLeaveStatus({
+    leaveId,
+    status: 'APPROVED',
+    actorId: user.id,
   });
 
-  if (!leave) return { success: false, data: { message: 'Leave request not found or already processed' } };
-
-  await prisma.leave.update({
-    where: { id: leaveId },
-    data: { status: 'APPROVED', approvedById: user.id },
-  });
-
-  return { success: true, data: { message: `Leave #${leaveId} approved successfully` } };
+  return { success: true, data: { message: `Leave #${leaveId} approved successfully`, leave: updated } };
 }
 
 async function executeRejectLeave({ user, fields }) {
   const leaveId = Number(fields.leaveId);
   if (!leaveId) return { success: false, data: { message: 'Invalid leave ID' } };
 
-  const leave = await prisma.leave.findFirst({
-    where: { id: leaveId, organizationId: user.organizationId, status: 'PENDING' },
+  const updated = await updateLeaveStatus({
+    leaveId,
+    status: 'REJECTED',
+    rejectionReason: fields.rejectionReason || 'Rejected via AI Assistant',
+    actorId: user.id,
   });
 
-  if (!leave) return { success: false, data: { message: 'Leave request not found or already processed' } };
-
-  await prisma.leave.update({
-    where: { id: leaveId },
-    data: { status: 'REJECTED', rejectionReason: fields.rejectionReason || 'Rejected by manager' },
-  });
-
-  return { success: true, data: { message: `Leave #${leaveId} rejected` } };
+  return { success: true, data: { message: `Leave #${leaveId} rejected`, leave: updated } };
 }
 
 async function executeApprovePermission({ user, fields }) {
   const permId = Number(fields.permissionId);
   if (!permId) return { success: false, data: { message: 'Invalid permission ID' } };
 
-  await prisma.permissionRequest.update({
-    where: { id: permId },
-    data: { status: 'APPROVED' },
+  const updated = await updatePermissionStatus({
+    requestId: permId,
+    status: 'APPROVED',
+    actorId: user.id,
   });
 
-  return { success: true, data: { message: `Permission #${permId} approved` } };
+  return { success: true, data: { message: `Permission #${permId} approved`, request: updated } };
 }
 
 async function executeRejectPermission({ user, fields }) {
   const permId = Number(fields.permissionId);
   if (!permId) return { success: false, data: { message: 'Invalid permission ID' } };
 
-  await prisma.permissionRequest.update({
-    where: { id: permId },
-    data: { status: 'REJECTED' },
+  const updated = await updatePermissionStatus({
+    requestId: permId,
+    status: 'REJECTED',
+    actorId: user.id,
   });
 
-  return { success: true, data: { message: `Permission #${permId} rejected` } };
+  return { success: true, data: { message: `Permission #${permId} rejected`, request: updated } };
 }
 
 async function executeApproveCompOff({ user, fields }) {
   const compOffId = Number(fields.compOffId);
   if (!compOffId) return { success: false, data: { message: 'Invalid comp-off ID' } };
 
-  const log = await prisma.compOffWorkLog.findFirst({
-    where: { id: compOffId, organizationId: user.organizationId, status: 'PENDING' },
+  const updated = await updateCompOffStatus({
+    requestId: compOffId,
+    status: 'APPROVED',
+    actorId: user.id,
   });
 
-  if (!log) return { success: false, data: { message: 'Comp-off request not found' } };
-
-  await prisma.$transaction([
-    prisma.compOffWorkLog.update({
-      where: { id: compOffId },
-      data: { status: 'APPROVED' },
-    }),
-    prisma.leaveBalance.update({
-      where: { userId: log.userId },
-      data: { compOff: { increment: 1 } },
-    }),
-  ]);
-
-  return { success: true, data: { message: `Comp-off #${compOffId} approved. 1 day credit added.` } };
+  return { success: true, data: { message: `Comp-off #${compOffId} approved successfully`, request: updated } };
 }
 
 async function executeRejectCompOff({ user, fields }) {
   const compOffId = Number(fields.compOffId);
   if (!compOffId) return { success: false, data: { message: 'Invalid comp-off ID' } };
 
-  await prisma.compOffWorkLog.update({
-    where: { id: compOffId },
-    data: { status: 'REJECTED' },
+  const updated = await updateCompOffStatus({
+    requestId: compOffId,
+    status: 'REJECTED',
+    actorId: user.id,
   });
 
-  return { success: true, data: { message: `Comp-off #${compOffId} rejected` } };
+  return { success: true, data: { message: `Comp-off #${compOffId} rejected`, request: updated } };
 }
 
 async function executeAddEmployee({ user, fields }) {

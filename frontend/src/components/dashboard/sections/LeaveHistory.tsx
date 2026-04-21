@@ -6,6 +6,7 @@ import type { Holiday } from '@/types/holiday';
 import type { Leave } from '@/types/leave';
 import LeaveStatusBadge from '@/components/leave/LeaveStatusBadge';
 import { workingDaysForLeaveRange } from '@/utils/leave/leaveHelpers';
+import EmptyState from '@/components/ui/EmptyState';
 
 type Props = {
   leaves: Leave[];
@@ -81,10 +82,18 @@ const LeaveHistory = ({ leaves = [], holidays = [] }: Props) => {
             ))}
           </div>
         ) : (
-          <div className='flex flex-1 flex-col items-center justify-center px-4 py-16 text-center text-muted-foreground'>
-            <History size={32} className='mb-3 opacity-20' />
-            <p className='text-sm'>No leave history found</p>
-          </div>
+          <EmptyState 
+            icon={History}
+            title="No leave history yet"
+            description="When you apply for leave and it gets processed, it will appear here."
+            action={
+              <Link href="/leaves/apply">
+                <Button variant="outline" size="sm">
+                  Apply for Leave
+                </Button>
+              </Link>
+            }
+          />
         )}
       </div>
     </div>

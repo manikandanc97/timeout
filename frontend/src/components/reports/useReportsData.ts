@@ -94,10 +94,17 @@ export function useReportsData(canView: boolean) {
           ? employeeById.get(row.userId)
           : employeeByName.get(formatPersonName(row.user?.name));
         const department = employee?.team?.department?.name ?? 'Unassigned';
+        
         const fromDate = new Date(row.startDate);
+        const toDate = new Date(row.endDate);
+        const monthStart = new Date(selectedYear, selectedMonth - 1, 1);
+        const monthEnd = new Date(selectedYear, selectedMonth, 0);
+
+        // Check if the leave overlap with the selected month
+        const overlaps = fromDate <= monthEnd && toDate >= monthStart;
+
         return (
-          fromDate.getMonth() + 1 === selectedMonth &&
-          fromDate.getFullYear() === selectedYear &&
+          overlaps &&
           (selectedDepartment === 'ALL' || department === selectedDepartment)
         );
       }),
@@ -142,7 +149,7 @@ export function useReportsData(canView: boolean) {
           String(Math.round(row.netSalary)),
           row.status,
           String(row.lopDays),
-          String(row.deductions),
+          String(Math.round(row.deductions || 0)),
         ];
       }),
     ];

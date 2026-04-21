@@ -345,6 +345,56 @@ export async function notifyEmployeeProfileEvent({
   });
 }
 
+/** 
+ * Wrappers for leaveService - resolve IDs and call the decision notification 
+ */
+
+export async function notifyLeaveStatusUpdate({ leaveId, status, rejectionReason, actorId }) {
+  const [leave, actor] = await Promise.all([
+    prisma.leave.findUnique({ where: { id: leaveId } }),
+    prisma.user.findUnique({ where: { id: actorId }, select: { name: true } })
+  ]);
+  if (!leave) return;
+  await notifyEmployeeLeaveDecision({
+    leave,
+    employeeId: leave.userId,
+    organizationId: leave.organizationId,
+    status,
+    actorName: actor?.name || 'Manager',
+    rejectionReason
+  });
+}
+
+export async function notifyPermissionStatusUpdate({ requestId, status, actorId }) {
+  const [req, actor] = await Promise.all([
+    prisma.permissionRequest.findUnique({ where: { id: requestId } }),
+    prisma.user.findUnique({ where: { id: actorId }, select: { name: true } })
+  ]);
+  if (!req) return;
+  await notifyPermissionDecision({
+    organizationId: req.organizationId,
+    employeeId: req.userId,
+    status,
+    actorName: actor?.name || 'Manager',
+    date: req.date
+  });
+}
+
+export async function notifyCompOffStatusUpdate({ requestId, status, actorId }) {
+  const [req, actor] = await Promise.all([
+    prisma.compOffWorkLog.findUnique({ where: { id: requestId } }),
+    prisma.user.findUnique({ where: { id: actorId }, select: { name: true } })
+  ]);
+  if (!req) return;
+  await notifyCompOffDecision({
+    organizationId: req.organizationId,
+    employeeId: req.userId,
+    status,
+    actorName: actor?.name || 'Manager',
+    workDate: req.workDate
+  });
+}
+
 export async function notifyAdmins({
   organizationId,
   type,

@@ -137,17 +137,17 @@ const Login = () => {
         </p>
 
         <div className="mt-8 border-t border-border pt-6">
-          <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
             Try Demo Accounts
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-col sm:grid sm:grid-cols-3 gap-2">
             <Button
               type="button"
               variant="outline"
-              className="h-auto py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary"
+              className="h-auto py-2 sm:py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-all active:scale-[0.98]"
               onClick={() => {
-                setEmail("mani@timeout.com");
-                setPassword("timeout123");
+                setEmail("admin@acmehrm.com");
+                setPassword("demo1234");
               }}
             >
               Admin
@@ -155,7 +155,7 @@ const Login = () => {
             <Button
               type="button"
               variant="outline"
-              className="h-auto py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary"
+              className="h-auto py-2 sm:py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-all active:scale-[0.98]"
               onClick={() => {
                 setEmail("manager@acmehrm.com");
                 setPassword("demo1234");
@@ -166,7 +166,7 @@ const Login = () => {
             <Button
               type="button"
               variant="outline"
-              className="h-auto py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary"
+              className="h-auto py-2 sm:py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-all active:scale-[0.98]"
               onClick={() => {
                 setEmail("employee@acmehrm.com");
                 setPassword("demo1234");

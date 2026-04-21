@@ -101,6 +101,15 @@ export default function PayrollPageClient() {
             </div>
           </div>
           <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              className='h-10 rounded-xl! px-3! text-sm! border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'
+              disabled={generating || loading || !isAdmin}
+              onClick={() => void generateMonthlyPayroll()}
+            >
+              {generating ? 'Generating...' : 'Generate Payroll'}
+            </Button>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -159,6 +168,8 @@ export default function PayrollPageClient() {
           onDownloadPayslip={(row: PayrollRow) => downloadPayslipPdf(row, summary.currentMonth)}
           formatTableAmount={formatTableAmount}
           isAdmin={Boolean(isAdmin)}
+          pagination={pagination}
+          onPageChange={setPage}
         />
       </div>
 

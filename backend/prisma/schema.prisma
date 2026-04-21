@@ -45,6 +45,8 @@ model Organization {
   aiSettings    AiSettings?
   aiAuditLogs   AiAuditLog[]
   hrDocumentChunks HrDocumentChunk[]
+  payrollApprovalLogs PayrollApprovalLog[]
+  auditLogs     AuditLog[]
 }
 
 model Department {
@@ -133,8 +135,11 @@ enum RequestStatus {
 }
 
 enum PayrollStatus {
-  PENDING
+  DRAFT
+  REVIEWED
+  APPROVED
   PAID
+  VOID
 }
 
 enum LeaveType {
@@ -286,21 +291,31 @@ model SalaryStructure {
   userId          Int
   organizationId  Int
   yearlyGrossSalary Float?
-  basicSalary     Float
-  hra             Float    @default(0)
-  allowance       Float    @default(0)
-  bonus           Float    @default(0)
-  pf              Float    @default(0)
-  tax             Float    @default(0)
-  professionalTax Float    @default(0)
+  basicSalary       Float
+  hra               Float    @default(0)
+  allowance         Float    @default(0)
+  bonus             Float    @default(0)
+  pf                Float    @default(0)
+  tax               Float    @default(0)
+  professionalTax   Float    @default(0)
+  
+  // Enterprise fields
+  esi               Float    @default(0)
+  tds               Float    @default(0)
+  pfRate            Float    @default(12.0)
+  esiRate           Float    @default(0.75)
+  conveyance        Float    @default(0)
+  specialAllowance  Float    @default(0)
+  overtimeRate      Float    @default(0)
+
   /** Running LOP days tracked against this active structure */
-  lopDays         Int      @default(0)
+  lopDays           Int      @default(0)
   /** Running LOP amount tracked against this active structure */
-  lopAmount       Float    @default(0)
-  effectiveFrom   DateTime
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  lopAmount         Float    @default(0)
+  effectiveFrom     DateTime
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -316,19 +331,33 @@ model Payroll {
   month          Int
   year           Int
   yearlyGrossSalary Float
-  basicSalary    Float
-  hra            Float         @default(0)
-  allowance      Float         @default(0)
-  bonus          Float         @default(0)
-  pf             Float         @default(0)
-  tax            Float         @default(0)
-  professionalTax Float        @default(0)
-  lopDays         Int          @default(0)
-  lopAmount       Float        @default(0)
-  netSalary      Float
-  status         PayrollStatus @default(PENDING)
-  paidDate       DateTime?
-  createdAt      DateTime      @default(now())
+  basicSalary       Float
+  hra               Float         @default(0)
+  allowance         Float         @default(0)
+  bonus             Float         @default(0)
+  pf                Float         @default(0)
+  tax               Float         @default(0)
+  professionalTax   Float         @default(0)
+  
+  // Enterprise fields
+  esi               Float         @default(0)
+  tds               Float         @default(0)
+  conveyance        Float         @default(0)
+  specialAllowance  Float         @default(0)
+  incentives        Float         @default(0)
+  overtimeAmount    Float         @default(0)
+  reimbursements    Float         @default(0)
+  settlementAmount  Float         @default(0)
+
+  lopDays           Int           @default(0)
+  lopAmount         Float         @default(0)
+  netSalary         Float
+  status            PayrollStatus @default(DRAFT)
+  paidDate          DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  approvalLogs      PayrollApprovalLog[]
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -400,4 +429,35 @@ model HrDocumentChunk {
   hrPolicy       HrPolicy?    @relation(fields: [hrPolicyId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
+}
+
+model PayrollApprovalLog {
+  id             Int           @id @default(autoincrement())
+  payrollId      Int
+  organizationId Int
+  status         PayrollStatus
+  comment        String?
+  actorId        Int
+  createdAt      DateTime      @default(now())
+
+  payroll        Payroll       @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@index([payrollId])
+}
+
+model AuditLog {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  entityType     String   // e.g. "SALARY_STRUCTURE", "PAYROLL"
+  entityId       Int
+  action         String   // "CREATE", "UPDATE", "APPROVE"
+  oldValue       Json?
+  newValue       Json?
+  actorId        Int
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@index([organizationId, createdAt])
 }
