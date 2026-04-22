@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Hourglass } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { employeeMenuList, adminMenuList } from '@/constants/sidebarMenu';
+import { getMenuByRole, UserRole } from '@/constants/sidebarMenu';
 import { useAuth } from '@/context/AuthContext';
 
 type SidebarProps = {
@@ -16,16 +16,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const { user } = useAuth();
 
-  let menuList = employeeMenuList;
-
-  if (
-    user &&
-    (user.role === 'ADMIN' ||
-      user.role === 'MANAGER' ||
-      user.role === 'HR')
-  ) {
-    menuList = adminMenuList;
-  }
+  const userRole = (user?.role?.toLowerCase() || 'employee') as UserRole;
+  const menuList = getMenuByRole(userRole);
 
   return (
     <>

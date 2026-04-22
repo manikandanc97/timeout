@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -14,7 +14,12 @@ import {
   Wallet,
   ReceiptText,
   Clock,
-} from 'lucide-react';
+  Home,
+  UserCheck,
+} from "lucide-react";
+
+// role types 😄
+export type UserRole = "employee" | "manager" | "hr" | "admin" | "super_admin";
 
 type MenuItem = {
   name: string;
@@ -22,24 +27,76 @@ type MenuItem = {
   icon: React.ElementType;
 };
 
-export const employeeMenuList: MenuItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Attendance', href: '/attendance', icon: Clock },
-  { name: 'My Leaves', href: '/leaves', icon: CalendarDays },
-  { name: 'Apply Leave', href: '/apply', icon: FilePlus2 },
-  { name: 'Payslip', href: '/payslip', icon: ReceiptText },
-  { name: 'Leave Policy', href: '/policy', icon: BookOpen },
+// employee menu
+const employeeMenuList: MenuItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Attendance", href: "/attendance", icon: Clock },
+  { name: "My Leaves", href: "/leaves", icon: CalendarDays },
+  { name: "Apply Leave", href: "/apply", icon: FilePlus2 },
+  { name: "WFH Request", href: "/wfh", icon: Home },
+  { name: "Payslip", href: "/payslip", icon: ReceiptText },
+  { name: "Leave Policy", href: "/policy", icon: BookOpen },
 ];
 
-export const adminMenuList: MenuItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Attendance', href: '/attendance', icon: Clock },
-  { name: 'Requests', href: '/requests', icon: ClipboardCheck },
-  { name: 'Employees', href: '/employees', icon: Users },
-  { name: 'Teams', href: '/team', icon: Users },
-  { name: 'Holidays', href: '/holidays', icon: CalendarRange },
-  { name: 'Leave Policy', href: '/policy', icon: BookOpen },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Payroll', href: '/payroll', icon: Wallet },
-  { name: 'Settings', href: '/settings', icon: Settings },
+// manager menu
+const managerMenuList: MenuItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Attendance", href: "/attendance", icon: Clock },
+  { name: "My Leaves", href: "/leaves", icon: CalendarDays },
+  { name: "Apply Leave", href: "/apply", icon: FilePlus2 },
+  { name: "WFH Request", href: "/wfh", icon: Home },
+  { name: "Team Requests", href: "/requests", icon: ClipboardCheck },
+  { name: "My Team", href: "/team", icon: Users },
+  { name: "Payslip", href: "/payslip", icon: ReceiptText },
+  { name: "Leave Policy", href: "/policy", icon: BookOpen },
 ];
+
+// HR menu
+const hrMenuList: MenuItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Attendance", href: "/attendance", icon: Clock },
+  { name: "Requests", href: "/requests", icon: ClipboardCheck },
+  { name: "Employees", href: "/employees", icon: Users },
+  { name: "Teams", href: "/team", icon: Users },
+  { name: "Holidays", href: "/holidays", icon: CalendarRange },
+  { name: "Leave Policy", href: "/policy", icon: BookOpen },
+  { name: "Reports", href: "/reports", icon: BarChart3 },
+  { name: "Payroll", href: "/payroll", icon: Wallet },
+  { name: "Settings", href: "/settings", icon: Settings },
+];
+
+// admin + super admin menu
+const adminMenuList: MenuItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Attendance", href: "/attendance", icon: Clock },
+  { name: "Requests", href: "/requests", icon: ClipboardCheck },
+  { name: "Employees", href: "/employees", icon: Users },
+  { name: "Teams", href: "/team", icon: Users },
+  { name: "Holidays", href: "/holidays", icon: CalendarRange },
+  { name: "Leave Policy", href: "/policy", icon: BookOpen },
+  { name: "Reports", href: "/reports", icon: BarChart3 },
+  { name: "Payroll", href: "/payroll", icon: Wallet },
+  { name: "User Roles", href: "/roles", icon: UserCheck },
+  { name: "Settings", href: "/settings", icon: Settings },
+];
+
+// role based menu getter 🔥
+export const getMenuByRole = (role: UserRole): MenuItem[] => {
+  switch (role) {
+    case "employee":
+      return employeeMenuList;
+
+    case "manager":
+      return managerMenuList;
+
+    case "hr":
+      return hrMenuList;
+
+    case "admin":
+    case "super_admin":
+      return adminMenuList;
+
+    default:
+      return employeeMenuList;
+  }
+};
