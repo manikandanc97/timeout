@@ -47,13 +47,22 @@ const DashboardShell = ({ children, initialUser }: Props) => {
       return;
     }
 
-    if ('requestIdleCallback' in window) {
-      const handle = window.requestIdleCallback(schedule, { timeout: 1500 });
-      return () => window.cancelIdleCallback(handle);
+    const browserWindow = window as Window &
+      typeof globalThis & {
+        requestIdleCallback?: (
+          callback: IdleRequestCallback,
+          options?: IdleRequestOptions,
+        ) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      };
+
+    if (browserWindow.requestIdleCallback) {
+      const handle = browserWindow.requestIdleCallback(schedule, { timeout: 1500 });
+      return () => browserWindow.cancelIdleCallback?.(handle);
     }
 
-    const timeout = window.setTimeout(schedule, 900);
-    return () => window.clearTimeout(timeout);
+    const timeout = browserWindow.setTimeout(schedule, 900);
+    return () => browserWindow.clearTimeout(timeout);
   }, []);
 
   return (
