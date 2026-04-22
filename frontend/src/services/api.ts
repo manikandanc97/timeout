@@ -1,8 +1,17 @@
 import axios from 'axios';
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/lib/token';
 
+const normalizeApiBaseUrl = (rawBaseUrl?: string) => {
+  const trimmed = rawBaseUrl?.trim() ?? '';
+  if (!trimmed) return '';
+  const noTrailingSlash = trimmed.replace(/\/+$/, '');
+  return /\/api$/i.test(noTrailingSlash)
+    ? noTrailingSlash
+    : `${noTrailingSlash}/api`;
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL),
   withCredentials: true,
 });
 

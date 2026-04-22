@@ -3,6 +3,14 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 30;
+const normalizeApiBaseUrl = (rawBaseUrl?: string) => {
+  const trimmed = rawBaseUrl?.trim() ?? '';
+  if (!trimmed) return '';
+  const noTrailingSlash = trimmed.replace(/\/+$/, '');
+  return /\/api$/i.test(noTrailingSlash)
+    ? noTrailingSlash
+    : `${noTrailingSlash}/api`;
+};
 
 const getTokenExpiry = (token?: string) => {
   if (!token) {
@@ -38,7 +46,7 @@ const hasFreshAccessToken = (token?: string) => {
 };
 
 const refreshAccessToken = cache(async () => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
 
   if (!baseUrl) {
     throw new Error('API URL missing');
@@ -69,7 +77,7 @@ const refreshAccessToken = cache(async () => {
 });
 
 export async function serverFetch<T = unknown>(endpoint: string): Promise<T> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
 
   if (!baseUrl) {
     throw new Error('API URL missing');
