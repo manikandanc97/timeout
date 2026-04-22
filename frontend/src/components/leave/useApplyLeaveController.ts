@@ -5,7 +5,7 @@ import type { Holiday } from '@/types/holiday';
 import type { Gender } from '@/types/user';
 import type { Leave, LeaveBalance, LeaveType, PermissionSummary } from '@/types/leave';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { calculateLeaveDays, startDate as formatDate } from '@/utils/leave/leaveHelpers';
@@ -38,7 +38,7 @@ export function useApplyLeaveController({
   history,
   onSuccess,
 }: Params) {
-  const [activeTab, setActiveTab] = useState<'LEAVE_APPLY' | 'COMP_OFF' | 'PERMISSION'>('LEAVE_APPLY');
+  const [activeTab, setActiveTab] = useState<'LEAVE_APPLY' | 'COMP_OFF' | 'PERMISSION' | 'WFH' | 'ATTENDANCE_REGULARIZATION'>('LEAVE_APPLY');
   const [leaveTypeStart, setLeaveTypeStart] = useState(0);
   const [compOffDate, setCompOffDate] = useState('');
   const [compOffReason, setCompOffReason] = useState('');
@@ -49,6 +49,22 @@ export function useApplyLeaveController({
   const [permissionReason, setPermissionReason] = useState('');
   const [permissionSubmitting, setPermissionSubmitting] = useState(false);
   const [permissionSummary, setPermissionSummary] = useState<PermissionSummary | null>(null);
+
+  // WFH State
+  const [wfhStartDate, setWfhStartDate] = useState('');
+  const [wfhEndDate, setWfhEndDate] = useState('');
+  const [wfhReason, setWfhReason] = useState('');
+  const [wfhAvailability, setWfhAvailability] = useState('');
+  const [wfhManagerVisible, setWfhManagerVisible] = useState(true);
+  const [wfhRemarks, setWfhRemarks] = useState('');
+  const [wfhSubmitting, setWfhSubmitting] = useState(false);
+
+  // Regularization State
+  const [regDate, setRegDate] = useState('');
+  const [regCheckIn, setRegCheckIn] = useState('');
+  const [regCheckOut, setRegCheckOut] = useState('');
+  const [regReason, setRegReason] = useState('');
+  const [regSubmitting, setRegSubmitting] = useState(false);
 
   const form = useForm<LeaveFormData>({
     resolver: zodResolver(leaveSchema),
@@ -67,11 +83,34 @@ export function useApplyLeaveController({
   const reason = watch('reason');
 
   const dateStats = useMemo(() => calculateLeaveDays(startDate, endDate, holidays), [startDate, endDate, holidays]);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const todayIso = formatDate(today);
-  const tomorrowIso = formatDate(tomorrow);
+  
+  const [{ todayIso, tomorrowIso }, setDates] = useState({ todayIso: '', tomorrowIso: '' });
+
+  const loadPermissionSummary = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const response = await api.get<PermissionSummary>('/leaves/permissions/summary', { signal });
+      setPermissionSummary(response.data);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setPermissionSummary(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    
+    // Set dates on client only to avoid hydration mismatch
+    const t = new Date();
+    const tom = new Date(t);
+    tom.setDate(tom.getDate() + 1);
+    setDates({
+      todayIso: formatDate(t),
+      tomorrowIso: formatDate(tom)
+    });
+
+    void loadPermissionSummary(controller.signal);
+    return () => controller.abort();
+  }, [loadPermissionSummary]);
 
   const leaveOptions = useMemo<LeaveType[]>(() => {
     const options: LeaveType[] = ['ANNUAL', 'SICK', 'COMP_OFF'];
@@ -98,6 +137,7 @@ export function useApplyLeaveController({
   const balanceAfter = selectedBalance !== null ? selectedBalance - balanceDeductedDays : null;
   const isOverdrawn = balanceAfter !== null && balanceAfter < 0;
   const hasDateRange = Boolean(startDate && endDate);
+  
   const hasOverlap = useMemo(() => {
     if (!hasDateRange || !history?.length) return false;
     const start = new Date(startDate);
@@ -116,20 +156,7 @@ export function useApplyLeaveController({
   const canSubmitLeave =
     Boolean(type) && Boolean(startDate) && Boolean(endDate) && Boolean(reason?.trim()) && daysToDeduct > 0 && !hasOverlap && !isOverdrawn;
 
-  const loadPermissionSummary = async () => {
-    try {
-      const response = await api.get<PermissionSummary>('/leaves/permissions/summary');
-      setPermissionSummary(response.data);
-    } catch {
-      setPermissionSummary(null);
-    }
-  };
-
-  useEffect(() => {
-    void loadPermissionSummary();
-  }, []);
-
-  const onSubmitLeave = async (data: LeaveFormData) => {
+  const onSubmitLeave = useCallback(async (data: LeaveFormData) => {
     try {
       if (hasOverlap) {
         toast.error('You already have a leave for these dates.');
@@ -148,9 +175,9 @@ export function useApplyLeaveController({
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, 'Failed to submit leave request. Please try again.'));
     }
-  };
+  }, [hasOverlap, reset, onSuccess]);
 
-  const onCompOffApply = async () => {
+  const onCompOffApply = useCallback(async () => {
     if (!compOffDate || !compOffReason.trim()) {
       toast.error('Work date and reason are required');
       return;
@@ -166,9 +193,9 @@ export function useApplyLeaveController({
     } finally {
       setCompOffSubmitting(false);
     }
-  };
+  }, [compOffDate, compOffReason]);
 
-  const onPermissionApply = async () => {
+  const onPermissionApply = useCallback(async () => {
     if (!permissionDate || !permissionReason.trim()) {
       toast.error('Date and reason are required');
       return;
@@ -227,9 +254,73 @@ export function useApplyLeaveController({
     } finally {
       setPermissionSubmitting(false);
     }
-  };
+  }, [permissionDate, permissionReason, todayIso, tomorrowIso, permissionStartTime, permissionEndTime, loadPermissionSummary]);
 
-  return {
+  const resetWfhForm = useCallback(() => {
+    setWfhStartDate('');
+    setWfhEndDate('');
+    setWfhReason('');
+    setWfhAvailability('');
+    setWfhManagerVisible(true);
+    setWfhRemarks('');
+  }, []);
+
+  const onWfhApply = useCallback(async () => {
+    if (!wfhStartDate || !wfhEndDate || !wfhReason.trim() || !wfhAvailability.trim()) {
+      toast.error('Date range, reason and availability are required');
+      return;
+    }
+    setWfhSubmitting(true);
+    try {
+      const response = await api.post('/leaves', {
+        type: 'WFH',
+        startDate: wfhStartDate,
+        endDate: wfhEndDate,
+        reason: wfhReason.trim(),
+        workAvailability: wfhAvailability.trim(),
+        reportingManagerVisible: wfhManagerVisible,
+        remarks: wfhRemarks.trim(),
+      });
+      toast.success('WFH request submitted successfully');
+      resetWfhForm();
+      onSuccess?.(response.data?.leave);
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Failed to submit WFH request.'));
+    } finally {
+      setWfhSubmitting(false);
+    }
+  }, [wfhStartDate, wfhEndDate, wfhReason, wfhAvailability, wfhManagerVisible, wfhRemarks, resetWfhForm, onSuccess]);
+
+  const resetRegForm = useCallback(() => {
+    setRegDate('');
+    setRegCheckIn('');
+    setRegCheckOut('');
+    setRegReason('');
+  }, []);
+
+  const onRegularizeApply = useCallback(async () => {
+    if (!regDate || !regReason.trim() || (!regCheckIn && !regCheckOut)) {
+      toast.error('Date, reason and at least one punch time are required');
+      return;
+    }
+    setRegSubmitting(true);
+    try {
+      await api.post('/attendance/regularize', {
+        date: regDate,
+        requestedCheckIn: regCheckIn || null,
+        requestedCheckOut: regCheckOut || null,
+        reason: regReason.trim(),
+      });
+      toast.success('Attendance regularization request submitted');
+      resetRegForm();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Failed to submit regularization request.'));
+    } finally {
+      setRegSubmitting(false);
+    }
+  }, [regDate, regReason, regCheckIn, regCheckOut, resetRegForm]);
+
+  return useMemo(() => ({
     form,
     activeTab,
     setActiveTab,
@@ -250,6 +341,28 @@ export function useApplyLeaveController({
     setPermissionReason,
     permissionSubmitting,
     permissionSummary,
+    wfhStartDate,
+    setWfhStartDate,
+    wfhEndDate,
+    setWfhEndDate,
+    wfhReason,
+    setWfhReason,
+    wfhAvailability,
+    setWfhAvailability,
+    wfhManagerVisible,
+    setWfhManagerVisible,
+    wfhRemarks,
+    setWfhRemarks,
+    wfhSubmitting,
+    regDate,
+    setRegDate,
+    regCheckIn,
+    setRegCheckIn,
+    regCheckOut,
+    setRegCheckOut,
+    regReason,
+    setRegReason,
+    regSubmitting,
     todayIso,
     tomorrowIso,
     leaveOptions,
@@ -270,6 +383,8 @@ export function useApplyLeaveController({
     onSubmitLeave,
     onCompOffApply,
     onPermissionApply,
+    onWfhApply,
+    onRegularizeApply,
     resetCompOffForm: () => {
       setCompOffDate('');
       setCompOffReason('');
@@ -280,5 +395,17 @@ export function useApplyLeaveController({
       setPermissionEndTime('');
       setPermissionReason('');
     },
-  };
+    resetWfhForm,
+    resetRegForm,
+  }), [
+    form, activeTab, leaveTypeStart, compOffDate, compOffReason, compOffSubmitting,
+    permissionDate, permissionStartTime, permissionEndTime, permissionReason, permissionSubmitting, permissionSummary,
+    wfhStartDate, wfhEndDate, wfhReason, wfhAvailability, wfhManagerVisible, wfhRemarks, wfhSubmitting,
+    regDate, regCheckIn, regCheckOut, regReason, regSubmitting,
+    todayIso, tomorrowIso, leaveOptions, maxLeaveTypeStart, canGoPrev, canGoNext,
+    type, startDate, endDate, dateStats, daysToDeduct, lopDays, balanceDeductedDays,
+    hasDateRange, hasOverlap, isOverdrawn, canSubmitLeave,
+    onSubmitLeave, onCompOffApply, onPermissionApply, onWfhApply, onRegularizeApply,
+    resetWfhForm, resetRegForm
+  ]);
 }

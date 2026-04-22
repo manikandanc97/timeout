@@ -23,7 +23,7 @@ interface InputProps {
   disabled?: boolean;
 }
 
-const Input: React.FC<InputProps> = ({
+const Input: React.FC<InputProps> = React.memo(({
   type,
   label,
   value,
@@ -162,6 +162,8 @@ const Input: React.FC<InputProps> = ({
       ) : null}
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';
 
 export default Input;

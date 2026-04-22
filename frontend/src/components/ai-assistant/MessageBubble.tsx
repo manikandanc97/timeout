@@ -279,7 +279,7 @@ export const messageBubbleStyles = `
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
     color: #fff;
     border-bottom-right-radius: 4px;
-    box-shadow: 0 2px 12px rgba(8,131,149,0.25);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--primary) 25%, transparent);
   }
   .msg-bubble-ai {
     background: var(--card);
@@ -316,7 +316,7 @@ export const messageBubbleStyles = `
   .avatar-ai {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
     color: white;
-    box-shadow: 0 2px 8px rgba(8,131,149,0.3);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent);
   }
   .avatar-user {
     background: var(--muted);

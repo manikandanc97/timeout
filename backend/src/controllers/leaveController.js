@@ -133,7 +133,7 @@ const parseTimeToMinutes = (value) => {
 
 export const applyLeave = async (req, res) => {
   try {
-    const { type, startDate, endDate, reason } = req.body;
+    const { type, startDate, endDate, reason, workAvailability, reportingManagerVisible } = req.body;
     if (!type || !startDate || !endDate || !reason) {
       return res.status(400).json({ error: 'All fields are required' });
     }
@@ -145,6 +145,8 @@ export const applyLeave = async (req, res) => {
       startDate,
       endDate,
       reason,
+      workAvailability,
+      reportingManagerVisible: reportingManagerVisible ?? true,
     });
 
     // Side effect: Notifications

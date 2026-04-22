@@ -82,7 +82,7 @@ export function SuggestionChips({ suggestions, onSelect, disabled }: SuggestionC
           color: var(--primary-foreground);
           border-color: var(--primary);
           transform: translateY(-1px);
-          box-shadow: 0 3px 10px rgba(8, 131, 149, 0.25);
+          box-shadow: 0 3px 10px color-mix(in srgb, var(--primary) 25%, transparent);
         }
         .suggestion-chip:disabled {
           opacity: 0.45;

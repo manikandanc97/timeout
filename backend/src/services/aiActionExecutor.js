@@ -430,13 +430,20 @@ async function executeViewPayslip({ user }) {
 // ─── WFH Action ──────────────────────────────────────────────────────────────
 
 async function executeApplyWFH({ user, fields }) {
-  const { startDate, endDate, reason } = fields;
+  const { startDate, endDate, reason, workAvailability, reportingManagerVisible } = fields;
   const { applyLeave } = await import('../controllers/leaveController.js');
 
   return await new Promise((resolve, reject) => {
     const mockReq = {
       user: { id: user.id, organizationId: user.organizationId, gender: user.gender, role: user.role },
-      body: { type: 'WFH', startDate, endDate, reason },
+      body: { 
+        type: 'WFH', 
+        startDate, 
+        endDate, 
+        reason, 
+        workAvailability, 
+        reportingManagerVisible: reportingManagerVisible ?? true 
+      },
     };
     const mockRes = {
       status: (code) => ({ json: (data) => resolve({ success: code < 400, status: code, data }) }),

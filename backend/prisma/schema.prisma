@@ -222,6 +222,10 @@ model Leave {
   /** Estimated salary loss for LOP days */
   lopAmount      Float @default(0)
 
+  /** WFH specific fields */
+  workAvailability String?
+  reportingManagerVisible Boolean @default(true)
+
   approvedById Int?
 
   createdAt DateTime @default(now())

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import type { LeaveBalance, LeaveType } from '@/types/leave';
 import type { LeaveFormData } from '@/utils/leave/leaveSchema';
 import { calculateLeaveDays } from '@/utils/leave/leaveHelpers';
@@ -44,7 +45,7 @@ export type ApplyLeaveApplyTabProps = {
   canSubmitLeave: boolean;
 };
 
-const ApplyLeaveApplyTab = ({
+const ApplyLeaveApplyTab = React.memo(({
   control,
   errors,
   isSubmitting,
@@ -117,6 +118,8 @@ const ApplyLeaveApplyTab = ({
       />
     </div>
   </form>
-);
+));
+
+ApplyLeaveApplyTab.displayName = 'ApplyLeaveApplyTab';
 
 export default ApplyLeaveApplyTab;

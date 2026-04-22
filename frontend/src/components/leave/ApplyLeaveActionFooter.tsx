@@ -1,5 +1,4 @@
-'use client';
-
+import React from 'react';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
 import Button from '../ui/Button';
 
@@ -10,12 +9,12 @@ type Props = {
   onReset: () => void;
 };
 
-export default function ApplyLeaveActionFooter({
+const ApplyLeaveActionFooter = React.memo(({
   isSubmitting,
   isOverdrawn,
   canSubmitLeave,
   onReset,
-}: Props) {
+}: Props) => {
   return (
     <section className='flex flex-col gap-4 rounded-2xl border border-border bg-card/95 p-4 shadow-sm backdrop-blur-sm md:flex-row md:items-center md:p-5'>
       <div className='flex flex-1 flex-col gap-1 text-xs text-muted-foreground'>
@@ -34,25 +33,24 @@ export default function ApplyLeaveActionFooter({
           type='button'
           variant='outline'
           onClick={onReset}
+          disabled={isSubmitting}
           className='inline-flex justify-center items-center shadow-none px-5 md:px-6 py-3 font-semibold text-sm'
         >
           Reset
         </Button>
         <Button
           type='submit'
-          disabled={isSubmitting || isOverdrawn || !canSubmitLeave}
+          loading={isSubmitting}
+          disabled={isOverdrawn || !canSubmitLeave}
           className='shadow-md shadow-primary/20 px-6 md:px-8 py-3 font-semibold text-sm'
         >
-          {isSubmitting ? (
-            <span className='flex items-center gap-2'>
-              <span className='inline-block border-2 border-white/50 border-t-white rounded-full w-4 h-4 animate-spin' />
-              Submitting...
-            </span>
-          ) : (
-            'Submit request'
-          )}
+          Submit request
         </Button>
       </div>
     </section>
   );
-}
+});
+
+ApplyLeaveActionFooter.displayName = 'ApplyLeaveActionFooter';
+
+export default ApplyLeaveActionFooter;

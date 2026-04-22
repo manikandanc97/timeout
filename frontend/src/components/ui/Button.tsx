@@ -3,17 +3,12 @@ import React from 'react';
 /** Visual style presets so pages stay consistent without long className strings. */
 export type ButtonVariant = 'primary' | 'ghost' | 'outline' | 'danger';
 
-interface ButtonProps {
-  type?: 'button' | 'submit';
-  children: React.ReactNode;
-  disabled?: boolean;
-  className?: string;
-  onClick?: () => void;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Defaults to solid primary; use ghost for icon-only toolbars, outline for secondary actions. */
   variant?: ButtonVariant;
   /** When true, only cursor/disabled styles apply — use for icon tiles with fully custom Tailwind. */
   unstyled?: boolean;
-  'aria-label'?: string;
+  loading?: boolean;
 }
 
 const variantClass: Record<ButtonVariant, string> = {
@@ -27,33 +22,45 @@ const variantClass: Record<ButtonVariant, string> = {
     'rounded-lg bg-destructive px-4 py-2 font-medium text-destructive-foreground hover:opacity-90',
 };
 
-const Button = (props: ButtonProps) => {
+const Button = React.memo((props: ButtonProps) => {
   const {
     type = 'button',
     children,
     disabled = false,
+    loading = false,
     className = '',
-    onClick,
     variant = 'primary',
     unstyled = false,
-    'aria-label': ariaLabel,
+    ...rest
   } = props;
 
   const surface = unstyled
     ? ''
     : variantClass[variant];
 
+  const isDisabled = disabled || loading;
+
   return (
     <button
       type={type}
-      disabled={disabled}
-      onClick={onClick}
-      aria-label={ariaLabel}
-      className={`cursor-pointer transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${surface} ${className}`}
+      disabled={isDisabled}
+      className={`relative inline-flex items-center justify-center cursor-pointer transition-all duration-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${surface} ${className}`}
+      {...rest}
     >
-      {children}
+      {loading ? (
+        <>
+          <span className='invisible opacity-0'>{children}</span>
+          <div className='absolute inset-0 flex items-center justify-center'>
+            <div className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+          </div>
+        </>
+      ) : (
+        children
+      )}
     </button>
   );
-};
+});
+
+Button.displayName = 'Button';
 
 export default Button;

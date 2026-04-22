@@ -219,6 +219,8 @@ export const applyLeave = async ({
   startDate,
   endDate,
   reason,
+  workAvailability,
+  reportingManagerVisible,
 }) => {
   const normalizedStartDate = new Date(`${startDate}T00:00:00`);
   const normalizedEndDate = new Date(`${endDate}T00:00:00`);
@@ -330,6 +332,8 @@ export const applyLeave = async ({
         startDate: normalizedStartDate,
         endDate: normalizedEndDate,
         reason,
+        workAvailability: type === 'WFH' ? workAvailability : null,
+        reportingManagerVisible: type === 'WFH' ? reportingManagerVisible : true,
         balanceDeductedDays,
         lopDays,
         lopAmount,

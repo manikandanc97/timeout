@@ -5,13 +5,13 @@ import type { Holiday } from '@/types/holiday';
 import type { Gender } from '@/types/user';
 import React from 'react';
 import { CalendarClock } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import ApplyLeaveTabSwitch from './ApplyLeaveTabSwitch';
 import { useApplyLeaveController } from './useApplyLeaveController';
-
-const ApplyLeaveApplyTab = dynamic(() => import('./ApplyLeaveApplyTab'));
-const ApplyLeaveCompOffTab = dynamic(() => import('./ApplyLeaveCompOffTab'));
-const ApplyLeavePermissionTab = dynamic(() => import('./ApplyLeavePermissionTab'));
+import ApplyLeaveApplyTab from './ApplyLeaveApplyTab';
+import ApplyLeaveCompOffTab from './ApplyLeaveCompOffTab';
+import ApplyLeavePermissionTab from './ApplyLeavePermissionTab';
+import ApplyLeaveWFHTab from './ApplyLeaveWFHTab';
+import ApplyLeaveAttendanceRegularizationTab from './ApplyLeaveAttendanceRegularizationTab';
 
 type Props = {
   userGender: Gender | string;
@@ -21,7 +21,7 @@ type Props = {
   onSuccess?: (leave: Leave | null | undefined) => void;
 };
 
-const ApplyLeave = ({
+const ApplyLeave = React.memo(({
   userGender,
   balance,
   holidays,
@@ -56,6 +56,28 @@ const ApplyLeave = ({
     setPermissionReason,
     permissionSubmitting,
     permissionSummary,
+    wfhStartDate,
+    setWfhStartDate,
+    wfhEndDate,
+    setWfhEndDate,
+    wfhReason,
+    setWfhReason,
+    wfhAvailability,
+    setWfhAvailability,
+    wfhManagerVisible,
+    setWfhManagerVisible,
+    wfhRemarks,
+    setWfhRemarks,
+    wfhSubmitting,
+    regDate,
+    setRegDate,
+    regCheckIn,
+    setRegCheckIn,
+    regCheckOut,
+    setRegCheckOut,
+    regReason,
+    setRegReason,
+    regSubmitting,
     todayIso,
     tomorrowIso,
     leaveOptions,
@@ -76,8 +98,12 @@ const ApplyLeave = ({
     onSubmitLeave,
     onCompOffApply,
     onPermissionApply,
+    onWfhApply,
+    onRegularizeApply,
     resetCompOffForm,
     resetPermissionForm,
+    resetWfhForm,
+    resetRegForm,
   } = controller;
   const {
     control,
@@ -110,71 +136,112 @@ const ApplyLeave = ({
 
         <ApplyLeaveTabSwitch activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {activeTab === 'LEAVE_APPLY' ? (
-          <ApplyLeaveApplyTab
-            control={control}
-            errors={errors}
-            isSubmitting={isSubmitting}
-            onSubmit={onSubmitLeave}
-            handleSubmit={handleSubmit}
-            reset={reset}
-            setValue={setValue}
-            type={type}
-            startDate={startDate}
-            endDate={endDate}
-            todayIso={todayIso}
-            leaveOptions={leaveOptions}
-            leaveTypeStart={leaveTypeStart}
-            setLeaveTypeStart={setLeaveTypeStart}
-            canGoPrev={canGoPrev}
-            canGoNext={canGoNext}
-            maxLeaveTypeStart={maxLeaveTypeStart}
-            balance={balance}
-            dateStats={dateStats}
-            daysToDeduct={daysToDeduct}
-            lopDays={lopDays}
-            balanceDeductedDays={balanceDeductedDays}
-            hasDateRange={hasDateRange}
-            hasOverlap={hasOverlap}
-            isOverdrawn={isOverdrawn}
-            canSubmitLeave={canSubmitLeave}
-          />
-        ) : null}
+        <div className='will-change-[transform,opacity]'>
+          {activeTab === 'LEAVE_APPLY' ? (
+            <ApplyLeaveApplyTab
+              control={control}
+              errors={errors}
+              isSubmitting={isSubmitting}
+              onSubmit={onSubmitLeave}
+              handleSubmit={handleSubmit}
+              reset={reset}
+              setValue={setValue}
+              type={type}
+              startDate={startDate}
+              endDate={endDate}
+              todayIso={todayIso}
+              leaveOptions={leaveOptions}
+              leaveTypeStart={leaveTypeStart}
+              setLeaveTypeStart={setLeaveTypeStart}
+              canGoPrev={canGoPrev}
+              canGoNext={canGoNext}
+              maxLeaveTypeStart={maxLeaveTypeStart}
+              balance={balance}
+              dateStats={dateStats}
+              daysToDeduct={daysToDeduct}
+              lopDays={lopDays}
+              balanceDeductedDays={balanceDeductedDays}
+              hasDateRange={hasDateRange}
+              hasOverlap={hasOverlap}
+              isOverdrawn={isOverdrawn}
+              canSubmitLeave={canSubmitLeave}
+            />
+          ) : null}
 
-        {activeTab === 'COMP_OFF' ? (
-          <ApplyLeaveCompOffTab
-            todayIso={todayIso}
-            compOffDate={compOffDate}
-            setCompOffDate={setCompOffDate}
-            compOffReason={compOffReason}
-            setCompOffReason={setCompOffReason}
-            compOffSubmitting={compOffSubmitting}
-            onCompOffApply={onCompOffApply}
-            onReset={resetCompOffForm}
-          />
-        ) : null}
+          {activeTab === 'COMP_OFF' ? (
+            <ApplyLeaveCompOffTab
+              todayIso={todayIso}
+              compOffDate={compOffDate}
+              setCompOffDate={setCompOffDate}
+              compOffReason={compOffReason}
+              setCompOffReason={setCompOffReason}
+              compOffSubmitting={compOffSubmitting}
+              onCompOffApply={onCompOffApply}
+              onReset={resetCompOffForm}
+            />
+          ) : null}
 
-        {activeTab === 'PERMISSION' ? (
-          <ApplyLeavePermissionTab
-            permissionSummary={permissionSummary}
-            todayIso={todayIso}
-            tomorrowIso={tomorrowIso}
-            permissionDate={permissionDate}
-            setPermissionDate={setPermissionDate}
-            permissionStartTime={permissionStartTime}
-            setPermissionStartTime={setPermissionStartTime}
-            permissionEndTime={permissionEndTime}
-            setPermissionEndTime={setPermissionEndTime}
-            permissionReason={permissionReason}
-            setPermissionReason={setPermissionReason}
-            permissionSubmitting={permissionSubmitting}
-            onPermissionApply={onPermissionApply}
-            onReset={resetPermissionForm}
-          />
-        ) : null}
+          {activeTab === 'PERMISSION' ? (
+            <ApplyLeavePermissionTab
+              permissionSummary={permissionSummary}
+              todayIso={todayIso}
+              tomorrowIso={tomorrowIso}
+              permissionDate={permissionDate}
+              setPermissionDate={setPermissionDate}
+              permissionStartTime={permissionStartTime}
+              setPermissionStartTime={setPermissionStartTime}
+              permissionEndTime={permissionEndTime}
+              setPermissionEndTime={setPermissionEndTime}
+              permissionReason={permissionReason}
+              setPermissionReason={setPermissionReason}
+              permissionSubmitting={permissionSubmitting}
+              onPermissionApply={onPermissionApply}
+              onReset={resetPermissionForm}
+            />
+          ) : null}
+
+          {activeTab === 'WFH' ? (
+            <ApplyLeaveWFHTab
+              todayIso={todayIso}
+              wfhStartDate={wfhStartDate}
+              setWfhStartDate={setWfhStartDate}
+              wfhEndDate={wfhEndDate}
+              setWfhEndDate={setWfhEndDate}
+              wfhReason={wfhReason}
+              setWfhReason={setWfhReason}
+              wfhAvailability={wfhAvailability}
+              setWfhAvailability={setWfhAvailability}
+              wfhManagerVisible={wfhManagerVisible}
+              setWfhManagerVisible={setWfhManagerVisible}
+              wfhRemarks={wfhRemarks}
+              setWfhRemarks={setWfhRemarks}
+              isSubmitting={wfhSubmitting}
+              onSubmit={onWfhApply}
+              onReset={resetWfhForm}
+            />
+          ) : null}
+
+          {activeTab === 'ATTENDANCE_REGULARIZATION' ? (
+            <ApplyLeaveAttendanceRegularizationTab
+              regDate={regDate}
+              setRegDate={setRegDate}
+              regCheckIn={regCheckIn}
+              setRegCheckIn={setRegCheckIn}
+              regCheckOut={regCheckOut}
+              setRegCheckOut={setRegCheckOut}
+              regReason={regReason}
+              setRegReason={setRegReason}
+              isSubmitting={regSubmitting}
+              onSubmit={onRegularizeApply}
+              onReset={resetRegForm}
+            />
+          ) : null}
+        </div>
       </div>
     </div>
   );
-};
+});
+
+ApplyLeave.displayName = 'ApplyLeave';
 
 export default ApplyLeave;

@@ -168,9 +168,9 @@ export const ACTION_REQUIRED_FIELDS = {
   [AI_ACTIONS.ACTIVATE_EMPLOYEE]: ['employeeId'],
   [AI_ACTIONS.DELETE_EMPLOYEE]: ['employeeId'],
   // WFH
-  [AI_ACTIONS.APPLY_WFH]: ['startDate', 'endDate', 'reason'],
+  [AI_ACTIONS.APPLY_WFH]: ['startDate', 'endDate', 'reason', 'workAvailability'],
   // Attendance
-  [AI_ACTIONS.REQUEST_REGULARIZATION]: ['date', 'reason'],
+  [AI_ACTIONS.REQUEST_REGULARIZATION]: ['date', 'reason', 'requestedCheckIn', 'requestedCheckOut'],
   [AI_ACTIONS.APPROVE_REGULARIZATION]: ['regularizationId'],
   [AI_ACTIONS.REJECT_REGULARIZATION]: ['regularizationId', 'rejectionReason'],
 };
@@ -181,9 +181,12 @@ export const FIELD_PROMPTS = {
   startDate: 'From which date? (YYYY-MM-DD)',
   endDate: 'To which date? (YYYY-MM-DD)',
   reason: 'What is the reason?',
+  workAvailability: 'What are your work availability details for WFH?',
   date: 'For which date? (YYYY-MM-DD)',
   startTime: 'What time does it start? (HH:MM, 24-hour)',
   endTime: 'What time does it end? (HH:MM, 24-hour)',
+  requestedCheckIn: 'What is your requested Check-in time? (HH:MM)',
+  requestedCheckOut: 'What is your requested Check-out time? (HH:MM)',
   workDate: 'Which date did you work? (YYYY-MM-DD, must be a weekend)',
   name: "Employee's full name?",
   email: "Employee's email address?",

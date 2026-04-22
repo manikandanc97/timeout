@@ -131,14 +131,14 @@ const fabStyles = `
     height: 58px;
     border-radius: 50%;
     border: none;
-    background: linear-gradient(135deg, #09637e, #088395);
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
     color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow:
-      0 8px 25px rgba(8,131,149,0.45),
+      0 8px 25px color-mix(in srgb, var(--primary) 45%, transparent),
       0 3px 10px rgba(0,0,0,0.2);
     transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
     overflow: visible;
@@ -147,7 +147,7 @@ const fabStyles = `
   .ai-fab:hover {
     transform: scale(1.1) translateY(-2px);
     box-shadow:
-      0 12px 30px rgba(8,131,149,0.55),
+      0 12px 30px color-mix(in srgb, var(--primary) 55%, transparent),
       0 5px 15px rgba(0,0,0,0.25);
   }
   .ai-fab:active {
@@ -196,7 +196,7 @@ const fabStyles = `
     position: absolute;
     inset: -6px;
     border-radius: 50%;
-    border: 2.5px solid rgba(8,131,149,0.35);
+    border: 2.5px solid color-mix(in srgb, var(--primary) 35%, transparent);
     animation: fabRing 2.5s ease-in-out infinite;
     pointer-events: none;
   }
