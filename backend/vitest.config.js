@@ -19,7 +19,7 @@ export default defineConfig({
         'src/lib/defaultOrgStructure.js',
         '**/*.test.js',
         '**/seed*.js',
-        '**/scratch/**',
+        '**/scripts/**',
       ],
       thresholds: {
         lines: 50,

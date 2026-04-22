@@ -1,56 +1,55 @@
-# Timeout HRM - Premium Enterprise SaaS Solution
+# Timeout HRM
 
-[![Vercel](https://img.shields.io/badge/Deploy%20to-Vercel-black?logo=vercel)](https://vercel.com/new/clone?repository-url=https://github.com/your-repo/timeout-hrm)
-[![Deploy to Render](https://img.shields.io/badge/Deploy%20to-Render-4343ec?logo=render)](https://render.com/deploy?repo=https://github.com/your-repo/timeout-hrm)
+Timeout HRM is a premium full-stack HRM SaaS product prepared for marketplace delivery. The repository is organized as a clean workspace monorepo with separate frontend and backend applications, production documentation, environment templates, Prisma migrations, and buyer setup guides.
 
-**Timeout HRM** is a high-fidelity, production-ready Human Resource Management system designed for the modern workplace. Built with **Next.js**, **Express.js**, and **PostgreSQL**, it offers a seamless experience for managing employees, leaves, payroll, and more.
+## Project Structure
 
----
-
-## 🔥 Enterprise Features
-
-- 💎 **Smart AI Assistant**: Multi-provider RAG (Retrieval-Augmented Generation) assistant for automated HR queries and actions.
-- 💰 **Enterprise Payroll**: State-driven status-managed payroll with statutory deductions (PF, ESI, TDS) and PDF payslips.
-- 🛡️ **Full Audit Trail**: automated "Before vs After" logging for sensitive record modifications.
-- 📅 **Advanced Leave Management**: Multi-type leave policies (Sick, Annual, Comp-Off) with automated balance tracking.
-- ⚡ **Real-time Notifications**: Socket.IO integration for instant alerts on leave approvals and payslip availability.
-- 🎨 **Dynamic Theme Engine**: Premium UI with light/dark modes and customizable accent colors.
-
----
-
-## 🚀 One-Click Setup
-
-Initialize the full-stack environment with a single command:
-
-```bash
-npm run setup
+```text
+timeout-hrm/
+├── backend/            Express API, Prisma schema, services, tests, scripts
+├── documentation/      Buyer guides, deployment docs, support and setup help
+├── frontend/           Next.js application, UI system, app routes, client services
+├── .env.example        Root setup reference
+├── INSTALLATION.md     Quick installation entry guide
+├── package.json        Workspace orchestration scripts
+└── README.md
 ```
 
----
+## Quick Start
 
-## 🔑 Demo Access
+```bash
+npm install
+npm run db:migrate -w backend
+npm run seed -w backend
+npm run dev
+```
 
-Log in with our pre-configured demo accounts to experience the full feature set immediately:
+## Demo Credentials
 
-- **Admin:** `admin@acmehrm.com` / `demo1234`
-- **Manager:** `manager@acmehrm.com` / `demo1234`
-- **Employee:** `employee@acmehrm.com` / `demo1234`
+Demo account details are documented in [documentation/DEMO_CREDENTIALS.md](./documentation/DEMO_CREDENTIALS.md).
 
----
+## Documentation
 
-## 🛠️ Technology Stack
+- [Installation Guide](./INSTALLATION.md)
+- [Documentation Index](./documentation/README.md)
+- [Deployment Guide](./documentation/DEPLOYMENT.md)
+- [Architecture Guide](./documentation/ARCHITECTURE.md)
+- [SMTP Setup](./documentation/SMTP_SETUP.md)
+- [AI Provider Setup](./documentation/AI_PROVIDER_SETUP.md)
+- [Support Guide](./documentation/SUPPORT.md)
 
-- **Frontend:** Next.js 14+, Tailwind CSS, Lucide Icons, Shadcn UI
-- **Backend:** Node.js (Express), Prisma ORM, JWT, Socket.io
-- **Database:** PostgreSQL (with `pgvector` support)
-- **Tooling:** Monorepo (npm workspaces), Vitest, PDFKit
+## Workspace Commands
 
----
+```bash
+npm run dev
+npm run build
+npm run test
+npm run seed
+```
 
-## 📖 Complete Documentation
+## Buyer Notes
 
-For detailed installation, production deployment, and developer guides, please see:
-👉 [**INSTALLATION.md**](./INSTALLATION.md)
-
----
-© 2024 Timeout HRM. Ready for ThemeForest Marketplace.
+- Frontend and backend ship as clearly separated applications.
+- Prisma migrations are included under `backend/prisma/migrations`.
+- Example environment files are included for both apps.
+- The repository excludes local build artifacts and workstation-only folders.

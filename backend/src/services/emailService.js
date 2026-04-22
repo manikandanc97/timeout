@@ -35,21 +35,25 @@ async function sendEmail({ to, subject, html, organizationId = null }) {
           fromEmail = smtp.fromEmail || fromEmail;
           fromName = org.name || fromName;
           
-          logger.info(`[emailService] Using DB-backed SMTP for org ${organizationId}: ${host}`);
+          logger.info('Using organization SMTP configuration', {
+            organizationId,
+            host,
+          });
         }
       }
     } catch (err) {
-      console.error(`[emailService] Failed to fetch org ${organizationId} SMTP settings:`, err.message);
+      logger.warn('Failed to fetch organization SMTP settings', {
+        organizationId,
+        errorMessage: err?.message,
+      });
     }
   }
 
   if (!host || !user || !pass) {
-    console.log('\n[EMULATED EMAIL] (No SMTP credentials available)');
-    console.log(`To: ${to}`);
-    console.log(`Subject: ${subject}`);
-    console.log('\nHTML Content (truncated):');
-    console.log(html.substring(0, 200) + '...');
-    console.log('-----------------------------------------------------\n');
+    logger.warn('SMTP credentials missing. Email delivery emulated in local mode.', {
+      to,
+      subject,
+    });
     return;
   }
 
@@ -72,12 +76,11 @@ async function sendEmail({ to, subject, html, organizationId = null }) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    logger.info(`[emailService] Email sent successfully to ${to}`, { messageId: info.messageId });
+    logger.info('Email sent successfully', { to, messageId: info.messageId });
     return info;
   } catch (error) {
-    console.error('[emailService] SMTP Error:', {
+    logger.error('SMTP send failed', error, {
       code: error.code,
-      message: error.message,
       host,
       user,
     });

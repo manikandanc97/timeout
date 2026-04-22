@@ -17,6 +17,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "node prisma/seed.js",
+    "seed:admin": "node scripts/seedAdmin.js",
+    "seed:holidays": "node scripts/seedHolidayCalendar.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {

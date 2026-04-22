@@ -1,87 +1,49 @@
-# Timeout HRM - Enterprise Installation & Production Guide
+# Installation Guide
 
-This guide provides professional instructions for deploying **Timeout HRM** in production and development environments.
+This file is the quick-start entry point for buyers. Expanded setup, deployment, SMTP, AI, and support guides are available inside [`documentation/`](./documentation/README.md).
 
----
+## 1. Requirements
 
-## 🚀 1. Quick Start (Plug & Play)
+- Node.js `20.x` to `24.x`
+- PostgreSQL `14+`
+- npm `10+`
 
-The easiest way to initialize the project is using the unified setup script from the root directory:
+## 2. Environment Files
+
+Create local environment files from the included templates:
 
 ```bash
-# Install core dependencies & initialize backend + frontend
-npm run setup
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
 ```
-*This command runs `npm install`, applies database migrations, and seeds the demo environment.*
 
----
+If your shell does not support `cp`, duplicate the files manually.
 
-## 🛠️ 2. Manual Configuration
+## 3. Install Dependencies
 
-### Prerequisites
-- **Node.js:** v18.x or later
-- **PostgreSQL:** v14.x or later (With `pgvector` for AI similarity search)
-- **SMTP Server:** Required for notifications and OTP security.
+```bash
+npm install
+```
 
-### Environment Setup
-1. **Backend:** Copy `backend/.env.example` to `backend/.env`
-2. **Frontend:** Copy `frontend/.env.example` to `frontend/.env.local`
+## 4. Prepare the Database
 
-> [!IMPORTANT]
-> **Production Secrets**: In production, always use `NODE_ENV=production` and generate 32-character random strings for `ACCESS_SECRET` and `REFRESH_SECRET`.
+```bash
+npm run db:migrate -w backend
+npm run seed -w backend
+```
 
----
+## 5. Start the Product
 
-## 🧠 3. AI Assistant Setup
+```bash
+npm run dev
+```
 
-Timeout HRM supports a multi-provider AI architecture. You can configure this via **Admin Settings > AI Assistant** in the dashboard.
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:5000/api`
 
-- **Demo Mode:** Works out of the box with no API keys.
-- **Gemini (Recommended):** Get a free API key from [Google AI Studio](https://aistudio.google.com/).
-- **Ollama:** Supports local LLM hosting (Llama 3, etc.) on `http://localhost:11434`.
+## 6. Next Reading
 
----
-
-## 📧 4. SMTP & Notifications
-
-Standardize your notification flow by configuring SMTP in `backend/.env`.
-
-| Variable | Description |
-| :--- | :--- |
-| `SMTP_HOST` | Your mail server host (e.g., `smtp.resend.com`) |
-| `SMTP_PORT` | `587` (TLS) or `465` (SSL) |
-| `SMTP_USER` | Your SMTP username |
-| `SMTP_PASS` | Your SMTP password / API Key |
-
-**Verification**: Use the **"Test SMTP"** button in **Admin Settings** to verify your configuration.
-
----
-
-## 🚢 5. Production Deployment
-
-### Frontend (Vercel)
-1. Import the root folder into Vercel.
-2. Set `Root Directory` to `frontend`.
-3. Configure `NEXT_PUBLIC_API_URL` to point to your backend.
-4. Build Command: `npm run build`
-
-### Backend (Render/Docker)
-1. Set the root directory to `backend`.
-2. Build Command: `npm install && npm run db:generate`
-3. Environment: Set `NODE_ENV=production` and all vars from `.env.example`.
-
----
-
-## 🔍 6. Troubleshooting FAQ
-
-**Q: Prisma migration fails on "vector" type?**  
-A: Ensure your PostgreSQL instance has the `pgvector` extension enabled. Run `CREATE EXTENSION IF NOT EXISTS vector;` manually if needed.
-
-**Q: 401 Unauthorized errors in frontend?**  
-A: Check if `CLIENT_ORIGIN` in the backend exactly matches your frontend URL (including `https://` and trailing slashes).
-
-**Q: Emails not being sent?**  
-A: Check your SMTP credentials and ensure port `587` is open on your hosting provider's firewall.
-
----
-© 2024 Timeout HRM. Enterprise-ready.
+- [Deployment Guide](./documentation/DEPLOYMENT.md)
+- [Demo Credentials](./documentation/DEMO_CREDENTIALS.md)
+- [SMTP Setup](./documentation/SMTP_SETUP.md)
+- [AI Provider Setup](./documentation/AI_PROVIDER_SETUP.md)

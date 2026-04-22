@@ -1,7 +1,5 @@
-// seedAdmin.js
-
-import prisma from './src/prismaClient.js';
 import bcrypt from 'bcrypt';
+import prisma from '../src/prismaClient.js';
 
 async function createAdmin() {
   const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -19,4 +17,11 @@ async function createAdmin() {
   console.log('Admin created successfully');
 }
 
-createAdmin();
+createAdmin()
+  .catch((error) => {
+    console.error('Failed to seed admin:', error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

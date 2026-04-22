@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import { logger } from '../services/loggerService.js';
 
 /** @type {import('socket.io').Server | null} */
 let ioInstance = null;
@@ -84,9 +85,15 @@ export function getIO() {
  */
 export function emitNotification(userId, payload) {
   if (!ioInstance || !Number.isFinite(Number(userId))) {
-    console.warn(`[Socket] Emission skipped. IO: ${!!ioInstance}, UserId: ${userId}`);
+    logger.warn('Socket emission skipped', {
+      hasIoInstance: Boolean(ioInstance),
+      userId,
+    });
     return;
   }
-  console.log(`[Socket] Emitting notification to user ${userId}:`, payload.type);
+  logger.debug('Emitting socket notification', {
+    userId: Number(userId),
+    type: payload.type,
+  });
   ioInstance.to(userRoom(Number(userId))).emit('notification:new', payload);
 }

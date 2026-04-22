@@ -21,6 +21,7 @@ import { env, requireEnv } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import aiRoutes from './routes/aiRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
+import { logger } from './services/loggerService.js';
 
 const app = express();
 
@@ -72,21 +73,18 @@ app.use('/api/attendance', attendanceRoutes);
 const httpServer = http.createServer(app);
 
 async function start() {
-  console.log('[server] Starting server sequence...');
+  logger.info('Starting backend server');
   try {
-    console.log('[server] Checking required environment variables...');
+    logger.debug('Validating required environment variables');
     requireEnv('DATABASE_URL');
     requireEnv('ACCESS_SECRET');
     requireEnv('REFRESH_SECRET');
 
-    console.log('[server] Connecting to database...');
+    logger.debug('Connecting to database');
     await prisma.$connect();
-    console.log('[server] Database connected successfully.');
+    logger.info('Database connected successfully');
   } catch (e) {
-    console.error(
-      '[server] Fatal error during startup:',
-      e?.message ?? e,
-    );
+    logger.error('Fatal error during startup', e);
     process.exit(1);
   }
 
@@ -96,7 +94,10 @@ async function start() {
   initSocketServer(httpServer, { clientOrigin: env.clientOrigins });
 
   httpServer.listen(env.port, () => {
-    console.log(`Server running on port ${env.port} (HTTP + Socket.IO)`);
+    logger.info('Server started successfully', {
+      port: env.port,
+      transport: 'http+socket.io',
+    });
   });
 }
 
