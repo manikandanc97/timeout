@@ -2,7 +2,7 @@
 
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
-type RejectTarget = { kind: 'leave'; id: number } | { kind: 'compOff'; id: number } | null;
+type RejectTarget = { kind: 'leave'; id: number } | { kind: 'compOff'; id: number } | { kind: 'attendance'; id: number } | null;
 
 type Props = {
   rejectTarget: RejectTarget;
@@ -29,14 +29,18 @@ export default function PendingRejectModal({
           ? 'Reject request'
           : rejectTarget.kind === 'leave'
             ? 'Reject leave request'
-            : 'Reject comp off request'
+            : rejectTarget.kind === 'attendance'
+              ? 'Reject attendance regularization'
+              : 'Reject comp off request'
       }
       message={
         rejectTarget === null
           ? 'Please provide a reason.'
           : rejectTarget.kind === 'leave'
             ? 'Please provide a reason. This will be shown to the employee.'
-            : 'Please provide a reason before rejecting this comp off request.'
+            : rejectTarget.kind === 'attendance'
+              ? 'Please provide a reason for rejecting this regularization request.'
+              : 'Please provide a reason before rejecting this comp off request.'
       }
       cancelLabel='Cancel'
       confirmLabel='Reject'
