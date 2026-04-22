@@ -6,6 +6,31 @@ import { createOrganizationStructure } from '../lib/defaultOrgStructure.js';
 import { sendEmail } from '../services/emailService.js';
 import { env } from '../config/env.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+const crossSiteCookieConfig = isProduction
+  ? { secure: true, sameSite: 'none' }
+  : { secure: false, sameSite: 'lax' };
+
+const accessTokenCookieOptions = {
+  httpOnly: true,
+  ...crossSiteCookieConfig,
+  path: '/',
+  maxAge: 15 * 60 * 1000,
+};
+
+const refreshTokenCookieOptions = {
+  httpOnly: true,
+  ...crossSiteCookieConfig,
+  path: '/',
+  maxAge: 24 * 60 * 60 * 1000,
+};
+
+const clearCookieOptions = {
+  httpOnly: true,
+  ...crossSiteCookieConfig,
+  path: '/',
+};
+
 export const register = async (req, res) => {
   try {
     const { organizationName, adminName, password, workEmail } = req.body;
@@ -84,23 +109,9 @@ export const login = async (req, res) => {
       expiresIn: '1d',
     });
 
-    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('accessToken', accessToken, accessTokenCookieOptions);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
 
     res.json({ message: 'Login successful', accessToken });
   } catch (error) {
@@ -131,13 +142,7 @@ export const refreshTokenHandler = (req, res) => {
       },
     );
 
-    res.cookie('accessToken', newAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie('accessToken', newAccessToken, accessTokenCookieOptions);
 
     res.json({ accessToken: newAccessToken });
   });
@@ -243,20 +248,9 @@ export const changePassword = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-  const isProd = process.env.NODE_ENV === 'production';
-  res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    path: '/',
-  });
+  res.clearCookie('refreshToken', clearCookieOptions);
 
-  res.clearCookie('accessToken', {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    path: '/',
-  });
+  res.clearCookie('accessToken', clearCookieOptions);
   res.json({ message: 'Logged out successfully' });
 };
 

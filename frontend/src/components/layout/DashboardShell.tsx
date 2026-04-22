@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { setAccessToken } from '@/lib/token';
+import { getAccessToken, setAccessToken } from '@/lib/token';
 import api from '@/services/api';
 import { AuthProvider } from '@/context/AuthContext';
 import { NotificationProvider } from '@/context/NotificationProvider';
@@ -51,8 +51,13 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
     const validateSession = async () => {
       setLoading(true);
       try {
-        const refreshRes = await api.post('/auth/refresh');
-        setAccessToken(refreshRes.data.accessToken);
+        const inMemoryAccessToken = getAccessToken();
+        if (!inMemoryAccessToken) {
+          const refreshRes = await api.post('/auth/refresh');
+          if (refreshRes.data?.accessToken) {
+            setAccessToken(refreshRes.data.accessToken);
+          }
+        }
         const userRes = await api.get('/auth/me');
         if (cancelled) return;
         setUser(userRes.data);
