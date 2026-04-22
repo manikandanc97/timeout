@@ -72,6 +72,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               <Link
                 key={menu.name}
                 href={menu.href}
+                onClick={onClose}
                 className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors lg:flex-col lg:justify-center lg:gap-2 lg:px-2 lg:py-2 ${
                   isActive
                     ? 'bg-primary text-primary-foreground'

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { NotificationProvider } from '@/context/NotificationProvider';
 import Sidebar from '@/components/layout/Sidebar';
@@ -27,18 +27,19 @@ const DashboardShell = ({ children, initialUser }: Props) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showAssistant, setShowAssistant] = useState(false);
   const fillMainHeight = MAIN_VIEWPORT_FILL_PATHS.has(pathname);
+  const previousPathnameRef = useRef(pathname);
 
   useEffect(() => {
-    if (!isMobileMenuOpen) {
-      return;
+    if (previousPathnameRef.current !== pathname) {
+      previousPathnameRef.current = pathname;
+      const timeout = window.setTimeout(() => {
+        setIsMobileMenuOpen(false);
+      }, 0);
+      return () => window.clearTimeout(timeout);
     }
 
-    const timeout = window.setTimeout(() => {
-      setIsMobileMenuOpen(false);
-    }, 0);
-
-    return () => window.clearTimeout(timeout);
-  }, [pathname, isMobileMenuOpen]);
+    previousPathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     const schedule = () => setShowAssistant(true);
