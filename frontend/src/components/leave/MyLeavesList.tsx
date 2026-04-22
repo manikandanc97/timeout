@@ -178,7 +178,7 @@ const MyLeavesList = ({
   }
 
   return (
-    <section className='relative isolate h-full overflow-hidden rounded-3xl border border-border bg-card shadow-xl'>
+    <section className='relative isolate overflow-hidden rounded-3xl border border-border bg-card shadow-xl'>
       <div className='pointer-events-none absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl' />
       <div className='pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl' />
 
@@ -214,7 +214,7 @@ const MyLeavesList = ({
           ))}
         </div>
 
-        <div className='scroll-area-hrm mt-2 max-h-[calc(100vh-310px)] pr-2'>
+        <div className='mt-2 pr-2'>
           {filteredLeaves.length > 0 ? (
             <div className='flex flex-col gap-3'>
               {filteredLeaves.map((leave) => (
