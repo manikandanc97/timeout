@@ -1,29 +1,15 @@
 import React, { useState } from 'react';
 
-interface InputProps {
-  type: string;
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
   label: string;
-  value?: string;
-  onChange?: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
-  onBlur?: (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
-  id: string;
   containerClassName?: string;
   inputClassName?: string;
   rightElement?: React.ReactNode;
-  placeholder?: string;
-  rows?: number;
   hideLabel?: boolean;
-  min?: string;
-  max?: string;
-  required?: boolean;
-  disabled?: boolean;
+  rows?: number;
 }
 
-const Input: React.FC<InputProps> = React.memo(({
+const Input = React.memo(({
   type,
   label,
   value,
@@ -36,11 +22,12 @@ const Input: React.FC<InputProps> = React.memo(({
   rows,
   placeholder,
   hideLabel = false,
-  min,
-  max,
   required = false,
   disabled = false,
-}) => {
+  min,
+  max,
+  ...rest
+}: InputProps) => {
   const [internalFocused, setInternalFocused] = useState(false);
   const isDate = type === 'date';
   const [dynamicType, setDynamicType] = useState(isDate ? 'text' : type);
@@ -92,17 +79,11 @@ const Input: React.FC<InputProps> = React.memo(({
     isDate && value
       ? internalFocused
         ? value
-        : formatDisplayDate(value)
+        : formatDisplayDate(value as string)
       : (value ?? '');
 
   /** Date inputs use internal show/hide; other types follow the `type` prop (e.g. password ↔ text). */
   const effectiveInputType = isDate ? dynamicType : type;
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    onChange?.(e);
-  };
 
   return (
     <div className={`relative w-full ${containerClassName}`}>
@@ -110,7 +91,7 @@ const Input: React.FC<InputProps> = React.memo(({
         <textarea
           id={id}
           value={value}
-          onChange={handleChange}
+          onChange={onChange}
           placeholder={placeholderText}
           rows={rows || 4}
           className={sharedClassName}
@@ -119,13 +100,14 @@ const Input: React.FC<InputProps> = React.memo(({
           aria-label={ariaLabel}
           required={required}
           disabled={disabled}
+          {...(rest as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
         />
       ) : (
         <input
           type={effectiveInputType}
           id={id}
           value={computedValue}
-          onChange={handleChange}
+          onChange={onChange}
           placeholder={placeholderText}
           className={sharedClassName}
           onFocus={handleFocus}
@@ -135,6 +117,7 @@ const Input: React.FC<InputProps> = React.memo(({
           max={max}
           required={required}
           disabled={disabled}
+          {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
         />
       )}
       {!hideLabel && (

@@ -45,7 +45,7 @@ export type ApplyLeaveApplyTabProps = {
   canSubmitLeave: boolean;
 };
 
-const ApplyLeaveApplyTab = React.memo(({
+export default function ApplyLeaveApplyTab({
   control,
   errors,
   isSubmitting,
@@ -72,54 +72,52 @@ const ApplyLeaveApplyTab = React.memo(({
   hasOverlap,
   isOverdrawn,
   canSubmitLeave,
-}: ApplyLeaveApplyTabProps) => (
-  <form
-    onSubmit={handleSubmit(onSubmit)}
-    className='gap-5 grid lg:grid-cols-[1.7fr,1fr]'
-  >
-    <div className='min-w-0 space-y-5'>
-      <div className='gap-4 grid'>
-        <ApplyLeaveTypeSection
-          control={control}
-          errors={errors}
-          type={type}
-          leaveOptions={leaveOptions}
-          leaveTypeStart={leaveTypeStart}
-          setLeaveTypeStart={setLeaveTypeStart}
-          canGoPrev={canGoPrev}
-          canGoNext={canGoNext}
-          maxLeaveTypeStart={maxLeaveTypeStart}
-          balance={balance}
-          setValue={setValue}
-        />
+}: ApplyLeaveApplyTabProps) {
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='gap-5 grid lg:grid-cols-[1.7fr,1fr]'
+    >
+      <div className='min-w-0 space-y-5'>
+        <div className='gap-4 grid'>
+          <ApplyLeaveTypeSection
+            control={control}
+            errors={errors}
+            type={type}
+            leaveOptions={leaveOptions}
+            leaveTypeStart={leaveTypeStart}
+            setLeaveTypeStart={setLeaveTypeStart}
+            canGoPrev={canGoPrev}
+            canGoNext={canGoNext}
+            maxLeaveTypeStart={maxLeaveTypeStart}
+            balance={balance}
+            setValue={setValue}
+          />
 
-        <ApplyLeaveDurationSection
-          control={control}
-          errors={errors}
-          todayIso={todayIso}
-          startDate={startDate}
-          endDate={endDate}
-          dateStats={dateStats}
-          hasDateRange={hasDateRange}
-          hasOverlap={hasOverlap}
-          daysToDeduct={daysToDeduct}
-          lopDays={lopDays}
-          balanceDeductedDays={balanceDeductedDays}
+          <ApplyLeaveDurationSection
+            control={control}
+            errors={errors}
+            todayIso={todayIso}
+            startDate={startDate}
+            endDate={endDate}
+            dateStats={dateStats}
+            hasDateRange={hasDateRange}
+            hasOverlap={hasOverlap}
+            daysToDeduct={daysToDeduct}
+            lopDays={lopDays}
+            balanceDeductedDays={balanceDeductedDays}
+          />
+        </div>
+
+        <ApplyLeaveReasonSection control={control} errors={errors} />
+
+        <ApplyLeaveActionFooter
+          isSubmitting={isSubmitting}
+          isOverdrawn={isOverdrawn}
+          canSubmitLeave={canSubmitLeave}
+          onReset={() => reset()}
         />
       </div>
-
-      <ApplyLeaveReasonSection control={control} errors={errors} />
-
-      <ApplyLeaveActionFooter
-        isSubmitting={isSubmitting}
-        isOverdrawn={isOverdrawn}
-        canSubmitLeave={canSubmitLeave}
-        onReset={() => reset()}
-      />
-    </div>
-  </form>
-));
-
-ApplyLeaveApplyTab.displayName = 'ApplyLeaveApplyTab';
-
-export default ApplyLeaveApplyTab;
+    </form>
+  );
+}

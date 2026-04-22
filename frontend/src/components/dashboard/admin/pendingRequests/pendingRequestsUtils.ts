@@ -13,6 +13,7 @@ export const LEAVE_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   SICK: { bg: 'bg-rose-500/12 dark:bg-rose-400/18', text: 'text-rose-800 dark:text-rose-200' },
   MATERNITY: { bg: 'bg-pink-500/12 dark:bg-pink-400/18', text: 'text-pink-800 dark:text-pink-200' },
   PATERNITY: { bg: 'bg-violet-500/12 dark:bg-violet-400/18', text: 'text-violet-800 dark:text-violet-200' },
+  WFH: { bg: 'bg-amber-500/12 dark:bg-amber-400/18', text: 'text-amber-800 dark:text-amber-200' },
 };
 
 export type PermissionRow = {
@@ -33,6 +34,7 @@ export type CompOffRow = {
 };
 
 export function leaveTypeLabel(type: string) {
+  if (type === 'WFH') return 'WFH Request';
   const lower = type.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1) + ' leave';
 }
@@ -45,6 +47,12 @@ export function formatDate(dateString: string) {
 export function sortPendingLeaves(rows: LeaveWithEmployee[]) {
   return rows
     .filter((row) => row.status === 'PENDING')
+    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
+}
+
+export function sortPendingAttendance(rows: any[]) {
+  return rows
+    .filter((r) => r.status === 'PENDING')
     .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
 }
 

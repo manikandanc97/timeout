@@ -17,7 +17,7 @@ export function useOtherLeaveRequests({ initialPermissionRequests, initialCompOf
   const [compOffRows, setCompOffRows] = useState(initialCompOffRequests);
   const [regularizationRows, setRegularizationRows] = useState(initialRegularizationRequests);
   const [otherBusyKey, setOtherBusyKey] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'LEAVE' | 'PERMISSION' | 'COMP_OFF' | 'REGULARIZATION'>('LEAVE');
+  const [activeTab, setActiveTab] = useState<'LEAVE' | 'WFH' | 'PERMISSION' | 'COMP_OFF' | 'REGULARIZATION'>('LEAVE');
   const [otherSearch, setOtherSearch] = useState('');
   const [otherDateFrom, setOtherDateFrom] = useState('');
   const [otherDateTo, setOtherDateTo] = useState('');

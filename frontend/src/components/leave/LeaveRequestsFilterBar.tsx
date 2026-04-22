@@ -23,6 +23,7 @@ type Props = {
   onDateToChange: (value: string) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  hideTypeFilter?: boolean;
 };
 
 export default function LeaveRequestsFilterBar({
@@ -38,6 +39,7 @@ export default function LeaveRequestsFilterBar({
   onDateToChange,
   hasActiveFilters,
   onClearFilters,
+  hideTypeFilter = false,
 }: Props) {
   return (
     <FilterBarShell
@@ -89,25 +91,27 @@ export default function LeaveRequestsFilterBar({
           selectClassName='h-10 focus:ring-inset'
         />
       </div>
-      <div className='w-[170px] shrink-0'>
-        <Select
-          id='req-type'
-          label='Leave type'
-          hideLabel
-          value={typeFilter}
-          onChange={(e) =>
-            onTypeChange(e.target.value as FilterValue<LeaveType>)
-          }
-          options={[
-            { label: 'All types', value: 'ALL' },
-            ...TYPE_FILTER_OPTIONS.map((o) => ({
-              label: o.label,
-              value: o.value,
-            })),
-          ]}
-          selectClassName='h-10 focus:ring-inset'
-        />
-      </div>
+      {!hideTypeFilter && (
+        <div className='w-[170px] shrink-0'>
+          <Select
+            id='req-type'
+            label='Leave type'
+            hideLabel
+            value={typeFilter}
+            onChange={(e) =>
+              onTypeChange(e.target.value as FilterValue<LeaveType>)
+            }
+            options={[
+              { label: 'All types', value: 'ALL' },
+              ...TYPE_FILTER_OPTIONS.map((o) => ({
+                label: o.label,
+                value: o.value,
+              })),
+            ]}
+            selectClassName='h-10 focus:ring-inset'
+          />
+        </div>
+      )}
       <div className='w-[150px] shrink-0'>
         <Input
           id='req-from'

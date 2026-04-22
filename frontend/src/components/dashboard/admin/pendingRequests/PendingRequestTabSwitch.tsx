@@ -2,23 +2,26 @@
 
 import Button from '@/components/ui/Button';
 
-type Tab = 'LEAVE' | 'PERMISSION' | 'COMP_OFF';
+export type PendingTab = 'LEAVE' | 'WFH' | 'PERMISSION' | 'COMP_OFF' | 'ATTENDANCE';
 
 type Props = {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
+  activeTab: PendingTab;
+  onTabChange: (tab: PendingTab) => void;
 };
 
 export default function PendingRequestTabSwitch({ activeTab, onTabChange }: Props) {
-  const buttonClass = (tab: Tab) =>
-    `rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-      activeTab === tab ? 'bg-primary text-primary-foreground' : 'text-card-foreground/80 hover:bg-muted'
+  const buttonClass = (tab: PendingTab) =>
+    `rounded-lg px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
+      activeTab === tab ? 'bg-primary text-primary-foreground shadow-sm' : 'text-card-foreground/80 hover:bg-muted'
     }`;
 
   return (
-    <div className='mb-4 flex items-center gap-2 rounded-xl border border-border bg-card/80 p-1'>
+    <div className='mb-4 flex items-center gap-1 overflow-x-auto rounded-xl border border-border bg-card/80 p-1 no-scrollbar'>
       <Button type='button' unstyled onClick={() => onTabChange('LEAVE')} className={buttonClass('LEAVE')}>
         Leave
+      </Button>
+      <Button type='button' unstyled onClick={() => onTabChange('WFH')} className={buttonClass('WFH')}>
+        WFH
       </Button>
       <Button
         type='button'
@@ -35,6 +38,14 @@ export default function PendingRequestTabSwitch({ activeTab, onTabChange }: Prop
         className={buttonClass('COMP_OFF')}
       >
         Comp off
+      </Button>
+      <Button
+        type='button'
+        unstyled
+        onClick={() => onTabChange('ATTENDANCE')}
+        className={buttonClass('ATTENDANCE')}
+      >
+        Attendance
       </Button>
     </div>
   );

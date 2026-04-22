@@ -36,13 +36,18 @@ export default function LeaveRequestsPageClient({
   holidays,
   canModerate,
 }: Props) {
-  const req = useLeaveRequestsPage({ initialLeaves });
-  const { refetchLeaves } = req;
   const other = useOtherLeaveRequests({
     initialPermissionRequests,
     initialCompOffRequests,
     initialRegularizationRequests,
   });
+
+  const req = useLeaveRequestsPage({ 
+    initialLeaves, 
+    activeTab: other.activeTab 
+  });
+  
+  const { refetchLeaves } = req;
   const { refetchOtherFeeds } = other;
 
   const refetchAllRequestFeeds = useCallback(async () => {
@@ -55,8 +60,9 @@ export default function LeaveRequestsPageClient({
       void refetchAllRequestFeeds();
     });
   }, [refetchAllRequestFeeds]);
+
   const tabSummary =
-    other.activeTab === 'LEAVE'
+    (other.activeTab === 'LEAVE' || other.activeTab === 'WFH')
       ? req.summary
       : other.activeTab === 'PERMISSION'
         ? other.permissionSummary
@@ -85,7 +91,7 @@ export default function LeaveRequestsPageClient({
           >
               <RequestCategoryTabs activeTab={other.activeTab} onTabChange={other.setActiveTab} />
 
-              {other.activeTab === 'LEAVE' ? (
+              {(other.activeTab === 'LEAVE' || other.activeTab === 'WFH') ? (
                 <>
                   <LeaveRequestsFilterBar
                     searchTerm={req.searchTerm}
@@ -100,6 +106,7 @@ export default function LeaveRequestsPageClient({
                     onDateToChange={req.setDateTo}
                     hasActiveFilters={req.hasActiveFilters}
                     onClearFilters={req.clearFilters}
+                    hideTypeFilter={other.activeTab === 'WFH'}
                   />
 
                   <div className='flex min-h-124 w-full min-w-0 flex-col overflow-x-auto rounded-xl border border-border bg-muted/35'>

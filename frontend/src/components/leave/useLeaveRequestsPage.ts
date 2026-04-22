@@ -16,9 +16,10 @@ import {
 
 type Args = {
   initialLeaves: LeaveWithEmployee[];
+  activeTab?: string;
 };
 
-export function useLeaveRequestsPage({ initialLeaves }: Args) {
+export function useLeaveRequestsPage({ initialLeaves, activeTab = 'LEAVE' }: Args) {
   const [rows, setRows] = useState<LeaveWithEmployee[]>(initialLeaves);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] =
@@ -35,20 +36,27 @@ export function useLeaveRequestsPage({ initialLeaves }: Args) {
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, statusFilter, typeFilter, dateFrom, dateTo]);
+  }, [searchTerm, statusFilter, typeFilter, dateFrom, dateTo, activeTab]);
 
-  const summary = useMemo(() => computeLeaveRequestsSummary(rows), [rows]);
+  // Filter rows based on activeTab (LEAVE vs WFH)
+  const tabRows = useMemo(() => {
+    if (activeTab === 'WFH') return rows.filter(r => r.type === 'WFH');
+    if (activeTab === 'LEAVE') return rows.filter(r => r.type !== 'WFH');
+    return rows;
+  }, [rows, activeTab]);
+
+  const summary = useMemo(() => computeLeaveRequestsSummary(tabRows), [tabRows]);
 
   const filtered = useMemo(
     () =>
-      filterLeaveRequests(rows, {
+      filterLeaveRequests(tabRows, {
         searchTerm,
         statusFilter,
         typeFilter,
         dateFrom,
         dateTo,
       }),
-    [rows, searchTerm, statusFilter, typeFilter, dateFrom, dateTo],
+    [tabRows, searchTerm, statusFilter, typeFilter, dateFrom, dateTo],
   );
 
   const pageCount = leaveRequestsPageCount(

@@ -19,7 +19,7 @@ type Props = {
   onReset: () => void;
 };
 
-const ApplyLeaveAttendanceRegularizationTab = React.memo(({
+export default function ApplyLeaveAttendanceRegularizationTab({
   regDate,
   setRegDate,
   regCheckIn,
@@ -31,7 +31,7 @@ const ApplyLeaveAttendanceRegularizationTab = React.memo(({
   isSubmitting,
   onSubmit,
   onReset,
-}: Props) => {
+}: Props) {
   return (
     <div className='flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300 will-change-[transform,opacity]'>
       <div className='bg-primary/5 rounded-2xl p-5 border border-primary/10 flex gap-4 items-start'>
@@ -138,8 +138,4 @@ const ApplyLeaveAttendanceRegularizationTab = React.memo(({
       </div>
     </div>
   );
-});
-
-ApplyLeaveAttendanceRegularizationTab.displayName = 'ApplyLeaveAttendanceRegularizationTab';
-
-export default ApplyLeaveAttendanceRegularizationTab;
+}

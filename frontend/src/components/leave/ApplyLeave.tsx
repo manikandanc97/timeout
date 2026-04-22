@@ -21,13 +21,13 @@ type Props = {
   onSuccess?: (leave: Leave | null | undefined) => void;
 };
 
-const ApplyLeave = React.memo(({
+export default function ApplyLeave({
   userGender,
   balance,
   holidays,
   history,
   onSuccess,
-}: Props) => {
+}: Props) {
   const controller = useApplyLeaveController({
     userGender,
     balance,
@@ -137,7 +137,7 @@ const ApplyLeave = React.memo(({
         <ApplyLeaveTabSwitch activeTab={activeTab} onTabChange={setActiveTab} />
 
         <div className='will-change-[transform,opacity]'>
-          {activeTab === 'LEAVE_APPLY' ? (
+          {activeTab === 'LEAVE_APPLY' && (
             <ApplyLeaveApplyTab
               control={control}
               errors={errors}
@@ -166,9 +166,9 @@ const ApplyLeave = React.memo(({
               isOverdrawn={isOverdrawn}
               canSubmitLeave={canSubmitLeave}
             />
-          ) : null}
+          )}
 
-          {activeTab === 'COMP_OFF' ? (
+          {activeTab === 'COMP_OFF' && (
             <ApplyLeaveCompOffTab
               todayIso={todayIso}
               compOffDate={compOffDate}
@@ -179,9 +179,9 @@ const ApplyLeave = React.memo(({
               onCompOffApply={onCompOffApply}
               onReset={resetCompOffForm}
             />
-          ) : null}
+          )}
 
-          {activeTab === 'PERMISSION' ? (
+          {activeTab === 'PERMISSION' && (
             <ApplyLeavePermissionTab
               permissionSummary={permissionSummary}
               todayIso={todayIso}
@@ -198,9 +198,9 @@ const ApplyLeave = React.memo(({
               onPermissionApply={onPermissionApply}
               onReset={resetPermissionForm}
             />
-          ) : null}
+          )}
 
-          {activeTab === 'WFH' ? (
+          {activeTab === 'WFH' && (
             <ApplyLeaveWFHTab
               todayIso={todayIso}
               wfhStartDate={wfhStartDate}
@@ -219,9 +219,9 @@ const ApplyLeave = React.memo(({
               onSubmit={onWfhApply}
               onReset={resetWfhForm}
             />
-          ) : null}
+          )}
 
-          {activeTab === 'ATTENDANCE_REGULARIZATION' ? (
+          {activeTab === 'ATTENDANCE_REGULARIZATION' && (
             <ApplyLeaveAttendanceRegularizationTab
               regDate={regDate}
               setRegDate={setRegDate}
@@ -235,13 +235,9 @@ const ApplyLeave = React.memo(({
               onSubmit={onRegularizeApply}
               onReset={resetRegForm}
             />
-          ) : null}
+          )}
         </div>
       </div>
     </div>
   );
-});
-
-ApplyLeave.displayName = 'ApplyLeave';
-
-export default ApplyLeave;
+}
