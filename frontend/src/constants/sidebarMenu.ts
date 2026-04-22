@@ -15,7 +15,6 @@ import {
   ReceiptText,
   Clock,
   Home,
-  UserCheck,
 } from "lucide-react";
 
 // role types 😄
@@ -74,7 +73,6 @@ const adminMenuList: MenuItem[] = [
   { name: "Leave Policy", href: "/policy", icon: BookOpen },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Payroll", href: "/payroll", icon: Wallet },
-  { name: "User Roles", href: "/roles", icon: UserCheck },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
