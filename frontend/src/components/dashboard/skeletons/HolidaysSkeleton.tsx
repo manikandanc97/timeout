@@ -1,3 +1,5 @@
+import Skeleton from '@/components/ui/Skeleton';
+
 /** Mirrors `HolidaysSummaryCards` — three KPIs in a row on sm+. */
 function HolidaysSummarySkeleton() {
   const accents = [
@@ -16,10 +18,10 @@ function HolidaysSummarySkeleton() {
           className={`rounded-2xl border border-border border-l-4 ${accent} bg-card p-3 shadow-sm sm:p-3.5`}
         >
           <div className='flex items-center justify-between gap-2'>
-            <div className='h-3 w-20 animate-pulse rounded bg-muted/90 sm:w-24' />
-            <div className='h-8 w-8 shrink-0 animate-pulse rounded-lg bg-muted sm:h-9 sm:w-9 sm:rounded-xl' />
+            <Skeleton className='h-3 w-20 sm:w-24' />
+            <Skeleton className='h-8 w-8 shrink-0 rounded-lg sm:h-9 sm:w-9 sm:rounded-xl' />
           </div>
-          <div className='mt-2 h-7 w-10 animate-pulse rounded bg-muted/90 sm:mt-2.5 sm:h-8' />
+          <Skeleton className='mt-2 h-7 w-10 sm:mt-2.5 sm:h-8' />
         </div>
       ))}
     </section>
@@ -37,14 +39,14 @@ export default function HolidaysSkeleton() {
         <div className='flex min-w-0 flex-col gap-3'>
           <div className='flex shrink-0 flex-wrap items-start justify-between gap-3'>
             <div className='flex items-start gap-3'>
-              <div className='grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-linear-to-br from-muted via-card to-muted shadow-inner ring-1 ring-border/80' />
+              <Skeleton className='h-12 w-12 shrink-0 rounded-2xl shadow-inner ring-1 ring-border/80' />
               <div className='space-y-2 pt-0.5'>
-                <div className='h-2.5 w-24 animate-pulse rounded bg-muted/90' />
-                <div className='h-8 w-48 max-w-[70vw] animate-pulse rounded-md bg-muted/90' />
-                <div className='h-3.5 w-60 max-w-[85vw] animate-pulse rounded bg-muted' />
+                <Skeleton className='h-2.5 w-24' />
+                <Skeleton className='h-8 w-48 max-w-[70vw]' />
+                <Skeleton className='h-3.5 w-60 max-w-[85vw]' />
               </div>
             </div>
-            <div className='h-8 w-40 shrink-0 animate-pulse rounded-full border border-border/80 bg-muted/90' />
+            <Skeleton className='h-8 w-40 shrink-0 rounded-full border border-border/80' />
           </div>
 
           <HolidaysSummarySkeleton />
@@ -54,16 +56,16 @@ export default function HolidaysSkeleton() {
             className='flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:gap-3.5 sm:p-4'
           >
             <div className='flex min-w-0 shrink-0 flex-nowrap items-center gap-3 overflow-x-auto py-0.5 [scrollbar-width:thin]'>
-              <div className='h-10 min-w-[180px] max-w-sm flex-1 animate-pulse rounded-md bg-muted/90 ring-1 ring-border' />
-              <div className='ml-auto h-10 w-36 shrink-0 animate-pulse rounded-xl bg-muted ring-1 ring-border' />
+              <Skeleton className='h-10 min-w-[180px] max-w-sm flex-1 ring-1 ring-border' />
+              <Skeleton className='ml-auto h-10 w-36 shrink-0 rounded-xl ring-1 ring-border' />
             </div>
 
             <div className='flex w-full min-w-0 min-h-124 flex-col overflow-x-auto rounded-xl border border-border bg-muted/40'>
               <div className='sticky top-0 z-10 border-b border-border bg-muted/95 px-4 py-3 backdrop-blur-sm'>
                 <div className='flex min-w-[420px] gap-3'>
-                  <div className='h-3 w-14 animate-pulse rounded bg-muted/80' />
-                  <div className='h-3 w-12 animate-pulse rounded bg-muted/80' />
-                  <div className='ml-auto h-3 w-16 animate-pulse rounded bg-muted/80' />
+                  <Skeleton className='h-3 w-14' />
+                  <Skeleton className='h-3 w-12' />
+                  <Skeleton className='ml-auto h-3 w-16' />
                 </div>
               </div>
               <div className='divide-y divide-border/90'>
@@ -72,11 +74,11 @@ export default function HolidaysSkeleton() {
                     key={i}
                     className='flex min-w-[420px] items-center gap-3 px-4 py-3.5'
                   >
-                    <div className='h-3.5 w-40 shrink-0 animate-pulse rounded bg-muted' />
-                    <div className='h-3.5 w-28 shrink-0 animate-pulse rounded bg-muted' />
+                    <Skeleton className='h-3.5 w-40 shrink-0' />
+                    <Skeleton className='h-3.5 w-28 shrink-0' />
                     <div className='ml-auto flex shrink-0 gap-1'>
-                      <div className='h-8 w-8 animate-pulse rounded-lg bg-muted ring-1 ring-border/80' />
-                      <div className='h-8 w-8 animate-pulse rounded-lg bg-muted ring-1 ring-border/80' />
+                      <Skeleton className='h-8 w-8 rounded-lg ring-1 ring-border/80' />
+                      <Skeleton className='h-8 w-8 rounded-lg ring-1 ring-border/80' />
                     </div>
                   </div>
                 ))}

@@ -5,6 +5,7 @@ import type { FilterValue } from '@/components/leave/constants';
 import type { LeaveStatus, LeaveType, LeaveWithEmployee } from '@/types/leave';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { extractApiList, type ApiListEnvelope } from '@/lib/apiList';
 
 import {
   computeLeaveRequestsSummary,
@@ -91,8 +92,8 @@ export function useLeaveRequestsPage({ initialLeaves, activeTab = 'LEAVE' }: Arg
 
   const refresh = useCallback(async () => {
     try {
-      const res = await api.get<LeaveWithEmployee[]>('/leaves');
-      setRows(res.data);
+      const res = await api.get<LeaveWithEmployee[] | ApiListEnvelope<LeaveWithEmployee>>('/leaves');
+      setRows(extractApiList(res.data));
     } catch {
       toast.error('Could not refresh leave requests.');
     }

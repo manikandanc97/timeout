@@ -1,5 +1,9 @@
 import prisma from '../prismaClient.js';
 import { toLocalCalendarDate } from '../services/leaveService.js';
+import {
+  notifyAttendanceRegularizationApplied,
+  notifyAttendanceRegularizationDecision,
+} from '../services/notificationService.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -250,38 +254,16 @@ export const requestRegularization = async (req, res) => {
       },
     });
 
-    // Notify managers/admins
     try {
       const applicant = await prisma.user.findUnique({
         where: { id: userId },
-        select: { name: true, reportingManagerId: true },
+        select: { name: true },
       });
-      const recipients = await prisma.user.findMany({
-        where: {
-          organizationId,
-          role: { in: ['MANAGER', 'ADMIN'] },
-          id: applicant?.reportingManagerId
-            ? { in: [applicant.reportingManagerId] }
-            : undefined,
-          isActive: true,
-        },
-        select: { id: true },
-      });
-      // Only notify if we have reporting manager, else notify all admins
-      const adminRecipients = recipients.length > 0 ? recipients : await prisma.user.findMany({
-        where: { organizationId, role: 'ADMIN', isActive: true },
-        select: { id: true },
-      });
-
-      await prisma.notification.createMany({
-        data: adminRecipients.map((r) => ({
-          userId: r.id,
-          organizationId,
-          type: 'ATTENDANCE_REGULARIZATION_APPLIED',
-          title: 'Regularization Request',
-          body: `${applicant?.name ?? 'Employee'} requested attendance regularization for ${date}`,
-        })),
-        skipDuplicates: true,
+      await notifyAttendanceRegularizationApplied({
+        organizationId,
+        applicantId: userId,
+        applicantName: applicant?.name ?? 'Employee',
+        date: targetDay,
       });
     } catch (notifyErr) {
       console.error('[Attendance] regularization notify error:', notifyErr);
@@ -417,20 +399,17 @@ export const updateRegularizationStatus = async (req, res) => {
       return result;
     });
 
-    // Notify employee
     try {
       const actor_name = await prisma.user.findUnique({
         where: { id: actor.id },
         select: { name: true },
       });
-      await prisma.notification.create({
-        data: {
-          userId: row.userId,
-          organizationId: row.organizationId,
-          type: status === 'APPROVED' ? 'ATTENDANCE_REGULARIZATION_APPROVED' : 'ATTENDANCE_REGULARIZATION_REJECTED',
-          title: `Regularization ${status === 'APPROVED' ? 'Approved' : 'Rejected'}`,
-          body: `Your attendance regularization request for ${row.date.toLocaleDateString()} was ${status.toLowerCase()} by ${actor_name?.name ?? 'HR'}.`,
-        },
+      await notifyAttendanceRegularizationDecision({
+        organizationId: row.organizationId,
+        employeeId: row.userId,
+        status,
+        actorName: actor_name?.name ?? 'HR',
+        date: row.date,
       });
     } catch (notifyErr) {
       console.error('[Attendance] regularization decision notify error:', notifyErr);

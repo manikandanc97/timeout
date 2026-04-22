@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { LeaveWithEmployee } from '@/types/leave';
 import type { Holiday } from '@/types/holiday';
 import type { RegularizationRequest } from '@/types/attendance';
+import { extractApiList, type ApiListEnvelope } from '@/lib/apiList';
 import { AdminDashboardPanel } from './AdminDashboardPanel';
 import {
   CompOffRow,
@@ -60,20 +61,20 @@ export default function PendingLeaveRequests() {
 
   const reloadLists = useCallback(async () => {
     const [leaveRes, holidayRes, permissionRes, compOffRes, attendanceRes] = await Promise.all([
-      api.get<LeaveWithEmployee[]>('/leaves'),
+      api.get<LeaveWithEmployee[] | ApiListEnvelope<LeaveWithEmployee>>('/leaves'),
       api.get<Holiday[]>('/holidays').catch(() => ({ data: [] as Holiday[] })),
       api
-        .get<PermissionRow[]>('/leaves/permissions/requests')
+        .get<PermissionRow[] | ApiListEnvelope<PermissionRow>>('/leaves/permissions/requests')
         .catch(() => ({ data: [] as PermissionRow[] })),
       api
-        .get<CompOffRow[]>('/leaves/comp-off-requests')
+        .get<CompOffRow[] | ApiListEnvelope<CompOffRow>>('/leaves/comp-off-requests')
         .catch(() => ({ data: [] as CompOffRow[] })),
       api
         .get<{ data: RegularizationRequest[] }>('/attendance/regularize')
         .catch(() => ({ data: { data: [] } })),
     ]);
 
-    const allPendingLeaves = sortPendingLeaves(leaveRes.data);
+    const allPendingLeaves = sortPendingLeaves(extractApiList(leaveRes.data));
     
     // Separate regular leaves and WFH
     const regularLeaves = allPendingLeaves.filter(l => l.type !== 'WFH');
@@ -87,13 +88,11 @@ export default function PendingLeaveRequests() {
 
     setHolidays(Array.isArray(holidayRes.data) ? holidayRes.data : []);
 
-    const permData = Array.isArray(permissionRes.data) ? permissionRes.data : [];
+    const permData = extractApiList(permissionRes.data);
     setPermissionRows(permData.slice(0, SLOT_COUNT));
     setPermissionTotal(permData.length);
 
-    const compSorted = sortPendingCompOff(
-      Array.isArray(compOffRes.data) ? compOffRes.data : [],
-    );
+    const compSorted = sortPendingCompOff(extractApiList(compOffRes.data));
     setCompOffRows(compSorted.slice(0, SLOT_COUNT));
     setCompOffTotal(compSorted.length);
 

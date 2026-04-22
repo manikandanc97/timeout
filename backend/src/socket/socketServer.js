@@ -83,6 +83,10 @@ export function getIO() {
  * @param {Record<string, unknown>} payload Serializable notification row
  */
 export function emitNotification(userId, payload) {
-  if (!ioInstance || !Number.isFinite(Number(userId))) return;
+  if (!ioInstance || !Number.isFinite(Number(userId))) {
+    console.warn(`[Socket] Emission skipped. IO: ${!!ioInstance}, UserId: ${userId}`);
+    return;
+  }
+  console.log(`[Socket] Emitting notification to user ${userId}:`, payload.type);
   ioInstance.to(userRoom(Number(userId))).emit('notification:new', payload);
 }

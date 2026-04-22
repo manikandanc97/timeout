@@ -34,7 +34,8 @@ export default function TeamPageClient() {
   const canView =
     user?.role === 'ADMIN' ||
     user?.role === 'MANAGER' ||
-    user?.role === 'HR';
+    user?.role === 'HR' ||
+    user?.role === 'EMPLOYEE';
   const isAdmin = user?.role === 'ADMIN';
 
   const dir = useTeamsDirectory(canView);
@@ -55,9 +56,9 @@ export default function TeamPageClient() {
 
   return (
     <>
-      <CommonPageShell className='min-h-0 flex-1' bodyClassName='min-h-0 flex-1 gap-3 p-4 sm:gap-4 sm:p-5'>
-          <div className='flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4'>
-            <div className='flex min-h-0 min-w-0 flex-1 flex-col gap-3'>
+      <CommonPageShell className='min-h-0 flex-1' bodyClassName='gap-3 p-4 sm:gap-4 sm:p-5 lg:min-h-0 lg:flex-1'>
+          <div className='flex min-w-0 flex-col gap-3 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-4'>
+            <div className='flex min-w-0 flex-col gap-3 lg:min-h-0 lg:flex-1'>
               <TeamsPageHeader
                 filteredCount={dir.filtered.length}
                 totalCount={dir.teams.length}
@@ -66,7 +67,7 @@ export default function TeamPageClient() {
 
               <section
                 aria-labelledby='teams-heading'
-                className='flex min-h-0 min-w-0 flex-1 flex-col gap-3 rounded-2xl border border-border bg-muted/25 p-3 shadow-sm sm:gap-3.5 sm:p-4'
+                className='flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-muted/25 p-3 shadow-sm sm:gap-3.5 sm:p-4 lg:min-h-0 lg:flex-1'
               >
                 <TeamsFilterBar
                   searchTerm={dir.searchTerm}
@@ -111,7 +112,7 @@ export default function TeamPageClient() {
 
             <aside
               aria-label='Teams summary and departments'
-              className='flex w-full min-h-0 shrink-0 flex-col gap-3 lg:min-h-0 lg:min-w-[20rem] lg:w-80 xl:min-w-[22rem] xl:w-[22rem]'
+              className='flex w-full min-h-0 shrink-0 flex-col gap-3 lg:min-h-0 lg:min-w-[20rem] lg:w-80 xl:min-w-88 xl:w-88'
             >
               <TeamsSummaryCards
                 loading={dir.loadingList}

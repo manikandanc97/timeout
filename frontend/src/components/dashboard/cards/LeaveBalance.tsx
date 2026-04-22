@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useMemo } from "react";
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import { Cell, Pie, PieChart } from "recharts";
 import type { LeaveBalance as LeaveBalanceType } from "@/types/leave";
 
 type Props = {
@@ -20,6 +20,7 @@ type TooltipState = {
 const LeaveBalance = ({ balance }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const [chartSize, setChartSize] = useState({ width: 320, height: 240 });
 
   const data = useMemo(
     () => [
@@ -64,6 +65,24 @@ const LeaveBalance = ({ balance }: Props) => {
   const handleMouseLeave = () =>
     setTooltip((prev) => ({ ...prev, visible: false }));
 
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const syncSize = () => {
+      const nextWidth = Math.max(1, Math.floor(element.clientWidth));
+      const nextHeight = Math.max(1, Math.floor(element.clientHeight));
+      setChartSize({ width: nextWidth, height: nextHeight });
+    };
+
+    syncSize();
+
+    const observer = new ResizeObserver(syncSize);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="flex min-h-0 flex-col rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md">
       <h2 className="mb-4 text-xl font-semibold">Leave Balance</h2>
@@ -74,34 +93,34 @@ const LeaveBalance = ({ balance }: Props) => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <PieChart>
-            <Pie
-              data={data}
-              innerRadius={70}
-              outerRadius={95}
-              dataKey="value"
-              paddingAngle={2}
-              stroke="none"
-              onMouseEnter={(entry, index) =>
-                setTooltip((prev) => ({
-                  ...prev,
-                  visible: true,
-                  name: entry.name as string,
-                  value: entry.value as number,
-                  color: COLORS[index % COLORS.length],
-                }))
-              }
-              onMouseLeave={() =>
-                setTooltip((prev) => ({ ...prev, visible: false }))
-              }
-            >
-              {data.map((_, index) => (
-                <Cell key={index} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
+        <PieChart width={chartSize.width} height={chartSize.height}>
+          <Pie
+            data={data}
+            innerRadius={70}
+            outerRadius={95}
+            dataKey="value"
+            paddingAngle={2}
+            stroke="none"
+            cx="50%"
+            cy="50%"
+            onMouseEnter={(entry, index) =>
+              setTooltip((prev) => ({
+                ...prev,
+                visible: true,
+                name: entry.name as string,
+                value: entry.value as number,
+                color: COLORS[index % COLORS.length],
+              }))
+            }
+            onMouseLeave={() =>
+              setTooltip((prev) => ({ ...prev, visible: false }))
+            }
+          >
+            {data.map((_, index) => (
+              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+        </PieChart>
 
         <div className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none">
           <p className="text-sm text-muted-foreground">

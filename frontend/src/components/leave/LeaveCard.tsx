@@ -23,6 +23,7 @@ type Props = {
   holidays?: Holiday[];
   /** Return true when delete succeeded so the confirmation modal can close */
   onDelete: (id: number) => Promise<boolean>;
+  isReadOnly?: boolean;
 };
 
 export default function LeaveCard({
@@ -30,6 +31,7 @@ export default function LeaveCard({
   deletingId,
   onDelete,
   holidays = [],
+  isReadOnly = false,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [showRejectionReason, setShowRejectionReason] = useState(false);
@@ -58,6 +60,11 @@ export default function LeaveCard({
 
         <div className='flex flex-col flex-1 justify-center mt-0.5 min-w-0'>
           <div className='flex items-center gap-2 mb-1'>
+            {leave.user?.name && (
+              <span className='text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80'>
+                {leave.user.name} &bull;
+              </span>
+            )}
             <span className={`text-sm font-bold ${typeCfg.text}`}>
               {typeCfg.label}
             </span>
@@ -117,7 +124,7 @@ export default function LeaveCard({
           </div>
         </div>
 
-        {isPending && (
+        {!isReadOnly && isPending && (
           <div className='flex items-center self-start md:self-end gap-2 mt-1'>
             <Button
               type='button'

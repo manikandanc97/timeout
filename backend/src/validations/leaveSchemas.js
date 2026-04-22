@@ -5,6 +5,8 @@ export const leaveSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
   reason: z.string().min(5, 'Reason must be at least 5 characters').max(500),
+  workAvailability: z.string().max(500).optional(),
+  reportingManagerVisible: z.boolean().optional(),
 });
 
 export const compOffSchema = z.object({

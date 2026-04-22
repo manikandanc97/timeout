@@ -12,10 +12,14 @@ export default function FilterBarShell({
 }: FilterBarShellProps) {
   return (
     <div
-      className={`flex min-w-0 flex-nowrap items-center gap-3 overflow-x-auto py-1.5 [scrollbar-width:thin] ${className}`.trim()}
+      className={`flex min-w-0 flex-wrap items-center gap-3 py-1.5 sm:flex-nowrap sm:overflow-x-auto [scrollbar-width:thin] ${className}`.trim()}
     >
       {children}
-      {actions ? <div className='ml-auto flex shrink-0 items-center gap-2'>{actions}</div> : null}
+      {actions ? (
+        <div className='flex w-full flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto sm:shrink-0 sm:flex-nowrap'>
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }

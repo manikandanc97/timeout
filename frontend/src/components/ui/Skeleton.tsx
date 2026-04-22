@@ -7,7 +7,7 @@ type SkeletonProps = {
 export default function Skeleton({ className }: SkeletonProps) {
   return (
     <div
-      className={`animate-pulse rounded-md bg-skeleton/20 ${className}`}
+      className={`animate-pulse rounded-md bg-skeleton/30 ${className}`}
       aria-hidden='true'
     />
   );

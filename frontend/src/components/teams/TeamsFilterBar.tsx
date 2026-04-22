@@ -31,6 +31,7 @@ export default function TeamsFilterBar({
 }: Props) {
   return (
     <FilterBarShell
+      className='sm:items-center'
       actions={
         <>
           {isAdmin ? (
@@ -57,7 +58,7 @@ export default function TeamsFilterBar({
         </>
       }
     >
-      <div className='relative min-w-[180px] flex-1 max-w-sm'>
+      <div className='relative w-full min-w-0 sm:min-w-[180px] sm:max-w-sm sm:flex-1'>
         <Search
           size={14}
           className='pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground'
@@ -73,7 +74,7 @@ export default function TeamsFilterBar({
           inputClassName='h-10 py-0 pl-9 focus:ring-inset'
         />
       </div>
-      <div className='w-[160px] shrink-0'>
+      <div className='w-full shrink-0 sm:w-[160px]'>
         <Select
           id='teams-dept'
           label='Department'

@@ -28,6 +28,7 @@ function getRefreshScopesForNotification(
       return ['adminDashboardStats', 'adminPendingRequests', 'leaveRequestsPage'];
     case 'PERMISSION_APPLIED':
     case 'COMP_OFF_APPLIED':
+    case 'ATTENDANCE_REGULARIZATION_APPLIED':
       if (!isModerator) return [];
       return ['adminPendingRequests', 'leaveRequestsPage'];
     case 'LEAVE_APPROVED':
@@ -37,6 +38,8 @@ function getRefreshScopesForNotification(
     case 'PERMISSION_REJECTED':
     case 'COMP_OFF_APPROVED':
     case 'COMP_OFF_REJECTED':
+    case 'ATTENDANCE_REGULARIZATION_APPROVED':
+    case 'ATTENDANCE_REGULARIZATION_REJECTED':
       return ['leaveRequestsPage'];
     case 'SALARY_STRUCTURE_UPDATED':
       return ['payrollSummary', 'employeePayslips'];

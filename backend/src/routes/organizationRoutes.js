@@ -52,12 +52,12 @@ router.post('/test-smtp', roleMiddleware('ADMIN'), validate(testSmtpSchema), tes
 
 router.get(
   '/structure',
-  roleMiddleware('ADMIN', 'MANAGER'),
+  roleMiddleware('ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'),
   getOrganizationStructure,
 );
 router.get(
   '/employees',
-  roleMiddleware('ADMIN', 'MANAGER'),
+  roleMiddleware('ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'),
   getOrganizationEmployees,
 );
 router.get(
@@ -67,7 +67,7 @@ router.get(
 );
 router.get(
   '/teams',
-  roleMiddleware('ADMIN', 'MANAGER'),
+  roleMiddleware('ADMIN', 'MANAGER', 'HR', 'EMPLOYEE'),
   getOrganizationTeams,
 );
 router.post(

@@ -133,20 +133,26 @@ export function NotificationProvider({
       });
 
       socket.on('notification:new', (n: AppNotification) => {
-        if (seenIdsRef.current.has(n.id)) return;
-        seenIdsRef.current.add(n.id);
-
-        setNotifications((prev) => [n, ...prev].slice(0, 80));
-        if (!n.readAt) {
-          setUnreadCount((c) => c + 1);
+        const isAlreadyToasted = toastedSocketIds.current.has(n.id);
+        
+        if (!seenIdsRef.current.has(n.id)) {
+          seenIdsRef.current.add(n.id);
+          setNotifications((prev) => [n, ...prev].slice(0, 80));
+          if (!n.readAt) {
+            setUnreadCount((c) => c + 1);
+          }
         }
-        if (!toastedSocketIds.current.has(n.id)) {
+
+        if (!isAlreadyToasted) {
           toastedSocketIds.current.add(n.id);
           const message =
             n.body && n.body.trim().length > 0
               ? `${n.title}: ${n.body}`
               : n.title;
-          toast.success(message, { duration: 6500 });
+          toast.success(message, { 
+            duration: 6500,
+            icon: '🔔',
+          });
         }
 
         refreshDashboardForNotification(n, userRoleRef.current);

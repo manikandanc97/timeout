@@ -45,6 +45,7 @@ const resolveActorContext = async (authUser) => {
       role: true,
       organizationId: true,
       gender: true,
+      teamId: true,
     },
   });
 
@@ -57,6 +58,7 @@ const resolveActorContext = async (authUser) => {
     role: dbUser.role,
     organizationId: dbUser.organizationId,
     gender: dbUser.gender ?? authUser?.gender ?? null,
+    teamId: dbUser.teamId,
   };
 };
 
@@ -135,7 +137,8 @@ export const applyLeave = async (req, res) => {
   try {
     const { type, startDate, endDate, reason, workAvailability, reportingManagerVisible } = req.body;
     if (!type || !startDate || !endDate || !reason) {
-      return res.status(400).json({ error: 'All fields are required' });
+      console.warn('[Leave] Missing required fields:', { type, startDate, endDate, reason });
+      return res.status(400).json({ message: 'All fields are required' });
     }
 
     const { leave, impact } = await applyLeaveService({
@@ -745,7 +748,17 @@ export const getLeaves = async (req, res) => {
 
     let where;
     if (user.role === 'EMPLOYEE') {
-      where = { userId: user.id };
+      if (user.teamId) {
+        where = {
+          organizationId: user.organizationId,
+          OR: [
+            { userId: user.id },
+            { teamId: user.teamId },
+          ],
+        };
+      } else {
+        where = { userId: user.id };
+      }
     } else if (user.role === 'ADMIN') {
       where = { organizationId: user.organizationId };
     } else if (user.role === 'MANAGER') {
@@ -754,6 +767,7 @@ export const getLeaves = async (req, res) => {
         OR: [
           { userId: user.id },
           { user: { reportingManagerId: user.id } },
+          { teamId: user.teamId ?? undefined },
         ],
       };
     } else {
@@ -763,7 +777,7 @@ export const getLeaves = async (req, res) => {
     const [leaves, total] = await Promise.all([
       prisma.leave.findMany({
         where,
-        include: user.role !== 'EMPLOYEE' ? leaveListIncludeUser : undefined,
+        include: leaveListIncludeUser,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -957,7 +971,19 @@ export const updateLeaveStatus = async (req, res) => {
     }
 
     if (leaveType === 'SICK' || leaveType === 'ANNUAL') {
-      await recalculatePayrollForLeaveRange(leave);
+      try {
+        await recalculatePayrollForLeaveRange(leave);
+      } catch (payrollError) {
+        console.error(
+          '[leave] payroll recalculation failed during leave status update',
+          {
+            leaveId,
+            leaveType,
+            actorId: req.user?.id,
+            error: payrollError,
+          },
+        );
+      }
     }
 
     try {

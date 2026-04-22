@@ -1,4 +1,5 @@
 import React from 'react';
+import Skeleton from '@/components/ui/Skeleton';
 
 /**
  * Route / shell loading UI aligned with {@link AdminDashboard} layout
@@ -9,10 +10,10 @@ function PanelShell({ children }: { children: React.ReactNode }) {
     <div className='flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm'>
       <div className='flex items-center border-b border-border px-5 py-4'>
         <div className='flex items-center gap-3'>
-          <div className='h-9 w-9 shrink-0 rounded-xl bg-skeleton' />
+          <Skeleton className='h-9 w-9 shrink-0 rounded-xl' />
           <div className='space-y-2'>
-            <div className='h-3.5 w-36 rounded bg-skeleton' />
-            <div className='h-2.5 w-28 rounded bg-skeleton' />
+            <Skeleton className='h-3.5 w-36' />
+            <Skeleton className='h-2.5 w-28' />
           </div>
         </div>
       </div>
@@ -27,11 +28,11 @@ const AdminDashboardSkeleton = () => {
       {/* Page header — matches AdminDashboard */}
       <div className='flex items-start justify-between'>
         <div className='flex items-center gap-4'>
-          <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-skeleton ring-1 ring-border' />
+          <Skeleton className='h-12 w-12 shrink-0 rounded-2xl ring-1 ring-border' />
           <div className='space-y-2'>
-            <div className='h-2.5 w-24 rounded bg-skeleton' />
-            <div className='h-8 w-40 rounded bg-skeleton' />
-            <div className='h-3.5 w-52 rounded bg-muted' />
+            <Skeleton className='h-2.5 w-24' />
+            <Skeleton className='h-8 w-40' />
+            <Skeleton className='h-3.5 w-52' />
           </div>
         </div>
       </div>
@@ -51,10 +52,10 @@ const AdminDashboardSkeleton = () => {
               key={`kpi-${i}`}
               className={`flex items-center gap-3 rounded-2xl border border-border border-l-4 bg-card px-4 py-3.5 shadow-sm ${accent}`}
             >
-              <div className='h-10 w-10 shrink-0 rounded-xl bg-skeleton' />
+              <Skeleton className='h-10 w-10 shrink-0 rounded-xl' />
               <div className='min-w-0 flex-1 space-y-1.5'>
-                <div className='h-7 w-12 rounded-md bg-skeleton' />
-                <div className='h-3 max-w-44 rounded bg-muted' />
+                <Skeleton className='h-7 w-12 rounded-md' />
+                <Skeleton className='h-3 max-w-44' />
               </div>
             </div>
           ))}
@@ -80,24 +81,24 @@ const AdminDashboardSkeleton = () => {
                 <div className='space-y-2.5'>
                   <div className='flex items-center justify-between gap-3'>
                     <div className='flex min-w-0 items-center gap-2.5'>
-                      <div className='h-8 w-8 shrink-0 rounded-lg bg-muted' />
-                      <div className='h-3.5 flex-1 max-w-[120px] rounded bg-skeleton' />
+                      <Skeleton className='h-8 w-8 shrink-0 rounded-lg' />
+                      <Skeleton className='h-3.5 flex-1 max-w-[120px]' />
                     </div>
-                    <div className='h-5 w-16 shrink-0 rounded-md bg-muted' />
+                    <Skeleton className='h-5 w-16 shrink-0 rounded-md' />
                   </div>
                   <div className='flex items-center justify-between gap-3'>
                     <div className='flex min-w-0 items-center gap-2.5'>
-                      <div className='h-8 w-8 shrink-0 rounded-lg bg-muted' />
-                      <div className='h-3.5 flex-1 max-w-[100px] rounded bg-skeleton' />
+                      <Skeleton className='h-8 w-8 shrink-0 rounded-lg' />
+                      <Skeleton className='h-3.5 flex-1 max-w-[100px]' />
                     </div>
-                    <div className='h-5 w-14 shrink-0 rounded-md bg-muted' />
+                    <Skeleton className='h-5 w-14 shrink-0 rounded-md' />
                   </div>
                   <div className='flex items-center justify-between gap-3'>
                     <div className='flex min-w-0 items-center gap-2.5'>
-                      <div className='h-8 w-8 shrink-0 rounded-lg bg-muted' />
-                      <div className='h-3.5 flex-1 max-w-[110px] rounded bg-skeleton' />
+                      <Skeleton className='h-8 w-8 shrink-0 rounded-lg' />
+                      <Skeleton className='h-3.5 flex-1 max-w-[110px]' />
                     </div>
-                    <div className='h-5 w-12 shrink-0 rounded-md bg-muted' />
+                    <Skeleton className='h-5 w-12 shrink-0 rounded-md' />
                   </div>
                 </div>
               </PanelShell>
@@ -123,27 +124,27 @@ const AdminDashboardSkeleton = () => {
             </div>
             <div className='flex flex-1 flex-col px-4 pb-5 pt-4'>
               <div className='mb-4 flex items-center justify-between'>
-                <div className='h-8 w-8 rounded-lg bg-skeleton' />
+                <Skeleton className='h-8 w-8 rounded-lg' />
                 <div className='flex flex-col items-center space-y-1.5'>
-                  <div className='h-4 w-32 rounded bg-skeleton' />
-                  <div className='h-2.5 w-24 rounded bg-skeleton' />
+                  <Skeleton className='h-4 w-32' />
+                  <Skeleton className='h-2.5 w-24' />
                 </div>
-                <div className='h-8 w-8 rounded-lg bg-skeleton' />
+                <Skeleton className='h-8 w-8 rounded-lg' />
               </div>
               <div className='mb-1 grid grid-cols-7 gap-1'>
                 {[...Array(7)].map((_, i) => (
-                  <div
+                  <Skeleton
                     key={`head-${i}`}
-                    className='mx-auto h-2.5 w-8 rounded bg-skeleton'
+                    className='mx-auto h-2.5 w-8'
                   />
                 ))}
               </div>
               <div className='grid grid-cols-7 gap-y-1'>
                 {[...Array(35)].map((_, i) => (
-                  <div
+                  <Skeleton
                     key={`day-${i}`}
                     className={`mx-auto h-9 w-9 rounded-xl ${
-                      i === 14 ? 'bg-primary/50' : 'bg-skeleton'
+                      i === 14 ? 'opacity-50' : ''
                     }`}
                   />
                 ))}
@@ -152,8 +153,8 @@ const AdminDashboardSkeleton = () => {
                 <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
                   {[...Array(6)].map((_, i) => (
                     <div key={`legend-${i}`} className='flex items-center gap-2'>
-                      <div className='h-2.5 w-2.5 shrink-0 rounded-full bg-skeleton' />
-                      <div className='h-3 w-24 rounded bg-skeleton' />
+                      <Skeleton className='h-2.5 w-2.5 shrink-0 rounded-full' />
+                      <Skeleton className='h-3 w-24' />
                     </div>
                   ))}
                 </div>

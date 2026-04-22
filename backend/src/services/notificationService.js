@@ -10,6 +10,16 @@ function formatDateOnly(d) {
   return `${y}-${m}-${day}`;
 }
 
+function formatLocaleDate(d) {
+  const date = d instanceof Date ? d : new Date(d);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 function leaveTypeLabel(type) {
   if (!type) return 'Leave';
   return String(type).replace(/_/g, ' ');
@@ -33,7 +43,11 @@ async function getActiveUserIdsInOrg(organizationId) {
 
 async function getActiveAdminIdsInOrg(organizationId) {
   const rows = await prisma.user.findMany({
-    where: { organizationId, role: 'ADMIN', isActive: true },
+    where: {
+      organizationId,
+      role: { in: ['ADMIN', 'HR'] },
+      isActive: true,
+    },
     select: { id: true },
   });
   return rows.map((r) => r.id);
@@ -70,7 +84,9 @@ export function toNotificationPayload(record) {
 /** Persist notification then push to the user's Socket.IO room. */
 export async function createAndEmitNotification(data) {
   const row = await prisma.notification.create({ data });
-  emitNotification(row.userId, toNotificationPayload(row));
+  if (row?.userId) {
+    emitNotification(row.userId, toNotificationPayload(row));
+  }
   return row;
 }
 
@@ -84,43 +100,18 @@ export async function notifyLeaveAppliedRecipients({
   applicantName,
   organizationId,
 }) {
-  const recipientIds = new Set();
-
-  const admins = await prisma.user.findMany({
-    where: {
-      organizationId,
-      role: 'ADMIN',
-      isActive: true,
-    },
-    select: { id: true },
-  });
-  admins.forEach((a) => recipientIds.add(a.id));
-
-  const applicant = await prisma.user.findUnique({
-    where: { id: applicantId },
-    select: { reportingManagerId: true },
-  });
-  if (applicant?.reportingManagerId) {
-    recipientIds.add(applicant.reportingManagerId);
-  }
-
-  recipientIds.delete(applicantId);
-
+  const recipientIds = await resolveAdminAndManagerRecipients(organizationId, applicantId);
   const range = `${formatDateOnly(leave.startDate)} → ${formatDateOnly(leave.endDate)}`;
   const body = `${applicantName} requested ${leaveTypeLabel(leave.type)} (${range}).`;
 
-  await Promise.all(
-    [...recipientIds].map((userId) =>
-      createAndEmitNotification({
-        user: { connect: { id: userId } },
-        organization: { connect: { id: organizationId } },
-        type: 'LEAVE_APPLIED',
-        title: 'New leave request',
-        body,
-        leave: { connect: { id: leave.id } },
-      }),
-    ),
-  );
+  await notifyUsersByIds(recipientIds, (userId) => ({
+    user: { connect: { id: userId } },
+    organization: { connect: { id: organizationId } },
+    type: 'LEAVE_APPLIED',
+    title: 'New leave request',
+    body,
+    leave: { connect: { id: leave.id } },
+  }));
 }
 
 /**
@@ -409,6 +400,42 @@ export async function notifyAdmins({
     title,
     body,
   }));
+}
+
+export async function notifyAttendanceRegularizationApplied({
+  organizationId,
+  applicantId,
+  applicantName,
+  date,
+}) {
+  const recipients = await resolveAdminAndManagerRecipients(organizationId, applicantId);
+  const body = `${applicantName} requested attendance regularization for ${formatLocaleDate(date)}.`;
+  await notifyUsersByIds(recipients, (userId) => ({
+    user: { connect: { id: userId } },
+    organization: { connect: { id: organizationId } },
+    type: 'ATTENDANCE_REGULARIZATION_APPLIED',
+    title: 'Regularization Request',
+    body,
+  }));
+}
+
+export async function notifyAttendanceRegularizationDecision({
+  organizationId,
+  employeeId,
+  status,
+  actorName,
+  date,
+}) {
+  const isApproved = status === 'APPROVED';
+  await createAndEmitNotification({
+    user: { connect: { id: employeeId } },
+    organization: { connect: { id: organizationId } },
+    type: isApproved
+      ? 'ATTENDANCE_REGULARIZATION_APPROVED'
+      : 'ATTENDANCE_REGULARIZATION_REJECTED',
+    title: `Regularization ${isApproved ? 'Approved' : 'Rejected'}`,
+    body: `Your attendance regularization request for ${formatLocaleDate(date)} was ${status.toLowerCase()} by ${actorName}.`,
+  });
 }
 
 export function getRoleLabel(role) {

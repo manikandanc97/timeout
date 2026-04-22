@@ -58,16 +58,17 @@ export default function TeamsTable({
   onRequestDeleteTeam,
 }: Props) {
   return (
-    <div className='min-h-0 flex-1 overflow-y-auto overflow-x-hidden'>
-      <table className='w-full table-fixed border-collapse text-left text-sm'>
+    <div className='min-h-0 flex-1 overflow-y-auto overflow-x-auto'>
+      <table className='min-w-160 w-full table-fixed border-collapse text-left text-sm'>
         <thead className='sticky top-0 z-10'>
           <tr className='border-b border-border bg-muted/95 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
-            <th className='w-[30%] px-4 py-3.5 text-left'>Team name</th>
-            <th className='w-[30%] px-4 py-3.5 text-left'>Department</th>
-            <th className='w-[15%] whitespace-nowrap px-2 py-3.5 text-left'>
-              Employee count
+            <th className='w-[34%] px-4 py-3.5 text-left'>Team name</th>
+            <th className='w-[26%] px-4 py-3.5 text-left'>Department</th>
+            <th className='w-[18%] whitespace-nowrap px-2 py-3.5 text-left'>
+              <span className='sm:hidden'>Emp.</span>
+              <span className='hidden sm:inline'>Employee count</span>
             </th>
-            <th className='w-[25%] whitespace-nowrap px-2 py-3.5 text-right'>
+            <th className='w-[22%] whitespace-nowrap px-2 py-3.5 text-right'>
               Actions
             </th>
           </tr>

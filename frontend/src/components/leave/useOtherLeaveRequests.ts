@@ -5,6 +5,7 @@ import { formatPersonName } from '@/lib/personName';
 import type { CompOffRequestWithEmployee, PermissionRequestWithEmployee } from '@/types/leave';
 import type { RegularizationRequest } from '@/types/attendance';
 import { computeRequestStatusSummary, LEAVE_REQUESTS_PAGE_SIZE } from './leaveRequestsPageUtils';
+import { extractApiList, type ApiListEnvelope } from '@/lib/apiList';
 
 type Params = {
   initialPermissionRequests: PermissionRequestWithEmployee[];
@@ -129,12 +130,22 @@ export function useOtherLeaveRequests({ initialPermissionRequests, initialCompOf
 
   const refetchOtherFeeds = useCallback(async () => {
     const [permRes, compRes, regRes] = await Promise.all([
-      api.get<PermissionRequestWithEmployee[]>('/leaves/permissions/requests').catch(() => ({ data: [] as PermissionRequestWithEmployee[] })),
-      api.get<CompOffRequestWithEmployee[]>('/leaves/comp-off-requests').catch(() => ({ data: [] as CompOffRequestWithEmployee[] })),
+      api
+        .get<
+          PermissionRequestWithEmployee[] | ApiListEnvelope<PermissionRequestWithEmployee>
+        >('/leaves/permissions/requests')
+        .catch(() => ({
+          data: [] as PermissionRequestWithEmployee[],
+        })),
+      api
+        .get<CompOffRequestWithEmployee[] | ApiListEnvelope<CompOffRequestWithEmployee>>(
+          '/leaves/comp-off-requests',
+        )
+        .catch(() => ({ data: [] as CompOffRequestWithEmployee[] })),
       api.get<{ data: RegularizationRequest[] }>('/attendance/regularize').catch(() => ({ data: { data: [] as RegularizationRequest[] } })),
     ]);
-    setPermissionRows(Array.isArray(permRes.data) ? permRes.data : []);
-    setCompOffRows(Array.isArray(compRes.data) ? compRes.data : []);
+    setPermissionRows(extractApiList(permRes.data));
+    setCompOffRows(extractApiList(compRes.data));
     setRegularizationRows(Array.isArray(regRes.data?.data) ? regRes.data.data : []);
   }, []);
 

@@ -8,6 +8,7 @@ import type {
 } from '@/types/leave';
 import type { RegularizationRequest } from '@/types/attendance';
 import type { User } from '@/types/user';
+import { extractApiList, type ApiListEnvelope } from '@/lib/apiList';
 import { redirect } from 'next/navigation';
 
 const VIEW_ROLES = new Set(['ADMIN', 'MANAGER', 'HR']);
@@ -33,22 +34,22 @@ export default async function LeaveRequestsPage() {
   let holidays: Holiday[] = [];
   try {
     const [leavesRes, holidaysRes, permissionRes, compOffRes, regularizationRes] = await Promise.all([
-      serverFetch<LeaveWithEmployee[]>('/leaves'),
+      serverFetch<LeaveWithEmployee[] | ApiListEnvelope<LeaveWithEmployee>>('/leaves'),
       serverFetch<Holiday[]>('/holidays').catch(() => []),
-      serverFetch<PermissionRequestWithEmployee[]>('/leaves/permissions/requests').catch(
-        () => [],
-      ),
-      serverFetch<CompOffRequestWithEmployee[]>('/leaves/comp-off-requests').catch(
-        () => [],
-      ),
+      serverFetch<
+        PermissionRequestWithEmployee[] | ApiListEnvelope<PermissionRequestWithEmployee>
+      >('/leaves/permissions/requests').catch(() => []),
+      serverFetch<CompOffRequestWithEmployee[] | ApiListEnvelope<CompOffRequestWithEmployee>>(
+        '/leaves/comp-off-requests',
+      ).catch(() => []),
       serverFetch<{ data: RegularizationRequest[] }>('/attendance/regularize').catch(
         () => ({ data: [] }),
       ),
     ]);
-    initialLeaves = leavesRes;
+    initialLeaves = extractApiList(leavesRes);
     holidays = Array.isArray(holidaysRes) ? holidaysRes : [];
-    initialPermissionRequests = Array.isArray(permissionRes) ? permissionRes : [];
-    initialCompOffRequests = Array.isArray(compOffRes) ? compOffRes : [];
+    initialPermissionRequests = extractApiList(permissionRes);
+    initialCompOffRequests = extractApiList(compOffRes);
     initialRegularizationRequests = Array.isArray(regularizationRes?.data) ? regularizationRes.data : [];
   } catch {
     initialLeaves = [];

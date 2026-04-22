@@ -1,6 +1,7 @@
 import prisma from '../../prismaClient.js';
 import { logPayrollAudit } from './payrollAuditService.js';
 import { logger } from '../loggerService.js';
+import { notifyEmployeePayslipPaid } from '../notificationService.js';
 
 /**
  * Payroll Workflow Service
@@ -61,6 +62,19 @@ export const updatePayrollStatus = async ({
   });
 
   logger.info(`[PayrollWorkflow] ${payroll.user?.name} payroll moved to ${status} by user ${actorId}`);
+  
+  if (status === 'PAID') {
+    try {
+      await notifyEmployeePayslipPaid({
+        userId: payroll.userId,
+        organizationId: payroll.organizationId,
+        month: payroll.month,
+        year: payroll.year,
+      });
+    } catch (err) {
+      logger.error('[PayrollWorkflow] Failed to send payslip notification', err);
+    }
+  }
 
   return updated;
 };
