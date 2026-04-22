@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
-    "build": "npm run build -w frontend",
+    "build": "npm run build --workspaces --if-present",
     "seed": "npm run db:seed -w backend",
     "setup": "npm install && npm run db:migrate -w backend && npm run seed",
     "test": "npm test -w backend",
