@@ -9,11 +9,17 @@ import type { Holiday } from '@/types/holiday';
  * Holidays + weekends + today only (no leave status overlay).
  * Same shell as the apply-leave calendar for a consistent HR view.
  */
-export default function AdminCalendarSidebar() {
-  const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function AdminCalendarSidebar({
+  initialHolidays = [],
+}: {
+  initialHolidays?: Holiday[];
+}) {
+  const [holidays, setHolidays] = useState<Holiday[]>(initialHolidays);
+  const [loading, setLoading] = useState(initialHolidays.length === 0);
 
   useEffect(() => {
+    if (initialHolidays.length > 0) return;
+
     async function load() {
       setLoading(true);
       try {
@@ -27,8 +33,8 @@ export default function AdminCalendarSidebar() {
       }
     }
 
-    load();
-  }, []);
+    void load();
+  }, [initialHolidays]);
 
   if (loading) {
     return (

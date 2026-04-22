@@ -1,137 +1,60 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { getAccessToken, setAccessToken } from '@/lib/token';
-import api from '@/services/api';
 import { AuthProvider } from '@/context/AuthContext';
 import { NotificationProvider } from '@/context/NotificationProvider';
-import type { User } from '@/types/user';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
-import SidebarSkeleton from '@/components/dashboard/skeletons/SidebarSkeleton';
-import TopbarSkeleton from '@/components/dashboard/skeletons/TopbarSkeleton';
-import AdminDashboardSkeleton from '@/components/dashboard/skeletons/AdminDashboardSkeleton';
-import DashboardContentSkeleton from '@/components/dashboard/skeletons/DashboardContentSkeleton';
-import LeaveRequestsSkeleton from '@/components/dashboard/skeletons/LeaveRequestsSkeleton';
-import EmployeesSkeleton from '@/components/dashboard/skeletons/EmployeesSkeleton';
-import TeamsPageSkeleton from '@/components/dashboard/skeletons/TeamsPageSkeleton';
-import HolidaysSkeleton from '@/components/dashboard/skeletons/HolidaysSkeleton';
-import PayrollSkeleton from '@/components/dashboard/skeletons/PayrollSkeleton';
-import ReportsSkeleton from '@/components/dashboard/skeletons/ReportsSkeleton';
-import ApplyLeaveSkeleton from '@/app/(dashboard)/apply/loading';
-import MyLeavesSkeleton from '@/app/(dashboard)/leaves/loading';
-import { AIAssistant } from '@/components/ai-assistant/AIAssistant';
+import type { User } from '@/types/user';
+
+const AIAssistant = dynamic(
+  () => import('@/components/ai-assistant/AIAssistant').then((mod) => mod.AIAssistant),
+  { ssr: false },
+);
 
 type Props = {
   children: React.ReactNode;
-  initialRole?: string | null;
+  initialUser: User | null;
 };
 
-/** Main fills viewport under topbar; inner routes manage their own scroll regions. */
 const MAIN_VIEWPORT_FILL_PATHS = new Set(['/team']);
 
-const DashboardShell = ({ children, initialRole = null }: Props) => {
-  const router = useRouter();
+const DashboardShell = ({ children, initialUser }: Props) => {
   const pathname = usePathname();
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [roleHint, setRoleHint] = useState<string | null>(initialRole);
+  const user = initialUser;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(false);
   const fillMainHeight = MAIN_VIEWPORT_FILL_PATHS.has(pathname);
 
-  // Close mobile menu on route change
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const validateSession = async () => {
-      setLoading(true);
-      try {
-        const inMemoryAccessToken = getAccessToken();
-        if (!inMemoryAccessToken) {
-          const refreshRes = await api.post('/auth/refresh');
-          if (refreshRes.data?.accessToken) {
-            setAccessToken(refreshRes.data.accessToken);
-          }
-        }
-        const userRes = await api.get('/auth/me');
-        if (cancelled) return;
-        setUser(userRes.data);
-        const resolvedRole = String(userRes.data?.role ?? '');
-        if (resolvedRole) setRoleHint(resolvedRole);
-        setLoading(false);
-      } catch {
-        if (!cancelled) router.push('/login');
-      }
-    };
-
-    void validateSession();
-    return () => {
-      cancelled = true;
-    };
-    // Session is validated once on mount. Re-running on every pathname change
-    // remounted the shell in a loading state and made every navigation look
-    // like a full dashboard reload.
-  }, [router]);
-
-  if (loading) {
-    let content: React.ReactNode = null;
-    if (pathname === '/dashboard') {
-      const effectiveRole = String(user?.role ?? roleHint ?? '');
-      content =
-        effectiveRole === 'EMPLOYEE' ? (
-          <DashboardContentSkeleton />
-        ) : (
-          <AdminDashboardSkeleton />
-        );
-    } else if (pathname === '/apply') {
-      content = <ApplyLeaveSkeleton />;
-    } else if (pathname === '/leaves') {
-      content = <MyLeavesSkeleton />;
-    } else if (pathname === '/requests') {
-      content = <LeaveRequestsSkeleton />;
-    } else if (pathname === '/employees') {
-      content = <EmployeesSkeleton />;
-    } else if (pathname === '/holidays') {
-      content = <HolidaysSkeleton />;
-    } else if (pathname === '/team') {
-      content = <TeamsPageSkeleton />;
-    } else if (pathname === '/payroll') {
-      content = <PayrollSkeleton />;
-    } else if (pathname === '/reports') {
-      content = <ReportsSkeleton />;
-    } else if (pathname === '/settings') {
-      content = <ReportsSkeleton />;
-    } else if (pathname === '/payslip') {
-      content = <PayrollSkeleton />;
+    if (!isMobileMenuOpen) {
+      return;
     }
 
-    return (
-      <div className='flex h-screen overflow-hidden bg-background'>
-        <SidebarSkeleton />
-        <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
-          <TopbarSkeleton />
-          <main
-            className={
-              fillMainHeight
-                ? 'flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-6'
-                : 'flex-1 overflow-y-auto p-6'
-            }
-          >
-            {fillMainHeight ? (
-              <div className='flex min-h-0 flex-1 flex-col'>{content}</div>
-            ) : (
-              content
-            )}
-          </main>
-        </div>
-      </div>
-    );
-  }
+    const timeout = window.setTimeout(() => {
+      setIsMobileMenuOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [pathname, isMobileMenuOpen]);
+
+  useEffect(() => {
+    const schedule = () => setShowAssistant(true);
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if ('requestIdleCallback' in window) {
+      const handle = window.requestIdleCallback(schedule, { timeout: 1500 });
+      return () => window.cancelIdleCallback(handle);
+    }
+
+    const timeout = window.setTimeout(schedule, 900);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   return (
     <AuthProvider user={user}>
@@ -155,8 +78,9 @@ const DashboardShell = ({ children, initialRole = null }: Props) => {
             </main>
           </div>
         </div>
-        {/* AI Assistant floating widget — available on every page */}
-        <AIAssistant userRole={user?.role || 'EMPLOYEE'} />
+        {showAssistant ? (
+          <AIAssistant userRole={user?.role || 'EMPLOYEE'} />
+        ) : null}
       </NotificationProvider>
     </AuthProvider>
   );

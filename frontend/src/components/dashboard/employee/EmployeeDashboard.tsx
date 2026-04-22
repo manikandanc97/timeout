@@ -1,15 +1,13 @@
-import WelcomeCardServer from '@/components/dashboard/cards/WelcomeCardServer';
-import UpcomingHolidaysServer from '@/components/dashboard/sections/UpcomingHolidaysServer';
-import WelcomeCardSkeleton from '@/components/dashboard/skeletons/WelcomeCardSkeleton';
-import UpcomingHolidaysSkeleton from '@/components/dashboard/skeletons/UpcomingHolidaysSkeleton';
+import WelcomeCard from '@/components/dashboard/cards/WelcomeCard';
+import UpcomingHolidays from '@/components/dashboard/sections/UpcomingHolidays';
 import EmployeeDashboardShell from '@/components/dashboard/employee/EmployeeDashboardShell';
 import { getDashboardData, getLeaveHistory } from '@/services/dashboardService';
 import { serverFetch } from '@/services/serverApi';
 import type { Holiday } from '@/types/holiday';
 import type { Leave } from '@/types/leave';
-import { Suspense } from 'react';
+import type { User } from '@/types/user';
 
-export default async function EmployeeDashboard() {
+export default async function EmployeeDashboard({ user }: { user: User | null }) {
   const [dash, historyRaw, holidaysRaw] = await Promise.all([
     getDashboardData(),
     getLeaveHistory(),
@@ -24,16 +22,8 @@ export default async function EmployeeDashboard() {
       initialDashboard={dash}
       initialHistory={history.slice(0, 10) as Leave[]}
       holidays={holidays}
-      welcome={
-        <Suspense key='welcome-slot' fallback={<WelcomeCardSkeleton />}>
-          <WelcomeCardServer />
-        </Suspense>
-      }
-      upcoming={
-        <Suspense key='upcoming-slot' fallback={<UpcomingHolidaysSkeleton />}>
-          <UpcomingHolidaysServer />
-        </Suspense>
-      }
+      welcome={<WelcomeCard name={user?.name || 'User'} />}
+      upcoming={<UpcomingHolidays holidays={holidays.slice(0, 10)} />}
     />
   );
 }

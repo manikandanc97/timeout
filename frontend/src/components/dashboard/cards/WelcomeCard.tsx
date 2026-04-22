@@ -1,6 +1,6 @@
 import React from 'react';
-import WelcomeIcon from '../../svg/WelcomeIcon';
 import Link from 'next/link';
+import WelcomeIcon from '../../svg/WelcomeIcon';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -33,7 +33,7 @@ const WelcomeCard = ({ name }: { name: string }) => {
 
         <p className='mt-2 text-sm leading-relaxed text-muted-foreground'>
           Manage your leaves, track your requests, and stay updated with your
-          team’s availability, all in one place. Plan smart, work better
+          team&apos;s availability, all in one place. Plan smart, work better.
         </p>
 
         <Link

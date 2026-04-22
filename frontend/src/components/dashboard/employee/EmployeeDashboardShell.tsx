@@ -29,18 +29,6 @@ export default function EmployeeDashboardShell({
   const [history, setHistory] = useState(initialHistory);
   const [holidays, setHolidays] = useState(initialHolidays);
 
-  useEffect(() => {
-    setDashboard(initialDashboard);
-  }, [initialDashboard]);
-
-  useEffect(() => {
-    setHistory(initialHistory);
-  }, [initialHistory]);
-
-  useEffect(() => {
-    setHolidays(initialHolidays);
-  }, [initialHolidays]);
-
   const refetchLeaveSections = useCallback(async () => {
     try {
       const [dashRes, histRes, holRes] = await Promise.all([

@@ -1,6 +1,5 @@
 'use client';
 
-import api from '@/services/api';
 import {
   Building2,
   type LucideIcon,
@@ -8,15 +7,7 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react';
-import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
-import { useCallback, useEffect, useState } from 'react';
-
-type AdminDashboardStats = {
-  totalEmployees: number;
-  presentToday: number;
-  onLeaveToday: number;
-  departments: number;
-};
+import type { AdminDashboardStats } from '@/types/dashboard';
 
 type StatField = keyof AdminDashboardStats;
 
@@ -100,37 +91,21 @@ function SkeletonCard({ accentClass }: { accentClass: string }) {
   );
 }
 
-const AdminSummaryCards = () => {
-  const [stats, setStats] = useState<AdminDashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+const EMPTY_STATS: AdminDashboardStats = {
+  totalEmployees: 0,
+  presentToday: 0,
+  onLeaveToday: 0,
+  departments: 0,
+};
 
-  const fetchDashboardStats = useCallback(async (opts?: { showSkeleton?: boolean }) => {
-    const showSkeleton = opts?.showSkeleton !== false;
-    if (showSkeleton) setLoading(true);
-    try {
-      const { data } = await api.get<AdminDashboardStats>('/dashboard/stats');
-      setStats(data);
-    } catch {
-      setStats({
-        totalEmployees: 0,
-        presentToday: 0,
-        onLeaveToday: 0,
-        departments: 0,
-      });
-    } finally {
-      if (showSkeleton) setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchDashboardStats({ showSkeleton: true });
-  }, [fetchDashboardStats]);
-
-  useEffect(() => {
-    return subscribeDashboardRefresh('adminDashboardStats', () => {
-      void fetchDashboardStats({ showSkeleton: false });
-    });
-  }, [fetchDashboardStats]);
+const AdminSummaryCards = ({
+  stats = null,
+  loading = false,
+}: {
+  stats?: AdminDashboardStats | null;
+  loading?: boolean;
+}) => {
+  const resolvedStats = stats ?? EMPTY_STATS;
 
   if (loading) {
     return (
@@ -149,7 +124,7 @@ const AdminSummaryCards = () => {
     <div className='gap-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4'>
       {STAT_CARDS.map((card) => {
         const Icon = card.icon;
-        const value = stats?.[card.field] ?? 0;
+        const value = resolvedStats[card.field] ?? 0;
         const { colorScheme: cs } = card;
 
         return (

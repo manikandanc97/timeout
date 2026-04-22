@@ -120,10 +120,12 @@ const Topbar = ({ onMenuClick }: TopbarProps) => {
         </Button>
       </div>
 
-      <RightPanel
-        activePanel={activePanel}
-        onClose={() => setActivePanel(null)}
-      />
+      {activePanel ? (
+        <RightPanel
+          activePanel={activePanel}
+          onClose={() => setActivePanel(null)}
+        />
+      ) : null}
     </div>
   );
 };

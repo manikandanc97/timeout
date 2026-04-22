@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { BarChart, Bar, Tooltip, Cell } from 'recharts';
+import React from 'react';
 import { CalendarClock, TrendingDown, TrendingUp } from 'lucide-react';
 import type {
   LeaveBalance,
@@ -16,35 +15,6 @@ type Props = {
   chartData?: LeaveChartData;
 };
 
-type TooltipPayloadRow = {
-  payload: { month: string; value: number };
-  color?: string;
-  fill?: string;
-};
-
-type CustomTooltipProps = {
-  active?: boolean;
-  payload?: TooltipPayloadRow[];
-};
-
-const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className='z-50 flex items-center gap-1.5 rounded-lg border border-border bg-foreground px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-background shadow-xl'>
-        <span style={{ color: payload[0].color || payload[0].fill }}>
-          {data.month}
-        </span>
-        <span>•</span>
-        <span>
-          {data.value} {data.value === 1 ? 'leave' : 'leaves'}
-        </span>
-      </div>
-    );
-  }
-  return null;
-};
-
 const MiniChart = ({
   color,
   data,
@@ -52,40 +22,42 @@ const MiniChart = ({
   color: string;
   data: LeaveChartSeries;
 }) => {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const safeData = data.length > 0 ? data : [{ month: 'N/A', value: 0 }];
+  const maxValue = Math.max(...safeData.map((item) => item.value), 1);
+  const chartHeight = 64;
+  const barWidth = 12;
+  const gap = 8;
+  const width = safeData.length * barWidth + Math.max(0, safeData.length - 1) * gap;
 
   return (
-    <BarChart
-      width={96}
-      height={64}
-      data={data}
-      onMouseMove={(state) => {
-        if (state?.isTooltipActive && state?.activeTooltipIndex != null) {
-          const idx = state.activeTooltipIndex;
-          setActiveIndex(typeof idx === 'number' ? idx : null);
-        } else {
-          setActiveIndex(null);
-        }
-      }}
-      onMouseLeave={() => setActiveIndex(null)}
+    <svg
+      width={width}
+      height={chartHeight}
+      viewBox={`0 0 ${width} ${chartHeight}`}
+      className='overflow-visible'
+      aria-hidden
     >
-      <Tooltip
-        content={<CustomTooltip />}
-        cursor={{ fill: 'transparent' }}
-        isAnimationActive={false}
-      />
+      {safeData.map((item, index) => {
+        const x = index * (barWidth + gap);
+        const height = Math.max(6, (item.value / maxValue) * (chartHeight - 8));
+        const y = chartHeight - height;
 
-      <Bar dataKey='value' radius={[2, 2, 0, 0]} minPointSize={1}>
-        {data.map((_, index) => (
-          <Cell
-            key={`cell-${index}`}
-            fill={color}
-            opacity={activeIndex == null || activeIndex === index ? 1 : 0.3}
-            className='transition-all duration-300'
-          />
-        ))}
-      </Bar>
-    </BarChart>
+        return (
+          <g key={`${item.month}-${index}`}>
+            <title>{`${item.month}: ${item.value} ${item.value === 1 ? 'leave' : 'leaves'}`}</title>
+            <rect
+              x={x}
+              y={y}
+              width={barWidth}
+              height={height}
+              rx={4}
+              fill={color}
+              opacity={item.value === 0 ? 0.35 : 1}
+            />
+          </g>
+        );
+      })}
+    </svg>
   );
 };
 
@@ -156,7 +128,6 @@ const LeaveCard = ({
 );
 
 const LeaveSummaryCards = ({ balance, monthlyUsage, chartData }: Props) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const usage = monthlyUsage ?? {
     sick: 0,
     annual: 0,
@@ -167,10 +138,7 @@ const LeaveSummaryCards = ({ balance, monthlyUsage, chartData }: Props) => {
 
   return (
     <div className='relative'>
-      <div
-        ref={scrollRef}
-        className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'
-      >
+      <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
         <div>
           <LeaveCard
             label='Annual Leave'

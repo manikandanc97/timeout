@@ -1,19 +1,9 @@
 'use client';
 
-import api from '@/services/api';
 import { formatPersonName } from '@/lib/personName';
-import {
-  Cake,
-  PartyPopper,
-  Umbrella,
-  UserRound,
-  UsersRound,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
-import {
-  AdminDashboardEmpty,
-  AdminDashboardPanel,
-} from './AdminDashboardPanel';
+import { Cake, PartyPopper, Umbrella, UserRound, UsersRound } from 'lucide-react';
+import type { AdminHrDashboardPayload } from '@/types/dashboard';
+import { AdminDashboardEmpty, AdminDashboardPanel } from './AdminDashboardPanel';
 import {
   getAvatarColor,
   InitialsAvatar,
@@ -22,44 +12,13 @@ import {
   TeamBar,
 } from './hrInsightsUtils';
 
-export type AdminHrDashboardPayload = {
-  employeesOnLeaveToday: { userName: string; leaveType: string }[];
-  upcomingBirthdays: { name: string; dateLabel: string }[];
-  newJoinersThisWeek: { name: string; teamName: string }[];
-  teamEmployeeCounts: { teamName: string; count: number }[];
-};
-
-export default function AdminHrInsights() {
-  const [data, setData] = useState<AdminHrDashboardPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const { data: body } =
-          await api.get<AdminHrDashboardPayload>('/dashboard/stats');
-        if (!cancelled) {
-          setData({
-            employeesOnLeaveToday: body.employeesOnLeaveToday ?? [],
-            upcomingBirthdays: body.upcomingBirthdays ?? [],
-            newJoinersThisWeek: body.newJoinersThisWeek ?? [],
-            teamEmployeeCounts: body.teamEmployeeCounts ?? [],
-          });
-        }
-      } catch {
-        if (!cancelled) setData(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+export default function AdminHrInsights({
+  data = null,
+  loading = false,
+}: {
+  data?: AdminHrDashboardPayload | null;
+  loading?: boolean;
+}) {
   if (loading) {
     return (
       <div className='gap-4 grid sm:grid-cols-2'>
@@ -79,13 +38,12 @@ export default function AdminHrInsights() {
   }
 
   const maxTeamCount = Math.max(
-    ...(data.teamEmployeeCounts.map((t) => t.count) ?? [1]),
+    ...(data.teamEmployeeCounts.map((team) => team.count) ?? [1]),
     1,
   );
 
   return (
     <div className='gap-4 grid sm:grid-cols-2'>
-      {/* Employees on Leave */}
       <AdminDashboardPanel
         title='On leave today'
         subtitle={`${data.employeesOnLeaveToday.length} approved`}
@@ -94,15 +52,12 @@ export default function AdminHrInsights() {
         iconClass='text-sky-600'
       >
         {data.employeesOnLeaveToday.length === 0 ? (
-          <AdminDashboardEmpty
-            icon={UserRound}
-            message='Everyone is in today.'
-          />
+          <AdminDashboardEmpty icon={UserRound} message='Everyone is in today.' />
         ) : (
           <ul className='space-y-2.5'>
-            {data.employeesOnLeaveToday.map((row, i) => (
+            {data.employeesOnLeaveToday.map((row, index) => (
               <li
-                key={`leave-${i}`}
+                key={`leave-${index}`}
                 className='flex justify-between items-center gap-3'
               >
                 <div className='flex items-center gap-2.5 min-w-0'>
@@ -121,7 +76,6 @@ export default function AdminHrInsights() {
         )}
       </AdminDashboardPanel>
 
-      {/* Team Headcount */}
       <AdminDashboardPanel
         title='Team headcount'
         subtitle='Employees by team'
@@ -136,20 +90,15 @@ export default function AdminHrInsights() {
           />
         ) : (
           <ul className='space-y-3'>
-            {data.teamEmployeeCounts.map((row, i) => (
-              <li key={`team-${i}`}>
-                <TeamBar
-                  teamName={row.teamName}
-                  count={row.count}
-                  max={maxTeamCount}
-                />
+            {data.teamEmployeeCounts.map((row, index) => (
+              <li key={`team-${index}`}>
+                <TeamBar teamName={row.teamName} count={row.count} max={maxTeamCount} />
               </li>
             ))}
           </ul>
         )}
       </AdminDashboardPanel>
 
-      {/* Upcoming Birthdays */}
       <AdminDashboardPanel
         title='Upcoming birthdays'
         subtitle='Next 60 days'
@@ -164,9 +113,9 @@ export default function AdminHrInsights() {
           />
         ) : (
           <ul className='space-y-2.5'>
-            {data.upcomingBirthdays.map((row, i) => (
+            {data.upcomingBirthdays.map((row, index) => (
               <li
-                key={`bday-${i}`}
+                key={`birthday-${index}`}
                 className='flex justify-between items-center gap-3'
               >
                 <div className='flex items-center gap-2.5 min-w-0'>
@@ -187,10 +136,9 @@ export default function AdminHrInsights() {
         )}
       </AdminDashboardPanel>
 
-      {/* New Joiners */}
       <AdminDashboardPanel
         title='New joiners'
-        subtitle='This week (Mon–Sun)'
+        subtitle='This week (Mon-Sun)'
         icon={PartyPopper}
         iconTileClass='bg-muted'
         iconClass='text-amber-600'
@@ -202,9 +150,9 @@ export default function AdminHrInsights() {
           />
         ) : (
           <ul className='space-y-2.5'>
-            {data.newJoinersThisWeek.map((row, i) => (
+            {data.newJoinersThisWeek.map((row, index) => (
               <li
-                key={`joiner-${i}`}
+                key={`joiner-${index}`}
                 className='flex justify-between items-center gap-3'
               >
                 <div className='flex items-center gap-2.5 min-w-0'>

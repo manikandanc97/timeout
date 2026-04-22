@@ -1,5 +1,3 @@
-"use client";
-
 import { CalendarDays } from "lucide-react";
 import type { Holiday } from "@/types/holiday";
 

@@ -7,15 +7,9 @@ const DashboardLayout = async ({
 }: {
   children: React.ReactNode;
 }) => {
-  let initialRole: string | null = null;
-  try {
-    const user = await getCurrentUser();
-    initialRole = typeof user?.role === 'string' ? user.role : null;
-  } catch {
-    initialRole = null;
-  }
+  const user = await getCurrentUser();
 
-  return <DashboardShell initialRole={initialRole}>{children}</DashboardShell>;
+  return <DashboardShell initialUser={user}>{children}</DashboardShell>;
 };
 
 export default DashboardLayout;

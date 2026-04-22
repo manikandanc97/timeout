@@ -1,10 +1,7 @@
-'use client';
-
+import type { Holiday } from '@/types/holiday';
+import type { AdminDashboardSnapshot } from '@/types/dashboard';
 import { LayoutDashboard } from 'lucide-react';
-import AdminCalendarSidebar from './AdminCalendarSidebar';
-import AdminHrInsights from './AdminHrInsights';
-import AdminSummaryCards from './AdminSummaryCards';
-import PendingLeaveRequests from './PendingLeaveRequests';
+import AdminDashboardClient from './AdminDashboardClient';
 
 const todayLabel = () =>
   new Date().toLocaleDateString('en-IN', {
@@ -14,10 +11,15 @@ const todayLabel = () =>
     year: 'numeric',
   });
 
-const AdminDashboard = () => {
+const AdminDashboard = ({
+  initialSnapshot,
+  initialHolidays,
+}: {
+  initialSnapshot: AdminDashboardSnapshot | null;
+  initialHolidays: Holiday[];
+}) => {
   return (
-    <div className='space-y-6 pb-8 min-h-screen'>
-      {/* Page Header */}
+    <div className='min-h-screen space-y-6 pb-8'>
       <div className='flex justify-between items-start'>
         <div className='flex items-center gap-4'>
           <div className='flex justify-center items-center bg-primary/10 rounded-2xl ring-1 ring-primary/20 w-12 h-12 shrink-0'>
@@ -40,24 +42,10 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Summary KPI Row */}
-      <section>
-        <AdminSummaryCards />
-      </section>
-
-      {/* Main Content + Right Sidebar */}
-      <section className='lg:items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>
-        {/* Left: Pending Requests + HR Insights */}
-        <div className='grow space-y-6 lg:col-span-2'>
-          <PendingLeaveRequests />
-          <AdminHrInsights />
-        </div>
-
-        {/* Right: Calendar — sticky within main scroll (needs self-start in grid) */}
-        <div className='top-2 z-10 self-start lg:sticky lg:col-span-1'>
-          <AdminCalendarSidebar />
-        </div>
-      </section>
+      <AdminDashboardClient
+        initialSnapshot={initialSnapshot}
+        initialHolidays={initialHolidays}
+      />
     </div>
   );
 };
