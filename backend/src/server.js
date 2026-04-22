@@ -72,15 +72,19 @@ app.use('/api/attendance', attendanceRoutes);
 const httpServer = http.createServer(app);
 
 async function start() {
+  console.log('[server] Starting server sequence...');
   try {
+    console.log('[server] Checking required environment variables...');
     requireEnv('DATABASE_URL');
     requireEnv('ACCESS_SECRET');
     requireEnv('REFRESH_SECRET');
 
+    console.log('[server] Connecting to database...');
     await prisma.$connect();
+    console.log('[server] Database connected successfully.');
   } catch (e) {
     console.error(
-      '[config] Could not connect to the database:',
+      '[server] Fatal error during startup:',
       e?.message ?? e,
     );
     process.exit(1);
