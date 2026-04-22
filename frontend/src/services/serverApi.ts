@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 30;
 
@@ -85,7 +86,7 @@ export async function serverFetch<T = unknown>(endpoint: string): Promise<T> {
   }
 
   if (!accessToken) {
-    throw new Error('Session expired. Please login again.');
+    redirect('/login');
   }
 
   let res = await fetch(`${baseUrl}${endpoint}`, {
@@ -101,7 +102,7 @@ export async function serverFetch<T = unknown>(endpoint: string): Promise<T> {
     accessToken = await refreshAccessToken();
 
     if (!accessToken) {
-      throw new Error('Session expired. Please login again.');
+      redirect('/login');
     }
 
     res = await fetch(`${baseUrl}${endpoint}`, {
