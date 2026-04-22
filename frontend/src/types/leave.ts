@@ -6,7 +6,8 @@ export type LeaveType =
   | 'SICK'
   | 'MATERNITY'
   | 'PATERNITY'
-  | 'COMP_OFF';
+  | 'COMP_OFF'
+  | 'WFH';
 
 export interface Leave {
   id: number;

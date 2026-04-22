@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { formatCurrencyINR } from '@/utils/formatters';
 import { WalletCards } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import Button from '@/components/ui/Button';
 import { usePayrollPage } from './usePayrollPage';
 import { usePayrollActions } from './usePayrollActions';
 import type { PayrollRow } from '@/types/payroll';
@@ -50,6 +51,10 @@ export default function PayrollPageClient() {
     visibleRows,
     hasActiveFilters,
     bulkMarkPaidEligibleCount,
+    generating,
+    generateMonthlyPayroll,
+    pagination,
+    setPage,
   } = usePayrollPage(canView);
   const payrollActions = usePayrollActions({
     rows,

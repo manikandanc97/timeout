@@ -2,6 +2,8 @@ import type { PayrollRow } from '@/types/payroll';
 import { Download, Eye, RotateCcw, WalletCards } from 'lucide-react';
 import { TableSkeleton } from '@/components/common/SkeletonLoaders';
 import EmptyState from '@/components/ui/EmptyState';
+import Button from '@/components/ui/Button';
+import { formatPersonName } from '@/lib/personName';
 
 type Props = {
   loading: boolean;
@@ -70,7 +72,7 @@ export default function PayrollTableSection(props: Props) {
                         : "There are no payroll records for this period. Click 'Generate Payroll' to get started."
                       }
                       action={props.hasActiveFilters ? (
-                        <Button variant="outline" size="sm" onClick={props.onClearFilters}>
+                        <Button variant="outline" className="px-2 py-1 text-sm" onClick={props.onClearFilters}>
                           Clear all filters
                         </Button>
                       ) : undefined}

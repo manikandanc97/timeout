@@ -12,19 +12,19 @@ const router = express.Router();
 router.get(
   '/stats',
   authMiddleware,
-  roleMiddleware('ADMIN'),
+  roleMiddleware('ADMIN', 'MANAGER', 'HR'),
   getAdminDashboardData,
 );
 router.get(
   '/permission-requests',
   authMiddleware,
-  roleMiddleware('ADMIN'),
+  roleMiddleware('ADMIN', 'MANAGER', 'HR'),
   getAdminPermissionRequests,
 );
 router.get(
   '/comp-off-requests',
   authMiddleware,
-  roleMiddleware('ADMIN'),
+  roleMiddleware('ADMIN', 'MANAGER', 'HR'),
   getAdminCompOffRequests,
 );
 

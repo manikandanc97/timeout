@@ -47,6 +47,8 @@ model Organization {
   hrDocumentChunks HrDocumentChunk[]
   payrollApprovalLogs PayrollApprovalLog[]
   auditLogs     AuditLog[]
+  attendanceLogs AttendanceLog[]
+  regularizationRequests RegularizationRequest[]
 }
 
 model Department {
@@ -118,6 +120,8 @@ model User {
   permissionRequests PermissionRequest[]
   notifications Notification[]
   aiAuditLogs   AiAuditLog[]
+  attendanceLogs AttendanceLog[]
+  regularizationRequests RegularizationRequest[]
 
   @@index([reportingManagerId])
 }
@@ -148,6 +152,7 @@ enum LeaveType {
   COMP_OFF
   MATERNITY
   PATERNITY
+  WFH
 }
 
 enum NotificationType {
@@ -174,6 +179,10 @@ enum NotificationType {
   ORG_STRUCTURE_UPDATED
   PAYROLL_UPDATED
   PAYSLIP_PAID
+  ATTENDANCE_REGULARIZATION_APPLIED
+  ATTENDANCE_REGULARIZATION_APPROVED
+  ATTENDANCE_REGULARIZATION_REJECTED
+  WFH_APPLIED
 }
 
 model Notification {
@@ -246,6 +255,8 @@ model CompOffWorkLog {
   workDate       DateTime
   reason         String
   status         RequestStatus @default(PENDING)
+  approvedById   Int?
+  rejectionReason String?
   createdAt      DateTime @default(now())
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -277,6 +288,8 @@ model PermissionRequest {
   endTimeMinutes   Int?
   reason          String
   status          RequestStatus @default(PENDING)
+  approvedById    Int?
+  rejectionReason String?
   createdAt       DateTime       @default(now())
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -461,3 +474,50 @@ model AuditLog {
   
   @@index([organizationId, createdAt])
 }
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+}
+
+model AttendanceLog {
+  id             Int             @id @default(autoincrement())
+  userId         Int
+  organizationId Int
+  date           DateTime
+  checkIn        DateTime?
+  checkOut       DateTime?
+  status         AttendanceStatus @default(ABSENT)
+  workHours      Float?          // Total calculated hours
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([organizationId, date])
+}
+
+model RegularizationRequest {
+  id               Int           @id @default(autoincrement())
+  userId           Int
+  organizationId   Int
+  date             DateTime
+  requestedCheckIn DateTime?
+  requestedCheckOut DateTime?
+  reason           String
+  status           RequestStatus @default(PENDING)
+  approvedById     Int?
+  rejectionReason  String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([organizationId, date])
+}
+

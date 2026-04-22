@@ -1,6 +1,7 @@
 'use client';
 
 import type { CompOffRequestWithEmployee, PermissionRequestWithEmployee } from '@/types/leave';
+import type { RegularizationRequest } from '@/types/attendance';
 import ApproveRejectButtonGroup from '@/components/leave/ApproveRejectButtonGroup';
 import LeaveRequestsPagination from '@/components/leave/LeaveRequestsPagination';
 import LeaveStatusBadge from '@/components/leave/LeaveStatusBadge';
@@ -9,7 +10,7 @@ import Input from '@/components/ui/Input';
 import { formatPersonName } from '@/lib/personName';
 import { LEAVE_REQUESTS_PAGE_SIZE } from '@/components/leave/leaveRequestsPageUtils';
 
-type Tab = 'PERMISSION' | 'COMP_OFF';
+type Tab = 'PERMISSION' | 'COMP_OFF' | 'REGULARIZATION';
 
 type Props = {
   activeTab: Tab;
@@ -18,7 +19,7 @@ type Props = {
   otherDateFrom: string;
   otherDateTo: string;
   hasOtherFilters: boolean;
-  otherSlice: (PermissionRequestWithEmployee | CompOffRequestWithEmployee)[];
+  otherSlice: (PermissionRequestWithEmployee | CompOffRequestWithEmployee | RegularizationRequest)[];
   otherFilteredLength: number;
   otherPageCount: number;
   safeOtherPage: number;
@@ -30,6 +31,7 @@ type Props = {
   clearOtherFilters: () => void;
   updatePermissionStatus: (requestId: number, status: 'APPROVED' | 'REJECTED') => Promise<void>;
   updateCompOffStatus: (requestId: number, status: 'APPROVED' | 'REJECTED') => Promise<void>;
+  updateRegularizationStatus: (requestId: number, status: 'APPROVED' | 'REJECTED', rejectionReason?: string) => Promise<void>;
 };
 
 const formatDate = (value: string) =>
@@ -78,6 +80,7 @@ export default function OtherRequestsSection(props: Props) {
     clearOtherFilters,
     updatePermissionStatus,
     updateCompOffStatus,
+    updateRegularizationStatus,
   } = props;
 
   return (
@@ -150,11 +153,19 @@ export default function OtherRequestsSection(props: Props) {
               <col className='w-[12%]' />
               <col className='w-[36%]' />
             </colgroup>
-          ) : (
+          ) : activeTab === 'COMP_OFF' ? (
             <colgroup>
               <col className='w-[20%]' />
               <col className='w-[14%]' />
               <col className='w-[46%]' />
+              <col className='w-[20%]' />
+            </colgroup>
+          ) : (
+            <colgroup>
+              <col className='w-[16%]' />
+              <col className='w-[14%]' />
+              <col className='w-[20%]' />
+              <col className='w-[30%]' />
               <col className='w-[20%]' />
             </colgroup>
           )}
@@ -168,9 +179,16 @@ export default function OtherRequestsSection(props: Props) {
                   <th className='px-3 py-3.5 text-left sm:px-4'>Duration</th>
                   <th className='px-3 py-3.5 pr-5 text-left sm:pl-4 sm:pr-6'>Action</th>
                 </>
-              ) : (
+              ) : activeTab === 'COMP_OFF' ? (
                 <>
                   <th className='px-3 py-3.5 text-left sm:px-4'>Work date</th>
+                  <th className='px-3 py-3.5 text-left sm:px-4'>Reason</th>
+                  <th className='px-3 py-3.5 pr-5 text-left sm:pl-4 sm:pr-6'>Action</th>
+                </>
+              ) : (
+                <>
+                  <th className='px-3 py-3.5 text-left sm:px-4'>Date</th>
+                  <th className='px-3 py-3.5 text-left sm:px-4'>Requested Times</th>
                   <th className='px-3 py-3.5 text-left sm:px-4'>Reason</th>
                   <th className='px-3 py-3.5 pr-5 text-left sm:pl-4 sm:pr-6'>Action</th>
                 </>
@@ -212,7 +230,7 @@ export default function OtherRequestsSection(props: Props) {
                   </td>
                 </tr>
               ))
-            ) : (
+            ) : activeTab === 'COMP_OFF' ? (
               (otherSlice as CompOffRequestWithEmployee[]).map((row) => (
                 <tr key={row.id} className='border-b border-border/60 transition-colors hover:bg-muted/50'>
                   <td className='min-w-0 px-3 py-2 align-top text-sm font-medium text-card-foreground sm:px-4'>
@@ -230,6 +248,34 @@ export default function OtherRequestsSection(props: Props) {
                         disabled={otherBusyKey === `compoff-${row.id}`}
                         onApprove={() => void updateCompOffStatus(row.id, 'APPROVED')}
                         onReject={() => void updateCompOffStatus(row.id, 'REJECTED')}
+                      />
+                    ) : (
+                      <LeaveStatusBadge status={row.status} className='shrink-0' />
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              (otherSlice as RegularizationRequest[]).map((row) => (
+                <tr key={row.id} className='border-b border-border/60 transition-colors hover:bg-muted/50'>
+                  <td className='min-w-0 px-3 py-2 align-top text-sm font-medium text-card-foreground sm:px-4'>
+                    <span className='block truncate' title={formatPersonName(row.user?.name) || undefined}>
+                      {formatPersonName(row.user?.name) || '—'}
+                    </span>
+                  </td>
+                  <td className='min-w-0 whitespace-nowrap px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>{formatDate(row.date)}</td>
+                  <td className='min-w-0 px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>
+                    {row.requestedCheckIn ? new Date(row.requestedCheckIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'} - {row.requestedCheckOut ? new Date(row.requestedCheckOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                  </td>
+                  <td className='min-w-0 px-3 py-2 align-top text-sm text-muted-foreground sm:px-4'>
+                    <span className='line-clamp-2 wrap-break-word' title={row.reason}>{row.reason || '—'}</span>
+                  </td>
+                  <td className='min-w-0 px-3 py-2 pr-5 align-top sm:pl-4 sm:pr-6'>
+                    {canModerate && row.status === 'PENDING' ? (
+                      <ApproveRejectButtonGroup
+                        disabled={otherBusyKey === `regularization-${row.id}`}
+                        onApprove={() => void updateRegularizationStatus(row.id, 'APPROVED')}
+                        onReject={() => void updateRegularizationStatus(row.id, 'REJECTED')}
                       />
                     ) : (
                       <LeaveStatusBadge status={row.status} className='shrink-0' />

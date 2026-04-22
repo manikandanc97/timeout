@@ -4,4 +4,5 @@ export const LEAVE_BALANCE_LABELS = {
   COMP_OFF: 'Comp off',
   MATERNITY: 'Maternity',
   PATERNITY: 'Paternity',
+  WFH: 'Work from Home',
 } as const;

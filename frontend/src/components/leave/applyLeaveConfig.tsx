@@ -4,6 +4,7 @@ import {
   Baby,
   Umbrella,
   BriefcaseBusiness,
+  Home,
 } from 'lucide-react';
 import type { ElementType } from 'react';
 
@@ -64,9 +65,18 @@ export const leaveTypeConfig: Record<
     label: 'Comp Off',
     desc: 'Use weekend-work credits',
   },
+  WFH: {
+    icon: Home,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-500/12',
+    border: 'border-emerald-500/30',
+    ring: 'ring-emerald-500',
+    label: 'Work From Home',
+    desc: 'Remote work request',
+  },
 };
 
-export const balanceKeyMap: Record<LeaveType, keyof LeaveBalance> = {
+export const balanceKeyMap: Partial<Record<LeaveType, keyof LeaveBalance>> = {
   ANNUAL: 'annual',
   SICK: 'sick',
   COMP_OFF: 'compOff',

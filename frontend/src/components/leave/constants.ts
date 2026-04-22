@@ -1,4 +1,4 @@
-import { Baby, Stethoscope, Umbrella, CalendarClock } from 'lucide-react';
+import { Baby, Stethoscope, Umbrella, CalendarClock, Home } from 'lucide-react';
 import type { ElementType } from 'react';
 import type { LeaveType, LeaveStatus } from '@/types/leave';
 
@@ -61,6 +61,15 @@ export const TYPE_CONFIG: Record<
     border: 'border-violet-500/25',
     accentBorder: 'border-l-violet-500',
   },
+  WFH: {
+    label: 'Work From Home',
+    description: 'Remote work request',
+    icon: Home,
+    bg: 'bg-emerald-500/12',
+    text: 'text-emerald-700',
+    border: 'border-emerald-500/25',
+    accentBorder: 'border-l-emerald-500',
+  },
 };
 
 export const TYPE_FILTER_OPTIONS: Array<{ value: LeaveType; label: string }> = [
@@ -69,6 +78,7 @@ export const TYPE_FILTER_OPTIONS: Array<{ value: LeaveType; label: string }> = [
   { value: 'COMP_OFF', label: TYPE_CONFIG.COMP_OFF.label },
   { value: 'MATERNITY', label: TYPE_CONFIG.MATERNITY.label },
   { value: 'PATERNITY', label: TYPE_CONFIG.PATERNITY.label },
+  { value: 'WFH', label: TYPE_CONFIG.WFH.label },
 ];
 
 /** Same rules as Apply Leave: maternity only for female, paternity only for male. */

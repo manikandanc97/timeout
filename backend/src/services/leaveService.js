@@ -287,8 +287,13 @@ export const applyLeave = async ({
       throw new Error('No comp off balance left');
     }
     balanceDeductedDays = totalDays;
+  } else if (leaveType === 'WFH') {
+    // WFH does not deduct from any leave balance — it is purely an approval request
+    balanceDeductedDays = 0;
+    lopDays = 0;
+    lopAmount = 0;
   } else {
-    // Other types (Maternity, etc.) - simple deduction for now or managed separately
+    // Maternity / Paternity — managed separately, no numeric deduction here
     balanceDeductedDays = totalDays;
   }
 
@@ -458,12 +463,23 @@ export const updateLeaveStatus = async ({ leaveId, status, rejectionReason, acto
   return results;
 };
 
-export const updatePermissionStatus = async ({ requestId, status, actorId }) => {
+export const updatePermissionStatus = async ({ requestId, status, actorId, rejectionReason }) => {
+  const row = await prisma.permissionRequest.findUnique({
+    where: { id: requestId },
+    select: { id: true, status: true, userId: true },
+  });
+  if (!row) throw new Error('Permission request not found');
+  if (row.status !== 'PENDING') throw new Error('Only pending requests can be updated');
+
   const updated = await prisma.permissionRequest.update({
     where: { id: requestId },
-    data: { status, approvedById: actorId }
+    data: {
+      status,
+      approvedById: actorId,
+      rejectionReason: status === 'REJECTED' ? (rejectionReason || 'Rejected') : null,
+    },
   });
-  
+
   try {
     await notifyPermissionStatusUpdate({ requestId, status, actorId });
   } catch (err) {
@@ -473,21 +489,26 @@ export const updatePermissionStatus = async ({ requestId, status, actorId }) => 
   return updated;
 };
 
-export const updateCompOffStatus = async ({ requestId, status, actorId }) => {
+export const updateCompOffStatus = async ({ requestId, status, actorId, rejectionReason }) => {
   const request = await prisma.compOffWorkLog.findUnique({ where: { id: requestId } });
   if (!request) throw new Error('Request not found');
+  if (request.status !== 'PENDING') throw new Error('Only pending requests can be updated');
 
   const updated = await prisma.$transaction(async (tx) => {
     const res = await tx.compOffWorkLog.update({
       where: { id: requestId },
-      data: { status, approvedById: actorId }
+      data: {
+        status,
+        approvedById: actorId,
+        rejectionReason: status === 'REJECTED' ? (rejectionReason || 'Rejected') : null,
+      },
     });
 
     if (status === 'APPROVED') {
       await tx.leaveBalance.upsert({
         where: { userId: request.userId },
         update: { compOff: { increment: 1 } },
-        create: { userId: request.userId, compOff: 1 }
+        create: { userId: request.userId, compOff: 1 },
       });
     }
 

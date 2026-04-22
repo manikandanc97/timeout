@@ -181,79 +181,132 @@ async function executeApproveLeave({ user, fields }) {
   const leaveId = Number(fields.leaveId);
   if (!leaveId) return { success: false, data: { message: 'Invalid leave ID' } };
 
-  const updated = await updateLeaveStatus({
-    leaveId,
-    status: 'APPROVED',
-    actorId: user.id,
-  });
+  const { updateLeaveStatus: controllerUpdate } = await import('../controllers/leaveController.js');
 
-  return { success: true, data: { message: `Leave #${leaveId} approved successfully`, leave: updated } };
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, role: user.role },
+      params: { id: leaveId },
+      body: { status: 'APPROVED' },
+    };
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => resolve({ success: code < 400, status: code, data }),
+      }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    controllerUpdate(mockReq, mockRes).catch(reject);
+  });
 }
 
 async function executeRejectLeave({ user, fields }) {
   const leaveId = Number(fields.leaveId);
   if (!leaveId) return { success: false, data: { message: 'Invalid leave ID' } };
 
-  const updated = await updateLeaveStatus({
-    leaveId,
-    status: 'REJECTED',
-    rejectionReason: fields.rejectionReason || 'Rejected via AI Assistant',
-    actorId: user.id,
-  });
+  const { updateLeaveStatus: controllerUpdate } = await import('../controllers/leaveController.js');
 
-  return { success: true, data: { message: `Leave #${leaveId} rejected`, leave: updated } };
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, role: user.role },
+      params: { id: leaveId },
+      body: { status: 'REJECTED', rejectionReason: fields.rejectionReason || 'Rejected via AI Assistant' },
+    };
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => resolve({ success: code < 400, status: code, data }),
+      }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    controllerUpdate(mockReq, mockRes).catch(reject);
+  });
 }
 
 async function executeApprovePermission({ user, fields }) {
   const permId = Number(fields.permissionId);
   if (!permId) return { success: false, data: { message: 'Invalid permission ID' } };
 
-  const updated = await updatePermissionStatus({
-    requestId: permId,
-    status: 'APPROVED',
-    actorId: user.id,
-  });
+  const { updatePermissionRequestStatus } = await import('../controllers/leaveController.js');
 
-  return { success: true, data: { message: `Permission #${permId} approved`, request: updated } };
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, role: user.role },
+      params: { id: permId },
+      body: { status: 'APPROVED' },
+    };
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => resolve({ success: code < 400, status: code, data }),
+      }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    updatePermissionRequestStatus(mockReq, mockRes).catch(reject);
+  });
 }
 
 async function executeRejectPermission({ user, fields }) {
   const permId = Number(fields.permissionId);
   if (!permId) return { success: false, data: { message: 'Invalid permission ID' } };
 
-  const updated = await updatePermissionStatus({
-    requestId: permId,
-    status: 'REJECTED',
-    actorId: user.id,
-  });
+  const { updatePermissionRequestStatus } = await import('../controllers/leaveController.js');
 
-  return { success: true, data: { message: `Permission #${permId} rejected`, request: updated } };
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, role: user.role },
+      params: { id: permId },
+      body: { status: 'REJECTED' },
+    };
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => resolve({ success: code < 400, status: code, data }),
+      }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    updatePermissionRequestStatus(mockReq, mockRes).catch(reject);
+  });
 }
 
 async function executeApproveCompOff({ user, fields }) {
   const compOffId = Number(fields.compOffId);
   if (!compOffId) return { success: false, data: { message: 'Invalid comp-off ID' } };
 
-  const updated = await updateCompOffStatus({
-    requestId: compOffId,
-    status: 'APPROVED',
-    actorId: user.id,
-  });
+  const { updateCompOffRequestStatus } = await import('../controllers/leaveController.js');
 
-  return { success: true, data: { message: `Comp-off #${compOffId} approved successfully`, request: updated } };
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, role: user.role },
+      params: { id: compOffId },
+      body: { status: 'APPROVED' },
+    };
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => resolve({ success: code < 400, status: code, data }),
+      }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    updateCompOffRequestStatus(mockReq, mockRes).catch(reject);
+  });
 }
 
 async function executeRejectCompOff({ user, fields }) {
   const compOffId = Number(fields.compOffId);
   if (!compOffId) return { success: false, data: { message: 'Invalid comp-off ID' } };
 
-  const updated = await updateCompOffStatus({
-    requestId: compOffId,
-    status: 'REJECTED',
-    actorId: user.id,
-  });
+  const { updateCompOffRequestStatus } = await import('../controllers/leaveController.js');
 
-  return { success: true, data: { message: `Comp-off #${compOffId} rejected`, request: updated } };
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, role: user.role },
+      params: { id: compOffId },
+      body: { status: 'REJECTED' },
+    };
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => resolve({ success: code < 400, status: code, data }),
+      }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    updateCompOffRequestStatus(mockReq, mockRes).catch(reject);
+  });
 }
 
 async function executeAddEmployee({ user, fields }) {
@@ -374,11 +427,152 @@ async function executeViewPayslip({ user }) {
   return { success: true, data: { payslip } };
 }
 
+// ─── WFH Action ──────────────────────────────────────────────────────────────
+
+async function executeApplyWFH({ user, fields }) {
+  const { startDate, endDate, reason } = fields;
+  const { applyLeave } = await import('../controllers/leaveController.js');
+
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, gender: user.gender, role: user.role },
+      body: { type: 'WFH', startDate, endDate, reason },
+    };
+    const mockRes = {
+      status: (code) => ({ json: (data) => resolve({ success: code < 400, status: code, data }) }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    applyLeave(mockReq, mockRes).catch(reject);
+  });
+}
+
+// ─── Attendance Actions ───────────────────────────────────────────────────────
+
+async function executePunchIn({ user }) {
+  const { punchIn } = await import('../controllers/attendanceController.js');
+
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId },
+    };
+    const mockRes = {
+      status: (code) => ({ json: (data) => resolve({ success: code < 400, status: code, data }) }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    punchIn(mockReq, mockRes).catch(reject);
+  });
+}
+
+async function executePunchOut({ user }) {
+  const { punchOut } = await import('../controllers/attendanceController.js');
+
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId },
+    };
+    const mockRes = {
+      status: (code) => ({ json: (data) => resolve({ success: code < 400, status: code, data }) }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    punchOut(mockReq, mockRes).catch(reject);
+  });
+}
+
+async function executeViewAttendance({ user }) {
+  const logs = await prisma.attendanceLog.findMany({
+    where: { userId: user.id },
+    orderBy: { date: 'desc' },
+    take: 14,
+  });
+  return { success: true, data: { logs } };
+}
+
+async function executeRequestRegularization({ user, fields }) {
+  const { requestRegularization } = await import('../controllers/attendanceController.js');
+
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId },
+      body: {
+        date: fields.date,
+        requestedCheckIn: fields.requestedCheckIn ?? null,
+        requestedCheckOut: fields.requestedCheckOut ?? null,
+        reason: fields.reason,
+      },
+    };
+    const mockRes = {
+      status: (code) => ({ json: (data) => resolve({ success: code < 400, status: code, data }) }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    requestRegularization(mockReq, mockRes).catch(reject);
+  });
+}
+
+async function executeApproveRegularization({ user, fields }) {
+  const regId = Number(fields.regularizationId);
+  if (!regId) return { success: false, data: { message: 'Invalid regularization request ID' } };
+
+  const { updateRegularizationStatus } = await import('../controllers/attendanceController.js');
+
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, role: user.role },
+      params: { id: regId },
+      body: { status: 'APPROVED' },
+    };
+    const mockRes = {
+      status: (code) => ({ json: (data) => resolve({ success: code < 400, status: code, data }) }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    updateRegularizationStatus(mockReq, mockRes).catch(reject);
+  });
+}
+
+async function executeRejectRegularization({ user, fields }) {
+  const regId = Number(fields.regularizationId);
+  if (!regId) return { success: false, data: { message: 'Invalid regularization request ID' } };
+
+  const { updateRegularizationStatus } = await import('../controllers/attendanceController.js');
+
+  return await new Promise((resolve, reject) => {
+    const mockReq = {
+      user: { id: user.id, organizationId: user.organizationId, role: user.role },
+      params: { id: regId },
+      body: { status: 'REJECTED', rejectionReason: fields.rejectionReason || 'Rejected via AI Assistant' },
+    };
+    const mockRes = {
+      status: (code) => ({ json: (data) => resolve({ success: code < 400, status: code, data }) }),
+      json: (data) => resolve({ success: true, status: 200, data }),
+    };
+    updateRegularizationStatus(mockReq, mockRes).catch(reject);
+  });
+}
+
+async function executeViewPendingRegularizations({ user }) {
+  const where = user.role === 'ADMIN'
+    ? { organizationId: user.organizationId, status: 'PENDING' }
+    : {
+        organizationId: user.organizationId,
+        status: 'PENDING',
+        user: { reportingManagerId: user.id },
+      };
+
+  const requests = await prisma.regularizationRequest.findMany({
+    where,
+    include: { user: { select: { id: true, name: true, designation: true } } },
+    orderBy: { date: 'desc' },
+    take: 10,
+  });
+
+  return { success: true, data: { requests } };
+}
+
 // ─── Action router map ───────────────────────────────────────────────────────
 const ACTION_HANDLERS = {
   APPLY_LEAVE: executeApplyLeave,
   APPLY_PERMISSION: executeApplyPermission,
   APPLY_COMP_OFF: executeApplyCompOff,
+  APPLY_WFH: executeApplyWFH,
   CHECK_LEAVE_BALANCE: executeCheckLeaveBalance,
   VIEW_MY_LEAVES: executeViewMyLeaves,
   HOLIDAY_LIST: executeHolidayList,
@@ -395,6 +589,13 @@ const ACTION_HANDLERS = {
   DELETE_EMPLOYEE: executeDeleteEmployee,
   VIEW_PAYROLL_SUMMARY: executeViewPayrollSummary,
   VIEW_PAYSLIP: executeViewPayslip,
+  PUNCH_IN: executePunchIn,
+  PUNCH_OUT: executePunchOut,
+  VIEW_ATTENDANCE: executeViewAttendance,
+  REQUEST_REGULARIZATION: executeRequestRegularization,
+  APPROVE_REGULARIZATION: executeApproveRegularization,
+  REJECT_REGULARIZATION: executeRejectRegularization,
+  VIEW_PENDING_REGULARIZATIONS: executeViewPendingRegularizations,
 };
 
 // ─── Main executor ───────────────────────────────────────────────────────────

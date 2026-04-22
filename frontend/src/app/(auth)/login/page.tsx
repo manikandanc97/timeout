@@ -146,7 +146,7 @@ const Login = () => {
               variant="outline"
               className="h-auto py-2 sm:py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-all active:scale-[0.98]"
               onClick={() => {
-                setEmail("admin@acmehrm.com");
+                setEmail("gowtham@timeout.com");
                 setPassword("demo1234");
               }}
             >
@@ -157,7 +157,7 @@ const Login = () => {
               variant="outline"
               className="h-auto py-2 sm:py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-all active:scale-[0.98]"
               onClick={() => {
-                setEmail("manager@acmehrm.com");
+                setEmail("karthik@timeout.com");
                 setPassword("demo1234");
               }}
             >
@@ -168,7 +168,7 @@ const Login = () => {
               variant="outline"
               className="h-auto py-2 sm:py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-all active:scale-[0.98]"
               onClick={() => {
-                setEmail("employee@acmehrm.com");
+                setEmail("balaji@timeout.com");
                 setPassword("demo1234");
               }}
             >

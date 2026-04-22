@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const leaveSchema = z
   .object({
-    type: z.enum(['ANNUAL', 'SICK', 'MATERNITY', 'PATERNITY', 'COMP_OFF'], {
+    type: z.enum(['ANNUAL', 'SICK', 'MATERNITY', 'PATERNITY', 'COMP_OFF', 'WFH'], {
       message: 'Leave type is required',
     }),
     startDate: z.string().min(1, 'Start date is required'),

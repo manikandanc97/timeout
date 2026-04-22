@@ -1,8 +1,8 @@
 'use client';
 
-import { BriefcaseBusiness, CalendarDays, Clock3, type LucideIcon } from 'lucide-react';
+import { BriefcaseBusiness, CalendarDays, Clock3, ShieldAlert, type LucideIcon } from 'lucide-react';
 
-export type RequestCategoryTabId = 'LEAVE' | 'PERMISSION' | 'COMP_OFF';
+export type RequestCategoryTabId = 'LEAVE' | 'PERMISSION' | 'COMP_OFF' | 'REGULARIZATION';
 
 type TabDef = {
   id: RequestCategoryTabId;
@@ -12,6 +12,7 @@ type TabDef = {
 
 const TAB_DEFINITIONS: TabDef[] = [
   { id: 'LEAVE', label: 'Leave', Icon: CalendarDays },
+  { id: 'REGULARIZATION', label: 'Regularize', Icon: ShieldAlert },
   { id: 'PERMISSION', label: 'Permission', Icon: Clock3 },
   { id: 'COMP_OFF', label: 'Comp off', Icon: BriefcaseBusiness },
 ];

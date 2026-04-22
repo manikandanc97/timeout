@@ -86,7 +86,8 @@ export default function ApplyLeaveTypeSection(props: Props) {
                 const cfg = leaveTypeConfig[key];
                 const Icon = cfg.icon;
                 const isSelected = field.value === key;
-                const balanceLabel = balance ? (balance[balanceKeyMap[key]] ?? null) : null;
+                const balKey = balanceKeyMap[key];
+                const balanceLabel = balance && balKey ? (balance[balKey] ?? null) : null;
                 return (
                   <Button
                     key={key}

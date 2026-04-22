@@ -15,6 +15,7 @@ import type {
   LeaveWithEmployee,
   PermissionRequestWithEmployee,
 } from '@/types/leave';
+import type { RegularizationRequest } from '@/types/attendance';
 import { subscribeDashboardRefresh } from '@/lib/dashboardRealtimeBus';
 import { useCallback, useEffect } from 'react';
 
@@ -22,6 +23,7 @@ type Props = {
   initialLeaves: LeaveWithEmployee[];
   initialPermissionRequests: PermissionRequestWithEmployee[];
   initialCompOffRequests: CompOffRequestWithEmployee[];
+  initialRegularizationRequests: RegularizationRequest[];
   holidays: Holiday[];
   canModerate: boolean;
 };
@@ -30,6 +32,7 @@ export default function LeaveRequestsPageClient({
   initialLeaves,
   initialPermissionRequests,
   initialCompOffRequests,
+  initialRegularizationRequests,
   holidays,
   canModerate,
 }: Props) {
@@ -38,6 +41,7 @@ export default function LeaveRequestsPageClient({
   const other = useOtherLeaveRequests({
     initialPermissionRequests,
     initialCompOffRequests,
+    initialRegularizationRequests,
   });
   const { refetchOtherFeeds } = other;
 
@@ -56,7 +60,9 @@ export default function LeaveRequestsPageClient({
       ? req.summary
       : other.activeTab === 'PERMISSION'
         ? other.permissionSummary
-        : other.compOffSummary;
+        : other.activeTab === 'COMP_OFF'
+          ? other.compOffSummary
+          : other.regularizationSummary;
 
   return (
     <section className='relative isolate flex flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xl'>
@@ -120,7 +126,7 @@ export default function LeaveRequestsPageClient({
                 </>
               ) : (
                 <OtherRequestsSection
-                  activeTab={other.activeTab === 'PERMISSION' ? 'PERMISSION' : 'COMP_OFF'}
+                  activeTab={other.activeTab === 'PERMISSION' ? 'PERMISSION' : other.activeTab === 'COMP_OFF' ? 'COMP_OFF' : 'REGULARIZATION'}
                   canModerate={canModerate}
                   otherSearch={other.otherSearch}
                   otherDateFrom={other.otherDateFrom}
@@ -138,6 +144,7 @@ export default function LeaveRequestsPageClient({
                   clearOtherFilters={other.clearOtherFilters}
                   updatePermissionStatus={other.updatePermissionStatus}
                   updateCompOffStatus={other.updateCompOffStatus}
+                  updateRegularizationStatus={other.updateRegularizationStatus}
                 />
               )}
             </section>

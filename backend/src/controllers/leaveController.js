@@ -16,9 +16,15 @@ import {
   getWorkingDays,
   getMonthlyNetFromSalaryStructure,
   recalculatePayrollForLeaveRange,
+  applyLeave as applyLeaveService,
 } from '../services/leaveService.js';
 
 const MONTHLY_PERMISSION_LIMIT_MINUTES = 4 * 60;
+const localDayKey = (d) => {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 
 const resolveActorContext = async (authUser) => {
   const fallback = {
@@ -132,7 +138,7 @@ export const applyLeave = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    const { leave, impact } = await leaveService.applyLeave({
+    const { leave, impact } = await applyLeaveService({
       userId: req.user.id,
       organizationId: req.user.organizationId,
       type,
@@ -543,14 +549,30 @@ export const getCompOffRequests = async (req, res) => {
   }
 };
 
+/**
+ * Determines whether `actor` is allowed to moderate a request made by `requestUserId`.
+ *
+ * Hierarchy rules:
+ *  - Self-approval is NEVER permitted.
+ *  - ADMIN may moderate any request in their org.
+ *  - MANAGER may only moderate requests from employees who report directly to them.
+ *  - MANAGER *** cannot *** moderate requests from another MANAGER — those must go to ADMIN.
+ */
 const canModerateUserRequest = async (actor, requestUserId) => {
+  // ██ CRITICAL: block all self-approval ██
+  if (actor.id === requestUserId) return false;
+
   if (actor.role === 'ADMIN') return true;
   if (actor.role !== 'MANAGER') return false;
 
   const applicant = await prisma.user.findUnique({
     where: { id: requestUserId },
-    select: { reportingManagerId: true },
+    select: { reportingManagerId: true, role: true },
   });
+
+  // Managers cannot approve other Managers — must escalate to Admin
+  if (applicant?.role === 'MANAGER') return false;
+
   return applicant?.reportingManagerId === actor.id;
 };
 
@@ -583,7 +605,11 @@ export const updatePermissionRequestStatus = async (req, res) => {
 
     const updated = await prisma.permissionRequest.update({
       where: { id: requestId },
-      data: { status },
+      data: {
+        status,
+        approvedById: actor.id,
+        rejectionReason: status === 'REJECTED' ? String(req.body?.rejectionReason ?? '').trim() || 'Rejected' : null,
+      },
     });
 
     try {
@@ -638,7 +664,11 @@ export const updateCompOffRequestStatus = async (req, res) => {
     const updated = await prisma.$transaction(async (tx) => {
       const next = await tx.compOffWorkLog.update({
         where: { id: requestId },
-        data: { status },
+        data: {
+          status,
+          approvedById: actor.id,
+          rejectionReason: status === 'REJECTED' ? String(req.body?.rejectionReason ?? '').trim() || 'Rejected' : null,
+        },
       });
       if (status === 'APPROVED') {
         const existingBalance = await tx.leaveBalance.findUnique({
@@ -786,12 +816,17 @@ export const updateLeaveStatus = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    // ██ CRITICAL: No self-approval ██
+    if (leave.userId === req.user.id) {
+      return res.status(403).json({ message: 'Self-approval is not allowed' });
+    }
+
     if (req.user.role === 'MANAGER') {
       let applicant;
       try {
         applicant = await prisma.user.findUnique({
           where: { id: leave.userId },
-          select: { reportingManagerId: true },
+          select: { reportingManagerId: true, role: true },
         });
       } catch (error) {
         if (!isMissingReportingManagerColumn(error)) throw error;
@@ -800,6 +835,14 @@ export const updateLeaveStatus = async (req, res) => {
             'Reporting manager mapping is unavailable. Please run database migrations and prisma generate.',
         });
       }
+
+      // ██ ESCALATION RULE: Manager leaves must be approved by ADMIN only ██
+      if (applicant?.role === 'MANAGER') {
+        return res.status(403).json({
+          message: 'Leave requests from Managers must be approved by HR Admin. Please contact your HR team.',
+        });
+      }
+
       if (applicant?.reportingManagerId !== req.user.id) {
         return res.status(403).json({
           message:

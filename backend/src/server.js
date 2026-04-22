@@ -20,6 +20,7 @@ import { initSocketServer } from './socket/socketServer.js';
 import { env, requireEnv } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import aiRoutes from './routes/aiRoutes.js';
+import attendanceRoutes from './routes/attendanceRoutes.js';
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use('/api/payroll', payrollRoutes);
 
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 const httpServer = http.createServer(app);
 

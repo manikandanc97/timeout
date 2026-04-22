@@ -13,6 +13,7 @@ import {
   BarChart3,
   Wallet,
   ReceiptText,
+  Clock,
 } from 'lucide-react';
 
 type MenuItem = {
@@ -23,6 +24,7 @@ type MenuItem = {
 
 export const employeeMenuList: MenuItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Attendance', href: '/attendance', icon: Clock },
   { name: 'My Leaves', href: '/leaves', icon: CalendarDays },
   { name: 'Apply Leave', href: '/apply', icon: FilePlus2 },
   { name: 'Payslip', href: '/payslip', icon: ReceiptText },
@@ -31,6 +33,7 @@ export const employeeMenuList: MenuItem[] = [
 
 export const adminMenuList: MenuItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Attendance', href: '/attendance', icon: Clock },
   { name: 'Requests', href: '/requests', icon: ClipboardCheck },
   { name: 'Employees', href: '/employees', icon: Users },
   { name: 'Teams', href: '/team', icon: Users },

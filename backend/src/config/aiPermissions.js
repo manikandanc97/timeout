@@ -43,6 +43,18 @@ export const AI_ACTIONS = {
   VIEW_PAYROLL_SUMMARY: 'VIEW_PAYROLL_SUMMARY',
   VIEW_AI_AUDIT_LOGS: 'VIEW_AI_AUDIT_LOGS',
   UPDATE_AI_SETTINGS: 'UPDATE_AI_SETTINGS',
+
+  // ─── WFH actions ────────────────────────────────────────────────────────────
+  APPLY_WFH: 'APPLY_WFH',
+
+  // ─── Attendance actions ──────────────────────────────────────────────────────
+  PUNCH_IN: 'PUNCH_IN',
+  PUNCH_OUT: 'PUNCH_OUT',
+  VIEW_ATTENDANCE: 'VIEW_ATTENDANCE',
+  REQUEST_REGULARIZATION: 'REQUEST_REGULARIZATION',
+  APPROVE_REGULARIZATION: 'APPROVE_REGULARIZATION',
+  REJECT_REGULARIZATION: 'REJECT_REGULARIZATION',
+  VIEW_PENDING_REGULARIZATIONS: 'VIEW_PENDING_REGULARIZATIONS',
 };
 
 /** Roles that are allowed to perform each action */
@@ -79,6 +91,18 @@ export const ROLE_PERMISSIONS = {
   [AI_ACTIONS.VIEW_PAYROLL_SUMMARY]: ['ADMIN'],
   [AI_ACTIONS.VIEW_AI_AUDIT_LOGS]: ['ADMIN'],
   [AI_ACTIONS.UPDATE_AI_SETTINGS]: ['ADMIN'],
+
+  // WFH
+  [AI_ACTIONS.APPLY_WFH]: ['EMPLOYEE', 'MANAGER', 'ADMIN'],
+
+  // Attendance
+  [AI_ACTIONS.PUNCH_IN]: ['EMPLOYEE', 'MANAGER', 'ADMIN'],
+  [AI_ACTIONS.PUNCH_OUT]: ['EMPLOYEE', 'MANAGER', 'ADMIN'],
+  [AI_ACTIONS.VIEW_ATTENDANCE]: ['EMPLOYEE', 'MANAGER', 'ADMIN'],
+  [AI_ACTIONS.REQUEST_REGULARIZATION]: ['EMPLOYEE', 'MANAGER', 'ADMIN'],
+  [AI_ACTIONS.APPROVE_REGULARIZATION]: ['MANAGER', 'ADMIN'],
+  [AI_ACTIONS.REJECT_REGULARIZATION]: ['MANAGER', 'ADMIN'],
+  [AI_ACTIONS.VIEW_PENDING_REGULARIZATIONS]: ['MANAGER', 'ADMIN'],
 };
 
 /**
@@ -91,9 +115,12 @@ export const CONFIRMATION_REQUIRED_ACTIONS = new Set([
   AI_ACTIONS.REJECT_LEAVE,
   AI_ACTIONS.REJECT_PERMISSION,
   AI_ACTIONS.REJECT_COMP_OFF,
+  AI_ACTIONS.REJECT_REGULARIZATION,
   AI_ACTIONS.APPLY_LEAVE,
   AI_ACTIONS.APPLY_PERMISSION,
   AI_ACTIONS.APPLY_COMP_OFF,
+  AI_ACTIONS.APPLY_WFH,
+  AI_ACTIONS.REQUEST_REGULARIZATION,
   AI_ACTIONS.ADD_EMPLOYEE,
   AI_ACTIONS.UPDATE_EMPLOYEE,
   AI_ACTIONS.ASSIGN_ROLE,
@@ -140,11 +167,17 @@ export const ACTION_REQUIRED_FIELDS = {
   [AI_ACTIONS.DEACTIVATE_EMPLOYEE]: ['employeeId'],
   [AI_ACTIONS.ACTIVATE_EMPLOYEE]: ['employeeId'],
   [AI_ACTIONS.DELETE_EMPLOYEE]: ['employeeId'],
+  // WFH
+  [AI_ACTIONS.APPLY_WFH]: ['startDate', 'endDate', 'reason'],
+  // Attendance
+  [AI_ACTIONS.REQUEST_REGULARIZATION]: ['date', 'reason'],
+  [AI_ACTIONS.APPROVE_REGULARIZATION]: ['regularizationId'],
+  [AI_ACTIONS.REJECT_REGULARIZATION]: ['regularizationId', 'rejectionReason'],
 };
 
 /** Human-friendly labels for field names used in questions */
 export const FIELD_PROMPTS = {
-  leaveType: 'What type of leave? (Annual / Sick / Comp-Off / Maternity / Paternity)',
+  leaveType: 'What type of leave? (Annual / Sick / Comp-Off / Maternity / Paternity / WFH)',
   startDate: 'From which date? (YYYY-MM-DD)',
   endDate: 'To which date? (YYYY-MM-DD)',
   reason: 'What is the reason?',
@@ -162,6 +195,7 @@ export const FIELD_PROMPTS = {
   leaveId: 'Which leave request ID?',
   permissionId: 'Which permission request ID?',
   compOffId: 'Which comp-off request ID?',
+  regularizationId: 'Which regularization request ID?',
   employeeId: 'Which employee? (name or ID)',
   rejectionReason: 'Reason for rejection?',
 };

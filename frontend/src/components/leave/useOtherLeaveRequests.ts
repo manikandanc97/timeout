@@ -3,18 +3,21 @@ import toast from 'react-hot-toast';
 import api from '@/services/api';
 import { formatPersonName } from '@/lib/personName';
 import type { CompOffRequestWithEmployee, PermissionRequestWithEmployee } from '@/types/leave';
+import type { RegularizationRequest } from '@/types/attendance';
 import { computeRequestStatusSummary, LEAVE_REQUESTS_PAGE_SIZE } from './leaveRequestsPageUtils';
 
 type Params = {
   initialPermissionRequests: PermissionRequestWithEmployee[];
   initialCompOffRequests: CompOffRequestWithEmployee[];
+  initialRegularizationRequests: RegularizationRequest[];
 };
 
-export function useOtherLeaveRequests({ initialPermissionRequests, initialCompOffRequests }: Params) {
+export function useOtherLeaveRequests({ initialPermissionRequests, initialCompOffRequests, initialRegularizationRequests }: Params) {
   const [permissionRows, setPermissionRows] = useState(initialPermissionRequests);
   const [compOffRows, setCompOffRows] = useState(initialCompOffRequests);
+  const [regularizationRows, setRegularizationRows] = useState(initialRegularizationRequests);
   const [otherBusyKey, setOtherBusyKey] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'LEAVE' | 'PERMISSION' | 'COMP_OFF'>('LEAVE');
+  const [activeTab, setActiveTab] = useState<'LEAVE' | 'PERMISSION' | 'COMP_OFF' | 'REGULARIZATION'>('LEAVE');
   const [otherSearch, setOtherSearch] = useState('');
   const [otherDateFrom, setOtherDateFrom] = useState('');
   const [otherDateTo, setOtherDateTo] = useState('');
@@ -48,13 +51,28 @@ export function useOtherLeaveRequests({ initialPermissionRequests, initialCompOf
     });
   }, [compOffRows, otherDateFrom, otherDateTo, otherSearch]);
 
-  const otherFiltered = activeTab === 'PERMISSION' ? permissionFiltered : compOffFiltered;
+  const regularizationFiltered = useMemo(() => {
+    const q = otherSearch.trim().toLowerCase();
+    return regularizationRows.filter((row) => {
+      const name = formatPersonName(row.user?.name).toLowerCase();
+      const email = (row.user?.email ?? '').toLowerCase();
+      const reason = (row.reason ?? '').toLowerCase();
+      const matchesSearch = q.length === 0 || name.includes(q) || email.includes(q) || reason.includes(q);
+      const rowDate = new Date(row.date);
+      const fromOk = !otherDateFrom || rowDate >= new Date(`${otherDateFrom}T00:00:00`);
+      const toOk = !otherDateTo || rowDate <= new Date(`${otherDateTo}T23:59:59`);
+      return matchesSearch && fromOk && toOk;
+    });
+  }, [regularizationRows, otherDateFrom, otherDateTo, otherSearch]);
+
+  const otherFiltered = activeTab === 'PERMISSION' ? permissionFiltered : activeTab === 'COMP_OFF' ? compOffFiltered : regularizationFiltered;
   const otherPageCount = Math.max(1, Math.ceil(otherFiltered.length / LEAVE_REQUESTS_PAGE_SIZE));
   const safeOtherPage = Math.min(otherPage, otherPageCount);
   const otherSlice = otherFiltered.slice((safeOtherPage - 1) * LEAVE_REQUESTS_PAGE_SIZE, safeOtherPage * LEAVE_REQUESTS_PAGE_SIZE);
   const hasOtherFilters = otherSearch.trim().length > 0 || otherDateFrom.length > 0 || otherDateTo.length > 0;
   const permissionSummary = useMemo(() => computeRequestStatusSummary(permissionRows), [permissionRows]);
   const compOffSummary = useMemo(() => computeRequestStatusSummary(compOffRows), [compOffRows]);
+  const regularizationSummary = useMemo(() => computeRequestStatusSummary(regularizationRows), [regularizationRows]);
 
   const clearOtherFilters = () => {
     setOtherSearch('');
@@ -95,13 +113,29 @@ export function useOtherLeaveRequests({ initialPermissionRequests, initialCompOf
     }
   };
 
+  const updateRegularizationStatus = async (requestId: number, status: 'APPROVED' | 'REJECTED', rejectionReason?: string) => {
+    const key = `regularization-${requestId}`;
+    setOtherBusyKey(key);
+    try {
+      await api.put(`/attendance/regularize/${requestId}`, { status, rejectionReason });
+      setRegularizationRows((prev) => prev.map((row) => (row.id === requestId ? { ...row, status } : row)));
+      toast.success(status === 'APPROVED' ? 'Regularization approved.' : 'Regularization rejected.');
+    } catch {
+      toast.error('Could not update regularization request.');
+    } finally {
+      setOtherBusyKey(null);
+    }
+  };
+
   const refetchOtherFeeds = useCallback(async () => {
-    const [permRes, compRes] = await Promise.all([
+    const [permRes, compRes, regRes] = await Promise.all([
       api.get<PermissionRequestWithEmployee[]>('/leaves/permissions/requests').catch(() => ({ data: [] as PermissionRequestWithEmployee[] })),
       api.get<CompOffRequestWithEmployee[]>('/leaves/comp-off-requests').catch(() => ({ data: [] as CompOffRequestWithEmployee[] })),
+      api.get<{ data: RegularizationRequest[] }>('/attendance/regularize').catch(() => ({ data: { data: [] as RegularizationRequest[] } })),
     ]);
     setPermissionRows(Array.isArray(permRes.data) ? permRes.data : []);
     setCompOffRows(Array.isArray(compRes.data) ? compRes.data : []);
+    setRegularizationRows(Array.isArray(regRes.data?.data) ? regRes.data.data : []);
   }, []);
 
   return {
@@ -123,9 +157,11 @@ export function useOtherLeaveRequests({ initialPermissionRequests, initialCompOf
     hasOtherFilters,
     permissionSummary,
     compOffSummary,
+    regularizationSummary,
     clearOtherFilters,
     updatePermissionStatus,
     updateCompOffStatus,
+    updateRegularizationStatus,
     refetchOtherFeeds,
   };
 }

@@ -75,8 +75,8 @@ export const handleChat = async (req, res) => {
       });
     }
 
-    // ── Handle confirmation ────────────────────────────────────────────────
-    if (confirm && session.phase === 'AWAITING_CONFIRMATION') {
+    // ── Handle confirmation / OTP ─────────────────────────────────────────
+    if (confirm && (session.phase === 'AWAITING_CONFIRMATION' || session.phase === 'AWAITING_OTP')) {
       const { intent, collectedFields } = session;
 
       // Final permission check before execution
