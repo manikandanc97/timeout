@@ -62,7 +62,7 @@ export function usePayrollPage(canView: boolean) {
           setPagination(res.data.pagination);
         }
       })
-      .catch((error: unknown) => toast.error(getApiErrorMessage(error, 'Failed to load payroll')))
+      .catch((error: unknown) => { void toast.error(getApiErrorMessage(error, 'Failed to load payroll')); })
       .finally(() => setLoading(false));
   }, [canView, selectedMonth, selectedYear, pagination.page]);
 
