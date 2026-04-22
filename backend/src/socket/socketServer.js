@@ -6,13 +6,14 @@ let ioInstance = null;
 
 /**
  * @param {import('http').Server} httpServer
- * @param {{ clientOrigin?: string }} [opts]
+ * @param {{ clientOrigin?: string | string[] }} [opts]
  */
 export function initSocketServer(httpServer, opts = {}) {
-  const clientOrigin =
-    opts.clientOrigin?.trim() ||
-    process.env.CLIENT_ORIGIN?.trim() ||
-    'http://localhost:3000';
+  const clientOrigin = Array.isArray(opts.clientOrigin)
+    ? opts.clientOrigin
+    : opts.clientOrigin?.trim() ||
+      process.env.CLIENT_ORIGIN?.trim() ||
+      'http://localhost:3000';
 
   const io = new Server(httpServer, {
     path: '/socket.io',

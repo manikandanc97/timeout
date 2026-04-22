@@ -26,7 +26,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: env.clientOrigin,
+    origin: env.clientOrigins,
     credentials: true,
   }),
 );
@@ -93,7 +93,7 @@ async function start() {
   app.use(notFoundHandler);
   app.use(errorHandler);
 
-  initSocketServer(httpServer, { clientOrigin: env.clientOrigin });
+  initSocketServer(httpServer, { clientOrigin: env.clientOrigins });
 
   httpServer.listen(env.port, () => {
     console.log(`Server running on port ${env.port} (HTTP + Socket.IO)`);
