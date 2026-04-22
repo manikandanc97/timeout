@@ -21,6 +21,11 @@ export interface Leave {
   lopDays?: number;
   lopAmount?: number;
   userId?: number;
+  user?: {
+    name?: string;
+    email?: string;
+    reportingManagerId?: number | null;
+  };
   createdAt?: string;
 }
 
