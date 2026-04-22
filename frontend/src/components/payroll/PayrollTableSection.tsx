@@ -1,9 +1,9 @@
 import type { PayrollRow } from '@/types/payroll';
 import { Download, Eye, RotateCcw, WalletCards } from 'lucide-react';
-import { TableSkeleton } from '@/components/common/SkeletonLoaders';
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import { formatPersonName } from '@/lib/personName';
+import Skeleton from '@/components/ui/Skeleton';
 
 type Props = {
   loading: boolean;
@@ -35,6 +35,7 @@ type Props = {
 
 export default function PayrollTableSection(props: Props) {
   const { pagination, onPageChange } = props;
+  const skeletonRows = Array.from({ length: 8 }, (_, index) => index);
 
   return (
     <section className='flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-muted/25 p-3 shadow-sm sm:gap-3.5 sm:p-4'>
@@ -56,11 +57,33 @@ export default function PayrollTableSection(props: Props) {
             <thead className='sticky top-0 z-10'><tr className='border-b border-border bg-muted/90 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'><th className='px-4 py-3.5 text-left'>Employee Name</th><th className='px-4 py-3.5 text-left'>Basic</th><th className='px-4 py-3.5 text-left'>Allowance</th><th className='px-4 py-3.5 text-left'>LOP</th><th className='px-4 py-3.5 text-left'>Deductions</th><th className='px-4 py-3.5 text-left'>Net Salary</th><th className='px-4 py-3.5 text-left'>Status</th><th className='px-4 py-3.5 text-right'>Action</th></tr></thead>
             <tbody>
               {props.loading ? (
-                <tr>
-                  <td colSpan={8} className='p-0'>
-                    <TableSkeleton rows={8} columns={8} />
-                  </td>
-                </tr>
+                skeletonRows.map((rowIndex) => (
+                  <tr
+                    key={`payroll-skeleton-${rowIndex}`}
+                    className='border-b border-border/60 bg-card/90'
+                  >
+                    <td className='px-4 py-2 align-top'>
+                      <div className='space-y-1.5'>
+                        <Skeleton className='h-3.5 w-30' />
+                        <Skeleton className='h-2.5 w-18' />
+                      </div>
+                    </td>
+                    <td className='px-4 py-2 align-top'><Skeleton className='h-3.5 w-20' /></td>
+                    <td className='px-4 py-2 align-top'><Skeleton className='h-3.5 w-20' /></td>
+                    <td className='px-4 py-2 align-top'><Skeleton className='h-3.5 w-14' /></td>
+                    <td className='px-4 py-2 align-top'><Skeleton className='h-3.5 w-18' /></td>
+                    <td className='px-4 py-2 align-top'><Skeleton className='h-3.5 w-24' /></td>
+                    <td className='px-4 py-2 align-top'><Skeleton className='h-6 w-16 rounded-md' /></td>
+                    <td className='px-4 py-2 text-right align-top'>
+                      <div className='flex flex-wrap justify-end gap-1.5 min-w-[120px]'>
+                        <Skeleton className='h-8 w-14 rounded-md' />
+                        <Skeleton className='h-8 w-12 rounded-md' />
+                        <Skeleton className='h-8 w-18 rounded-md' />
+                        <Skeleton className='h-8 w-12 rounded-md' />
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : props.visibleRows.length === 0 ? (
                 <tr>
                   <td colSpan={8} className='px-4 py-8'>

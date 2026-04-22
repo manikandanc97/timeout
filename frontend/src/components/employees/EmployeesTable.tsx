@@ -3,8 +3,8 @@ import { Pencil, Trash2, Users } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { formatPersonName } from '@/lib/personName';
 import type { OrganizationEmployee } from '@/types/employee';
-import { TableSkeleton } from '@/components/common/SkeletonLoaders';
 import EmptyState from '@/components/common/EmptyState';
+import Skeleton from '@/components/ui/Skeleton';
 
 import { formatJoined, roleLabel } from './utils';
 
@@ -25,6 +25,8 @@ export default function EmployeesTable({
   onEditEmployee,
   onRequestDeleteEmployee,
 }: Props) {
+  const skeletonRows = Array.from({ length: 10 }, (_, index) => index);
+
   return (
     <div className='w-full min-w-0 overflow-x-auto'>
       <table className='w-full min-w-[940px] border-collapse text-left text-sm'>
@@ -43,11 +45,49 @@ export default function EmployeesTable({
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={9} className='p-0'>
-                  <TableSkeleton rows={10} columns={9} />
-                </td>
-              </tr>
+              skeletonRows.map((rowIndex) => (
+                <tr
+                  key={`employee-skeleton-${rowIndex}`}
+                  className='border-b border-border bg-card/90'
+                >
+                  <td className='px-4 py-2 align-top'>
+                    <div className='flex items-center gap-3'>
+                      <Skeleton className='h-9 w-9 shrink-0 rounded-full' />
+                      <div className='space-y-1.5'>
+                        <Skeleton className='h-3.5 w-28' />
+                        <Skeleton className='h-2.5 w-18' />
+                      </div>
+                    </div>
+                  </td>
+                  <td className='px-4 py-2 align-top'>
+                    <Skeleton className='h-3.5 w-40' />
+                  </td>
+                  <td className='px-4 py-2 align-top'>
+                    <Skeleton className='h-3.5 w-24' />
+                  </td>
+                  <td className='px-4 py-2 align-top'>
+                    <Skeleton className='h-3.5 w-20' />
+                  </td>
+                  <td className='px-4 py-2 align-top'>
+                    <Skeleton className='h-3.5 w-28' />
+                  </td>
+                  <td className='px-4 py-2 align-top'>
+                    <Skeleton className='h-3.5 w-22' />
+                  </td>
+                  <td className='px-4 py-2 align-top'>
+                    <Skeleton className='h-6 w-18 rounded-md' />
+                  </td>
+                  <td className='px-4 py-2 align-top'>
+                    <Skeleton className='h-3.5 w-18' />
+                  </td>
+                  <td className='px-4 py-2 text-right align-top'>
+                    <div className='flex shrink-0 justify-end gap-0.5'>
+                      <Skeleton className='h-8 w-8 rounded-lg' />
+                      <Skeleton className='h-8 w-8 rounded-lg' />
+                    </div>
+                  </td>
+                </tr>
+              ))
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={9} className='p-8'>

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import type { AttendanceLog } from '@/types/attendance';
 import RegularizeModal from './RegularizeModal';
 import Button from '@/components/ui/Button';
+import Skeleton from '@/components/ui/Skeleton';
 
 type Props = {
   history: AttendanceLog[];
@@ -16,10 +17,34 @@ export default function AttendanceHistory({ history, loading, onRefresh }: Props
 
   if (loading) {
     return (
-      <div className='flex h-64 items-center justify-center rounded-2xl border border-border bg-card/50'>
-        <div className='flex items-center gap-3 text-muted-foreground'>
-          <div className='h-5 w-5 animate-spin rounded-full border-b-2 border-primary'></div>
-          <span>Loading history...</span>
+      <div className='rounded-2xl border border-border bg-card shadow-sm overflow-hidden'>
+        <div className='px-6 py-5 border-b border-border flex justify-between items-center'>
+          <Skeleton className='h-6 w-40' />
+        </div>
+        <div className='overflow-x-auto'>
+          <table className='w-full text-sm text-left'>
+            <thead className='text-xs text-muted-foreground uppercase bg-muted/30 border-b border-border'>
+              <tr>
+                {['w-16', 'w-16', 'w-18', 'w-14', 'w-20', 'w-14'].map((width, index) => (
+                  <th key={`attendance-loading-head-${index}`} className='px-6 py-3 font-medium'>
+                    <Skeleton className={`h-3 ${width}`} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className='divide-y divide-border'>
+              {Array.from({ length: 5 }, (_, index) => (
+                <tr key={`attendance-loading-row-${index}`} className='bg-card/90'>
+                  <td className='px-6 py-4'><Skeleton className='h-4 w-24' /></td>
+                  <td className='px-6 py-4'><Skeleton className='h-4 w-16' /></td>
+                  <td className='px-6 py-4'><Skeleton className='h-4 w-16' /></td>
+                  <td className='px-6 py-4'><Skeleton className='h-6 w-20 rounded-full' /></td>
+                  <td className='px-6 py-4'><Skeleton className='h-4 w-14' /></td>
+                  <td className='px-6 py-4 text-right'><Skeleton className='ml-auto h-8 w-24 rounded-md' /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );

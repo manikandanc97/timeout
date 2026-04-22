@@ -74,12 +74,10 @@ export function useAIChat(userRole?: string) {
     if (!message.trim() || isLoading) return;
 
     const userMsg = createUserMessage(message);
-    setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
-
     const loadingMsg = createLoadingMessage();
     loadingMsgId.current = loadingMsg.id;
-    setMessages((prev) => [...prev, loadingMsg]);
+    setIsLoading(true);
+    setMessages((prev) => [...prev, userMsg, loadingMsg]);
 
     try {
       const isOtpPhase = phase === 'AWAITING_OTP';
@@ -96,7 +94,7 @@ export function useAIChat(userRole?: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, applyResponse, removeLoading]);
+  }, [isLoading, applyResponse, phase, removeLoading]);
 
   /** Confirm the pending action */
   const confirm = useCallback(async () => {

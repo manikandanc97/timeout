@@ -1,6 +1,11 @@
 'use client';
 
 import api from '@/services/api';
+import {
+  SettingsFormSkeleton,
+  SettingsPermissionsSkeleton,
+  SettingsToggleGridSkeleton,
+} from '@/components/settings/SettingsSkeleton';
 import SettingsTabs from '@/components/settings/SettingsTabs';
 import { SETTINGS_TABS } from '@/components/settings/settingsMockData';
 import {
@@ -192,6 +197,16 @@ export default function SettingsPageClient() {
     return null;
   };
 
+  const renderLoadingContent = () => {
+    if (activeTab === 'roles') {
+      return <SettingsPermissionsSkeleton />;
+    }
+    if (activeTab === 'leavePolicy' || activeTab === 'payroll') {
+      return <SettingsToggleGridSkeleton />;
+    }
+    return <SettingsFormSkeleton />;
+  };
+
   return (
     <section className='hrm-shell-page'>
       <div className='absolute -left-32 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
@@ -220,14 +235,7 @@ export default function SettingsPageClient() {
         <section className='hrm-shell-inner min-h-[420px]'>
           <div className='flex-1'>
             {loading ? (
-              <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className='h-20 animate-pulse rounded-xl border border-border bg-muted/80'
-                  />
-                ))}
-              </div>
+              renderLoadingContent()
             ) : (
               renderTabContent()
             )}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PunchCard from './PunchCard';
 import AttendanceHistory from './AttendanceHistory';
 import { getTodayStatus, getMyAttendance } from '@/services/attendanceApi';
@@ -11,7 +11,7 @@ export default function AttendancePageClient() {
   const [history, setHistory] = useState<AttendanceLog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAttendance = async () => {
+  const fetchAttendance = useCallback(async () => {
     try {
       setLoading(true);
       const [todayData, historyData] = await Promise.all([
@@ -25,11 +25,11 @@ export default function AttendancePageClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchAttendance();
-  }, []);
+    void fetchAttendance();
+  }, [fetchAttendance]);
 
   return (
     <div className='flex flex-col gap-6'>

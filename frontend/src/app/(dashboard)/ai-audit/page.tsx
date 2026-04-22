@@ -1,39 +1,40 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import Skeleton from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { getAIAuditLogs, type AuditLog } from '@/services/aiService';
 import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
-  SUCCESS: { bg: 'rgba(22,163,74,0.1)', color: '#16a34a', label: '✅ Success' },
-  FAILED: { bg: 'rgba(220,38,38,0.1)', color: '#dc2626', label: '❌ Failed' },
-  CANCELLED: { bg: 'rgba(107,114,128,0.1)', color: '#6b7280', label: '🚫 Cancelled' },
-  REJECTED: { bg: 'rgba(234,88,12,0.1)', color: '#ea580c', label: '⛔ Rejected' },
+  SUCCESS: { bg: 'rgba(22,163,74,0.1)', color: '#16a34a', label: 'Success' },
+  FAILED: { bg: 'rgba(220,38,38,0.1)', color: '#dc2626', label: 'Failed' },
+  CANCELLED: { bg: 'rgba(107,114,128,0.1)', color: '#6b7280', label: 'Cancelled' },
+  REJECTED: { bg: 'rgba(234,88,12,0.1)', color: '#ea580c', label: 'Rejected' },
 };
 
 const INTENT_LABELS: Record<string, string> = {
-  APPLY_LEAVE: '🏖️ Apply Leave',
-  APPLY_PERMISSION: '⏰ Apply Permission',
-  APPLY_COMP_OFF: '🔄 Apply Comp-Off',
-  CHECK_LEAVE_BALANCE: '📊 Check Balance',
-  VIEW_MY_LEAVES: '📋 View Leaves',
-  HOLIDAY_LIST: '📅 Holiday List',
-  VIEW_PENDING_REQUESTS: '📬 View Pending',
-  APPROVE_LEAVE: '✅ Approve Leave',
-  REJECT_LEAVE: '❌ Reject Leave',
-  APPROVE_PERMISSION: '✅ Approve Permission',
-  REJECT_PERMISSION: '❌ Reject Permission',
-  APPROVE_COMP_OFF: '✅ Approve Comp-Off',
-  REJECT_COMP_OFF: '❌ Reject Comp-Off',
-  ADD_EMPLOYEE: '👤 Add Employee',
-  UPDATE_EMPLOYEE: '✏️ Update Employee',
-  DELETE_EMPLOYEE: '🗑️ Delete Employee',
-  DEACTIVATE_EMPLOYEE: '🔒 Deactivate',
-  ACTIVATE_EMPLOYEE: '🔓 Activate',
-  UPDATE_AI_SETTINGS: '⚙️ AI Settings',
-  GENERAL_HR_FAQ: '💬 HR FAQ',
-  LEAVE_POLICY_FAQ: '📋 Leave Policy FAQ',
+  APPLY_LEAVE: 'Apply Leave',
+  APPLY_PERMISSION: 'Apply Permission',
+  APPLY_COMP_OFF: 'Apply Comp-Off',
+  CHECK_LEAVE_BALANCE: 'Check Balance',
+  VIEW_MY_LEAVES: 'View Leaves',
+  HOLIDAY_LIST: 'Holiday List',
+  VIEW_PENDING_REQUESTS: 'View Pending',
+  APPROVE_LEAVE: 'Approve Leave',
+  REJECT_LEAVE: 'Reject Leave',
+  APPROVE_PERMISSION: 'Approve Permission',
+  REJECT_PERMISSION: 'Reject Permission',
+  APPROVE_COMP_OFF: 'Approve Comp-Off',
+  REJECT_COMP_OFF: 'Reject Comp-Off',
+  ADD_EMPLOYEE: 'Add Employee',
+  UPDATE_EMPLOYEE: 'Update Employee',
+  DELETE_EMPLOYEE: 'Delete Employee',
+  DEACTIVATE_EMPLOYEE: 'Deactivate',
+  ACTIVATE_EMPLOYEE: 'Activate',
+  UPDATE_AI_SETTINGS: 'AI Settings',
+  GENERAL_HR_FAQ: 'HR FAQ',
+  LEAVE_POLICY_FAQ: 'Leave Policy FAQ',
 };
 
 const ROLE_BADGES: Record<string, { bg: string; color: string }> = {
@@ -41,6 +42,49 @@ const ROLE_BADGES: Record<string, { bg: string; color: string }> = {
   MANAGER: { bg: 'rgba(8,131,149,0.1)', color: '#088395' },
   EMPLOYEE: { bg: 'rgba(22,163,74,0.1)', color: '#16a34a' },
 };
+
+function AuditTableSkeleton() {
+  return (
+    <div className="audit-table-wrapper">
+      <table className="audit-table">
+        <thead>
+          <tr>
+            <th><Skeleton className='h-3 w-10' /></th>
+            <th><Skeleton className='h-3 w-20' /></th>
+            <th><Skeleton className='h-3 w-14' /></th>
+            <th><Skeleton className='h-3 w-20' /></th>
+            <th><Skeleton className='h-3 w-24' /></th>
+            <th><Skeleton className='h-3 w-16' /></th>
+            <th><Skeleton className='h-3 w-20' /></th>
+            <th><Skeleton className='h-3 w-8' /></th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 8 }, (_, index) => (
+            <tr key={`audit-skeleton-${index}`} className="audit-row">
+              <td className="audit-cell"><Skeleton className='h-3.5 w-12' /></td>
+              <td className="audit-cell">
+                <div className="user-info">
+                  <Skeleton className='h-[30px] w-[30px] rounded-full' />
+                  <div>
+                    <Skeleton className='h-3.5 w-24' />
+                    <Skeleton className='mt-1.5 h-2.5 w-20' />
+                  </div>
+                </div>
+              </td>
+              <td className="audit-cell"><Skeleton className='h-6 w-16 rounded-md' /></td>
+              <td className="audit-cell"><Skeleton className='h-3.5 w-24' /></td>
+              <td className="audit-cell"><Skeleton className='h-3.5 w-32' /></td>
+              <td className="audit-cell"><Skeleton className='h-6 w-20 rounded-md' /></td>
+              <td className="audit-cell"><Skeleton className='h-3.5 w-28' /></td>
+              <td className="audit-cell"><Skeleton className='h-8 w-10 rounded-md' /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function AIAuditPage() {
   const { user } = useAuth();
@@ -78,16 +122,16 @@ export default function AIAuditPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, filters]);
+  }, [filters, page]);
 
   useEffect(() => {
     if (user && user.role !== 'ADMIN') {
       router.push('/dashboard');
     }
-  }, [user, router]);
+  }, [router, user]);
 
   useEffect(() => {
-    loadLogs();
+    void loadLogs();
   }, [loadLogs]);
 
   if (user?.role !== 'ADMIN') {
@@ -95,7 +139,7 @@ export default function AIAuditPage() {
   }
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters((f) => ({ ...f, [key]: value }));
+    setFilters((current) => ({ ...current, [key]: value }));
     setPage(1);
   };
 
@@ -103,25 +147,23 @@ export default function AIAuditPage() {
     <>
       <style>{auditStyles}</style>
       <div className="audit-page">
-        {/* Header */}
         <div className="audit-header">
           <div>
             <div className="audit-breadcrumb">
               <a href="/settings" className="breadcrumb-link">Settings</a>
-              <span className="breadcrumb-sep">›</span>
+              <span className="breadcrumb-sep">/</span>
               <span>AI Audit Logs</span>
             </div>
             <h1 className="audit-title">AI Audit Logs</h1>
             <p className="audit-subtitle">
-              Complete history of all AI-performed actions — {total.toLocaleString()} total records
+              Complete history of all AI-performed actions. {total.toLocaleString()} total records.
             </p>
           </div>
-          <button onClick={loadLogs} className="refresh-btn" disabled={loading}>
-            {loading ? '⟳ Loading...' : '🔄 Refresh'}
+          <button onClick={() => void loadLogs()} className="refresh-btn" disabled={loading}>
+            {loading ? 'Loading...' : 'Refresh'}
           </button>
         </div>
 
-        {/* Filters */}
         <div className="audit-filters">
           <select
             value={filters.intent}
@@ -140,10 +182,10 @@ export default function AIAuditPage() {
             className="filter-select"
           >
             <option value="">All Statuses</option>
-            <option value="SUCCESS">✅ Success</option>
-            <option value="FAILED">❌ Failed</option>
-            <option value="CANCELLED">🚫 Cancelled</option>
-            <option value="REJECTED">⛔ Rejected</option>
+            <option value="SUCCESS">Success</option>
+            <option value="FAILED">Failed</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="REJECTED">Rejected</option>
           </select>
 
           <input
@@ -162,23 +204,22 @@ export default function AIAuditPage() {
           />
 
           <button
-            onClick={() => { setFilters({ intent: '', status: '', startDate: '', endDate: '' }); setPage(1); }}
+            onClick={() => {
+              setFilters({ intent: '', status: '', startDate: '', endDate: '' });
+              setPage(1);
+            }}
             className="filter-clear-btn"
           >
             Clear
           </button>
         </div>
 
-        {/* Table */}
         <div className="audit-card">
           {loading ? (
-            <div className="audit-loading">
-              <div className="loading-spinner" />
-              <span>Loading audit logs...</span>
-            </div>
+            <AuditTableSkeleton />
           ) : logs.length === 0 ? (
             <div className="audit-empty">
-              <span>🔍</span>
+              <span>No results</span>
               <p>No audit logs found for the selected filters.</p>
             </div>
           ) : (
@@ -204,83 +245,15 @@ export default function AIAuditPage() {
                     const isExpanded = expandedLog === log.id;
 
                     return (
-                      <>
-                        <tr key={log.id} className="audit-row">
-                          <td className="audit-cell audit-id">#{log.id}</td>
-                          <td className="audit-cell">
-                            <div className="user-info">
-                              <div className="user-avatar">
-                                {log.userName.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <div className="user-name">{log.userName}</div>
-                                <div className="user-email"></div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="audit-cell">
-                            <span
-                              className="role-badge"
-                              style={{ background: roleStyle.bg, color: roleStyle.color }}
-                            >
-                              {log.userRole}
-                            </span>
-                          </td>
-                          <td className="audit-cell">
-                            <span className="intent-label">{intentLabel}</span>
-                          </td>
-                          <td className="audit-cell action-cell">{log.action}</td>
-                          <td className="audit-cell">
-                            <span
-                              className="status-badge"
-                              style={{ background: statusStyle.bg, color: statusStyle.color }}
-                            >
-                              {statusStyle.label}
-                            </span>
-                          </td>
-                          <td className="audit-cell time-cell">
-                            {new Date(log.createdAt).toLocaleString('en-IN', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </td>
-                          <td className="audit-cell">
-                            <button
-                              onClick={() => setExpandedLog(isExpanded ? null : log.id)}
-                              className="expand-btn"
-                            >
-                              {isExpanded ? '▲' : '▼'}
-                            </button>
-                          </td>
-                        </tr>
-                        {isExpanded && (
-                          <tr key={`${log.id}-detail`} className="audit-row-expanded">
-                            <td colSpan={8}>
-                              <div className="expand-detail">
-                                {log.payload && Object.keys(log.payload).length > 0 && (
-                                  <div className="expand-section">
-                                    <div className="expand-section-title">Input Payload</div>
-                                    <pre className="expand-code">
-                                      {JSON.stringify(log.payload, null, 2)}
-                                    </pre>
-                                  </div>
-                                )}
-                                {log.result && Object.keys(log.result).length > 0 && (
-                                  <div className="expand-section">
-                                    <div className="expand-section-title">Result</div>
-                                    <pre className="expand-code">
-                                      {JSON.stringify(log.result, null, 2)}
-                                    </pre>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
+                      <FragmentRow
+                        key={log.id}
+                        log={log}
+                        isExpanded={isExpanded}
+                        statusStyle={statusStyle}
+                        roleStyle={roleStyle}
+                        intentLabel={intentLabel}
+                        onToggle={() => setExpandedLog(isExpanded ? null : log.id)}
+                      />
                     );
                   })}
                 </tbody>
@@ -289,29 +262,120 @@ export default function AIAuditPage() {
           )}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="audit-pagination">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
               disabled={page === 1 || loading}
               className="page-btn"
             >
-              ← Prev
+              Prev
             </button>
             <span className="page-info">
               Page {page} of {totalPages} ({total.toLocaleString()} records)
             </span>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
               disabled={page === totalPages || loading}
               className="page-btn"
             >
-              Next →
+              Next
             </button>
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+function FragmentRow({
+  log,
+  isExpanded,
+  statusStyle,
+  roleStyle,
+  intentLabel,
+  onToggle,
+}: {
+  log: AuditLog;
+  isExpanded: boolean;
+  statusStyle: { bg: string; color: string; label: string };
+  roleStyle: { bg: string; color: string };
+  intentLabel: string;
+  onToggle: () => void;
+}) {
+  return (
+    <>
+      <tr className="audit-row">
+        <td className="audit-cell audit-id">#{log.id}</td>
+        <td className="audit-cell">
+          <div className="user-info">
+            <div className="user-avatar">
+              {log.userName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div className="user-name">{log.userName}</div>
+            </div>
+          </div>
+        </td>
+        <td className="audit-cell">
+          <span
+            className="role-badge"
+            style={{ background: roleStyle.bg, color: roleStyle.color }}
+          >
+            {log.userRole}
+          </span>
+        </td>
+        <td className="audit-cell">
+          <span className="intent-label">{intentLabel}</span>
+        </td>
+        <td className="audit-cell action-cell">{log.action}</td>
+        <td className="audit-cell">
+          <span
+            className="status-badge"
+            style={{ background: statusStyle.bg, color: statusStyle.color }}
+          >
+            {statusStyle.label}
+          </span>
+        </td>
+        <td className="audit-cell time-cell">
+          {new Date(log.createdAt).toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </td>
+        <td className="audit-cell">
+          <button onClick={onToggle} className="expand-btn">
+            {isExpanded ? 'Hide' : 'View'}
+          </button>
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr className="audit-row-expanded">
+          <td colSpan={8}>
+            <div className="expand-detail">
+              {log.payload && Object.keys(log.payload).length > 0 && (
+                <div className="expand-section">
+                  <div className="expand-section-title">Input Payload</div>
+                  <pre className="expand-code">
+                    {JSON.stringify(log.payload, null, 2)}
+                  </pre>
+                </div>
+              )}
+              {log.result && Object.keys(log.result).length > 0 && (
+                <div className="expand-section">
+                  <div className="expand-section-title">Result</div>
+                  <pre className="expand-code">
+                    {JSON.stringify(log.result, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
     </>
   );
 }
@@ -356,6 +420,9 @@ const auditStyles = `
     color: var(--muted-foreground);
     margin: 0;
   }
+  .refresh-btn, .filter-clear-btn, .page-btn, .expand-btn {
+    transition: all 0.18s;
+  }
   .refresh-btn {
     padding: 9px 18px;
     border-radius: 12px;
@@ -365,13 +432,11 @@ const auditStyles = `
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.18s;
     white-space: nowrap;
     flex-shrink: 0;
   }
   .refresh-btn:hover:not(:disabled) { background: var(--border); }
   .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  /* Filters */
   .audit-filters {
     display: flex;
     gap: 10px;
@@ -386,7 +451,6 @@ const auditStyles = `
     color: var(--foreground);
     font-size: 13px;
     outline: none;
-    cursor: pointer;
     min-width: 140px;
   }
   .filter-select:focus, .filter-input:focus {
@@ -402,19 +466,15 @@ const auditStyles = `
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.18s;
   }
   .filter-clear-btn:hover { background: var(--border); color: var(--foreground); }
-  /* Table */
   .audit-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 20px;
     overflow: hidden;
   }
-  .audit-table-wrapper {
-    overflow-x: auto;
-  }
+  .audit-table-wrapper { overflow-x: auto; }
   .audit-table {
     width: 100%;
     border-collapse: collapse;
@@ -465,7 +525,6 @@ const auditStyles = `
     flex-shrink: 0;
   }
   .user-name { font-weight: 600; color: var(--foreground); font-size: 13px; }
-  .user-email { font-size: 11px; color: var(--muted-foreground); }
   .role-badge, .status-badge {
     font-size: 11px;
     font-weight: 700;
@@ -491,7 +550,6 @@ const auditStyles = `
     color: var(--muted-foreground);
     cursor: pointer;
     font-size: 11px;
-    transition: all 0.15s;
   }
   .expand-btn:hover { background: var(--muted); }
   .audit-row-expanded td { padding: 0; }
@@ -525,8 +583,7 @@ const auditStyles = `
     overflow-y: auto;
     margin: 0;
   }
-  /* Empty / loading states */
-  .audit-loading, .audit-empty {
+  .audit-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -536,17 +593,6 @@ const auditStyles = `
     color: var(--muted-foreground);
     font-size: 14px;
   }
-  .audit-empty span { font-size: 36px; }
-  .loading-spinner {
-    width: 22px;
-    height: 22px;
-    border: 2.5px solid var(--border);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  /* Pagination */
   .audit-pagination {
     display: flex;
     align-items: center;
@@ -562,7 +608,6 @@ const auditStyles = `
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.18s;
   }
   .page-btn:hover:not(:disabled) {
     background: var(--primary);

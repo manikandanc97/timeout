@@ -5,6 +5,7 @@ import type { PayrollRow } from '@/types/payroll';
 import { formatCurrencyINR, formatDateShort } from '@/utils/formatters';
 import ReportTableSection from './ReportTableSection';
 import { monthLabel } from './useReportsData';
+import Skeleton from '@/components/ui/Skeleton';
 
 type Props = {
   loading: boolean;
@@ -25,6 +26,31 @@ export default function ReportsTables({
   filteredLeaves,
   filteredEmployees,
 }: Props) {
+  if (loading) {
+    return (
+      <>
+        <ReportTableSkeleton
+          title='Payroll Report Table'
+          subtitle='Monthly payroll status and salary breakdown for selected filters.'
+          columnWidths={['w-28', 'w-24', 'w-22', 'w-24', 'w-18', 'w-20', 'w-22', 'w-16', 'w-20']}
+          rows={5}
+        />
+        <ReportTableSkeleton
+          title='Leave Report Table'
+          subtitle='Leave requests with approval status and LOP details.'
+          columnWidths={['w-28', 'w-24', 'w-20', 'w-20', 'w-18', 'w-16', 'w-18']}
+          rows={5}
+        />
+        <ReportTableSkeleton
+          title='Employee Summary Table'
+          subtitle='Department-wise employee overview with leave and salary snapshot.'
+          columnWidths={['w-28', 'w-24', 'w-18', 'w-20', 'w-16', 'w-20', 'w-24']}
+          rows={5}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <ReportTableSection
@@ -45,7 +71,6 @@ export default function ReportsTables({
             row.paidDate ? formatDateShort(row.paidDate) : '-',
           ];
         })}
-        emptyText={loading ? 'Loading payroll report...' : undefined}
       />
 
       <ReportTableSection
@@ -67,7 +92,6 @@ export default function ReportsTables({
             Number(row.lopDays ?? 0) > 0 ? 'Yes' : 'No',
           ];
         })}
-        emptyText={loading ? 'Loading leave report...' : undefined}
       />
 
       <ReportTableSection
@@ -89,8 +113,60 @@ export default function ReportsTables({
             <span key='salary' className='font-semibold text-card-foreground'>{formatCurrencyINR(Number(currentPayroll?.netSalary ?? 0))}</span>,
           ];
         })}
-        emptyText={loading ? 'Loading employee summary...' : undefined}
       />
     </>
+  );
+}
+
+function ReportTableSkeleton({
+  title,
+  subtitle,
+  columnWidths,
+  rows,
+}: {
+  title: string;
+  subtitle: string;
+  columnWidths: string[];
+  rows: number;
+}) {
+  return (
+    <section className='flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-sm dark:shadow-none sm:gap-3.5 sm:p-4'>
+      <div>
+        <Skeleton className='h-6 w-52' />
+        <Skeleton className='mt-2 h-3.5 w-80 max-w-full' />
+      </div>
+      <div className='flex w-full min-w-0 flex-col overflow-x-auto rounded-xl border border-border bg-muted/40'>
+        <div className='w-full min-w-0 overflow-x-auto'>
+          <table className='w-full min-w-[980px] border-collapse text-left text-sm'>
+            <thead className='sticky top-0 z-10'>
+              <tr className='border-b border-border bg-muted/95 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm'>
+                {columnWidths.map((width, index) => (
+                  <th key={`${title}-head-${index}`} className='px-4 py-3.5 text-left'>
+                    <Skeleton className={`h-3 ${width}`} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: rows }, (_, rowIndex) => (
+                <tr
+                  key={`${title}-row-${rowIndex}`}
+                  className='border-b border-border bg-card/90'
+                >
+                  {columnWidths.map((width, cellIndex) => (
+                    <td
+                      key={`${title}-cell-${rowIndex}-${cellIndex}`}
+                      className='px-4 py-2 align-top'
+                    >
+                      <Skeleton className={`h-3.5 ${width}`} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   );
 }
