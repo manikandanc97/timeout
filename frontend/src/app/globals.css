@@ -194,7 +194,7 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 1.5rem;
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--card) 92%, transparent);
@@ -250,4 +250,10 @@ input[type="submit"]:disabled,
 input[type="reset"]:disabled,
 select:disabled {
   cursor: not-allowed;
+}
+
+@media (min-width: 1024px) {
+  .hrm-shell-page {
+    overflow: hidden;
+  }
 }

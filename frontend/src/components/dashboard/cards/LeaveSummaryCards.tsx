@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { CalendarClock, TrendingDown, TrendingUp } from 'lucide-react';
 import type {
   LeaveBalance,
@@ -22,42 +22,113 @@ const MiniChart = ({
   color: string;
   data: LeaveChartSeries;
 }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const safeData = data.length > 0 ? data : [{ month: 'N/A', value: 0 }];
   const maxValue = Math.max(...safeData.map((item) => item.value), 1);
   const chartHeight = 64;
-  const barWidth = 12;
-  const gap = 8;
+  const barWidth = 8;
+  const railHeight = 6;
+  const gap = 10;
   const width = safeData.length * barWidth + Math.max(0, safeData.length - 1) * gap;
 
   return (
-    <svg
-      width={width}
-      height={chartHeight}
-      viewBox={`0 0 ${width} ${chartHeight}`}
-      className='overflow-visible'
-      aria-hidden
+    <div
+      ref={containerRef}
+      className='relative w-full max-w-[152px]'
+      onMouseLeave={() => setTooltip(null)}
     >
-      {safeData.map((item, index) => {
-        const x = index * (barWidth + gap);
-        const height = Math.max(6, (item.value / maxValue) * (chartHeight - 8));
-        const y = chartHeight - height;
+      <svg
+        width='100%'
+        height={chartHeight}
+        viewBox={`0 0 ${width} ${chartHeight}`}
+        preserveAspectRatio='xMaxYMid meet'
+        className='h-16 w-full overflow-visible'
+        aria-hidden
+      >
+        {safeData.map((item, index) => {
+          const x = index * (barWidth + gap);
+          const activeHeight =
+            item.value > 0 ? Math.max(18, (item.value / maxValue) * (chartHeight - 8)) : 0;
+          const activeY = chartHeight - activeHeight;
+          const railY = chartHeight - railHeight;
 
-        return (
-          <g key={`${item.month}-${index}`}>
-            <title>{`${item.month}: ${item.value} ${item.value === 1 ? 'leave' : 'leaves'}`}</title>
-            <rect
-              x={x}
-              y={y}
-              width={barWidth}
-              height={height}
-              rx={4}
-              fill={color}
-              opacity={item.value === 0 ? 0.35 : 1}
-            />
-          </g>
-        );
-      })}
-    </svg>
+          return (
+            <g
+              key={`${item.month}-${index}`}
+              className='cursor-pointer'
+              onMouseEnter={(event) => {
+                const rect = containerRef.current?.getBoundingClientRect();
+
+                if (!rect) {
+                  return;
+                }
+
+                setTooltip({
+                  text: `${item.month}: ${item.value} ${item.value === 1 ? 'leave' : 'leaves'}`,
+                  x: event.clientX - rect.left,
+                  y: event.clientY - rect.top,
+                });
+              }}
+              onMouseMove={(event) => {
+                const rect = containerRef.current?.getBoundingClientRect();
+
+                if (!rect) {
+                  return;
+                }
+
+                setTooltip({
+                  text: `${item.month}: ${item.value} ${item.value === 1 ? 'leave' : 'leaves'}`,
+                  x: event.clientX - rect.left,
+                  y: event.clientY - rect.top,
+                });
+              }}
+            >
+              <rect
+                x={x}
+                y={railY}
+                width={barWidth}
+                height={railHeight}
+                rx={railHeight / 2}
+                fill={color}
+                opacity={0.35}
+              />
+              {item.value > 0 ? (
+                <rect
+                  x={x}
+                  y={activeY}
+                  width={barWidth}
+                  height={activeHeight}
+                  rx={barWidth / 2}
+                  fill={color}
+                />
+              ) : null}
+            </g>
+          );
+        })}
+      </svg>
+
+      {tooltip ? (
+        <div
+          className='pointer-events-none absolute z-50 rounded-lg border border-border bg-foreground px-2.5 py-1.5 text-xs whitespace-nowrap text-background shadow-lg'
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+            transform: 'translate(-50%, calc(-100% - 8px))',
+          }}
+        >
+          {tooltip.text}
+          <div
+            className='absolute h-2 w-2 rotate-45 bg-foreground'
+            style={{
+              left: '50%',
+              bottom: '-4px',
+              transform: 'translateX(-50%)',
+            }}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 };
 
@@ -111,11 +182,11 @@ const LeaveCard = ({
   right: React.ReactNode;
   isOneTime?: boolean;
 }) => (
-  <div className='flex items-start justify-between rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md'>
-    <div className='flex flex-col'>
+  <div className='flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md sm:flex-row sm:items-start sm:justify-between'>
+    <div className='min-w-0 flex-1'>
       <p className='text-sm text-muted-foreground'>{label}</p>
 
-      <div className='mt-4 flex items-baseline gap-2'>
+      <div className='mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1'>
         <h2 className='text-4xl leading-none font-bold'>{count}</h2>
         <span className='text-sm text-muted-foreground'>days remaining</span>
       </div>
@@ -123,7 +194,9 @@ const LeaveCard = ({
       <TrendBadge used={used} isOneTime={isOneTime} />
     </div>
 
-    <div className='mt-1 shrink-0'>{right}</div>
+    <div className='mt-1 flex w-full justify-end overflow-hidden sm:w-auto sm:shrink-0'>
+      {right}
+    </div>
   </div>
 );
 

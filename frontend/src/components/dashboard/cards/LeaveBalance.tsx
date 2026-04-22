@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useState } from "react";
 import type { LeaveBalance as LeaveBalanceType } from "@/types/leave";
 
 type Props = {
@@ -10,6 +10,10 @@ type Props = {
 const COLORS = ["#0E7490", "#14B8A6", "#6366F1"];
 
 const LeaveBalance = ({ balance }: Props) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [activeSegment, setActiveSegment] = useState<{ name: string; value: number } | null>(null);
+
   const data = [
     { name: "Annual", value: balance.annual },
     { name: "Sick", value: balance.sick },
@@ -24,7 +28,14 @@ const LeaveBalance = ({ balance }: Props) => {
     <div className="flex min-h-0 flex-col rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-md">
       <h2 className="mb-4 text-xl font-semibold">Leave Balance</h2>
 
-      <div className="relative flex h-[240px] min-h-[200px] w-full min-w-0 items-center justify-center">
+      <div
+        ref={containerRef}
+        className="relative flex h-[240px] min-h-[200px] w-full min-w-0 items-center justify-center"
+        onMouseLeave={() => {
+          setTooltip(null);
+          setActiveSegment(null);
+        }}
+      >
         <svg
           viewBox="0 0 220 220"
           className="h-full w-full max-w-[260px] -rotate-90"
@@ -56,17 +67,69 @@ const LeaveBalance = ({ balance }: Props) => {
                 strokeLinecap="round"
                 strokeDasharray={`${Math.max(segmentLength, 0)} ${circumference}`}
                 strokeDashoffset={dashOffset}
-              >
-                <title>{`${item.name}: ${item.value}`}</title>
-              </circle>
+                className="cursor-pointer transition-opacity duration-150"
+                opacity={activeSegment && activeSegment.name !== item.name ? 0.4 : 1}
+                onMouseEnter={(event) => {
+                  const rect = containerRef.current?.getBoundingClientRect();
+
+                  if (!rect) {
+                    return;
+                  }
+
+                  setActiveSegment({ name: item.name, value: item.value });
+                  setTooltip({
+                    text: `${item.name}: ${item.value}`,
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top,
+                  });
+                }}
+                onMouseMove={(event) => {
+                  const rect = containerRef.current?.getBoundingClientRect();
+
+                  if (!rect) {
+                    return;
+                  }
+
+                  setTooltip({
+                    text: `${item.name}: ${item.value}`,
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top,
+                  });
+                }}
+              />
             );
           })}
         </svg>
 
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-sm text-muted-foreground">Total balance</p>
-          <h3 className="text-3xl font-bold text-card-foreground">{total}</h3>
+          <p className="text-sm text-muted-foreground">
+            {activeSegment ? activeSegment.name : "Total balance"}
+          </p>
+          <h3 className="text-3xl font-bold text-card-foreground">
+            {activeSegment ? activeSegment.value : total}
+          </h3>
         </div>
+
+        {tooltip ? (
+          <div
+            className="pointer-events-none absolute z-50 rounded-lg border border-border bg-foreground px-2.5 py-1.5 text-xs whitespace-nowrap text-background shadow-lg"
+            style={{
+              left: tooltip.x,
+              top: tooltip.y,
+              transform: "translate(-50%, calc(-100% - 8px))",
+            }}
+          >
+            {tooltip.text}
+            <div
+              className="absolute h-2 w-2 rotate-45 bg-foreground"
+              style={{
+                left: "50%",
+                bottom: "-4px",
+                transform: "translateX(-50%)",
+              }}
+            />
+          </div>
+        ) : null}
       </div>
 
       <hr className="mb-2 mt-4 border-border" />

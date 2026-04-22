@@ -56,7 +56,7 @@ export default function TeamPageClient() {
 
   return (
     <>
-      <CommonPageShell className='min-h-0 flex-1' bodyClassName='gap-3 p-4 sm:gap-4 sm:p-5 lg:min-h-0 lg:flex-1'>
+      <CommonPageShell className='lg:min-h-0 lg:flex-1' bodyClassName='gap-3 p-4 sm:gap-4 sm:p-5 lg:min-h-0 lg:flex-1'>
           <div className='flex min-w-0 flex-col gap-3 lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch lg:gap-4'>
             <div className='flex min-w-0 flex-col gap-3 lg:min-h-0 lg:flex-1'>
               <TeamsPageHeader
