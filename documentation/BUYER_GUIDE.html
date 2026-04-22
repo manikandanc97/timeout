@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Timeout HRM Buyer Guide</title>
+    <style>
+      :root {
+        --bg: #f4f7f8;
+        --card: #ffffff;
+        --text: #122026;
+        --muted: #5b6b73;
+        --line: #d8e2e6;
+        --primary: #088395;
+        --primary-dark: #09637e;
+        --accent: #7ab2b2;
+        --code: #eef5f6;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(180deg, #edf5f6 0%, var(--bg) 100%);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .wrap {
+        width: min(1040px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 48px;
+      }
+
+      .hero {
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background:
+          radial-gradient(circle at top right, rgba(122, 178, 178, 0.22), transparent 34%),
+          linear-gradient(135deg, rgba(8, 131, 149, 0.08), rgba(9, 99, 126, 0.03)),
+          var(--card);
+        box-shadow: 0 16px 40px rgba(18, 32, 38, 0.08);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(8, 131, 149, 0.1);
+        color: var(--primary-dark);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0 0 12px;
+        line-height: 1.2;
+      }
+
+      h1 {
+        font-size: 40px;
+      }
+
+      h2 {
+        font-size: 24px;
+      }
+
+      h3 {
+        font-size: 18px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        gap: 20px;
+        margin-top: 24px;
+      }
+
+      .grid.cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--card);
+        box-shadow: 0 10px 24px rgba(18, 32, 38, 0.05);
+      }
+
+      .steps {
+        counter-reset: step;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .steps li {
+        position: relative;
+        padding-left: 52px;
+        margin: 0 0 18px;
+      }
+
+      .steps li::before {
+        counter-increment: step;
+        content: counter(step);
+        position: absolute;
+        left: 0;
+        top: -2px;
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: var(--primary);
+        color: #fff;
+        font-weight: 700;
+      }
+
+      code,
+      pre {
+        font-family: Consolas, "Courier New", monospace;
+      }
+
+      code {
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: var(--code);
+        color: var(--primary-dark);
+      }
+
+      pre {
+        margin: 12px 0 0;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--code);
+        overflow-x: auto;
+        color: var(--text);
+      }
+
+      .list {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .footer {
+        margin-top: 28px;
+        text-align: center;
+        font-size: 14px;
+      }
+
+      a {
+        color: var(--primary-dark);
+      }
+
+      @media (max-width: 800px) {
+        .grid.cols-2 {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="hero">
+        <div class="eyebrow">Timeout HRM</div>
+        <h1>Buyer Guide</h1>
+        <p>
+          Premium full-stack HRM SaaS template built with Next.js, Express, Prisma,
+          PostgreSQL, Socket.IO, and a polished admin dashboard experience.
+        </p>
+      </section>
+
+      <section class="grid cols-2">
+        <article class="card">
+          <h2>Package Contents</h2>
+          <ul class="list">
+            <li><code>frontend/</code> Next.js application</li>
+            <li><code>backend/</code> Express + Prisma API</li>
+            <li><code>documentation/</code> setup, deployment, troubleshooting and support guides</li>
+            <li><code>INSTALLATION.md</code> quick start instructions</li>
+            <li><code>.env.example</code> workspace reference</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h2>Requirements</h2>
+          <ul class="list">
+            <li>Node.js 20.x to 24.x</li>
+            <li>npm 10+</li>
+            <li>PostgreSQL 14+</li>
+            <li>A deployed backend URL for production frontend builds</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Quick Start</h2>
+          <ol class="steps">
+            <li>
+              Create environment files from the included templates.
+              <pre>cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local</pre>
+            </li>
+            <li>
+              Install dependencies from the workspace root.
+              <pre>npm install</pre>
+            </li>
+            <li>
+              Run database migrations and seed demo data.
+              <pre>npm run db:migrate -w backend
+npm run seed -w backend</pre>
+            </li>
+            <li>
+              Start both applications.
+              <pre>npm run dev</pre>
+            </li>
+          </ol>
+        </article>
+
+        <article class="card">
+          <h2>Production Setup Notes</h2>
+          <ul class="list">
+            <li>Set <code>NEXT_PUBLIC_API_URL</code> in <code>frontend/.env.local</code> or your host environment.</li>
+            <li>Set a production <code>DATABASE_URL</code> and secure auth secrets in <code>backend/.env</code>.</li>
+            <li>Update <code>CLIENT_ORIGINS</code> in the backend env to match your deployed frontend domain.</li>
+            <li>SMTP and AI provider values are optional and can be enabled later.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="grid cols-2">
+        <article class="card">
+          <h2>Useful Commands</h2>
+          <pre>npm run dev
+npm run build
+npm run lint -w frontend
+npm run db:migrate -w backend
+npm run seed -w backend</pre>
+        </article>
+
+        <article class="card">
+          <h2>More Documentation</h2>
+          <ul class="list">
+            <li><code>documentation/DEPLOYMENT.md</code></li>
+            <li><code>documentation/ARCHITECTURE.md</code></li>
+            <li><code>documentation/SMTP_SETUP.md</code></li>
+            <li><code>documentation/AI_PROVIDER_SETUP.md</code></li>
+            <li><code>documentation/TROUBLESHOOTING.md</code></li>
+            <li><code>documentation/SUPPORT.md</code></li>
+          </ul>
+        </article>
+      </section>
+
+      <p class="footer">
+        Need help after purchase? See <code>documentation/SUPPORT.md</code>.
+      </p>
+    </div>
+  </body>
+</html>

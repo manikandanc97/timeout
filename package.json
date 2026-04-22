@@ -16,7 +16,8 @@
     "setup": "npm install && npm run db:migrate -w backend && npm run seed",
     "test": "npm test -w backend",
     "test:coverage": "npm run test:coverage -w backend",
-    "lint": "npm run lint -w frontend"
+    "lint": "npm run lint -w frontend",
+    "themeforest:package": "powershell -ExecutionPolicy Bypass -File scripts/export-themeforest.ps1"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

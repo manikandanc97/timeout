@@ -45,6 +45,7 @@ npm run dev
 npm run build
 npm run test
 npm run seed
+npm run themeforest:package
 ```
 
 ## Buyer Notes
@@ -53,3 +54,4 @@ npm run seed
 - Prisma migrations are included under `backend/prisma/migrations`.
 - Example environment files are included for both apps.
 - The repository excludes local build artifacts and workstation-only folders.
+- Use `npm run themeforest:package` to generate a clean marketplace ZIP in `dist/themeforest/upload/`.

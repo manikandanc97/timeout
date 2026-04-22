@@ -19,6 +19,7 @@ frontend/out/
 frontend/.env.local
 frontend/.env.production.local
 frontend/tsconfig.tsbuildinfo
+dist/themeforest/
 
 *.log
 npm-debug.log*
