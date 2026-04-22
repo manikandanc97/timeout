@@ -50,6 +50,33 @@ describe('attendanceController', () => {
     });
   });
 
+  describe('getMyAttendance', () => {
+    it('should filter attendance by selected date when provided', async () => {
+      req.query = { date: '2026-04-22' };
+      mockPrisma.attendanceLog.findMany.mockResolvedValue([
+        { id: 1, date: new Date('2026-04-22T00:00:00.000Z') },
+      ]);
+      mockPrisma.attendanceLog.count.mockResolvedValue(1);
+
+      await attendanceController.getMyAttendance(req, res);
+
+      expect(mockPrisma.attendanceLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 1,
+            date: expect.any(Date),
+          }),
+        }),
+      );
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.any(Array),
+          pagination: expect.objectContaining({ total: 1 }),
+        }),
+      );
+    });
+  });
+
   describe('requestRegularization', () => {
     it('should create a request if none exists', async () => {
       req.body = { date: '2024-04-22', reason: 'Forgot to punch in', requestedCheckIn: new Date() };
@@ -124,6 +151,50 @@ describe('attendanceController', () => {
       // It calls upsert inside the transaction. mockPrisma is passed as the transaction object.
       expect(mockPrisma.attendanceLog.upsert).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Regularization request approved' }));
+    });
+  });
+
+  describe('getTeamAttendance', () => {
+    it('should return team attendance for admin with team info', async () => {
+      req.user.role = 'ADMIN';
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 1,
+        role: 'ADMIN',
+        organizationId: 10,
+      });
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: 2,
+          name: 'Balaji',
+          designation: 'Developer',
+          team: { id: 5, name: 'Platform Team' },
+          attendanceLogs: [
+            {
+              checkIn: new Date('2026-04-22T09:00:00.000Z'),
+              checkOut: new Date('2026-04-22T18:00:00.000Z'),
+              status: 'PRESENT',
+              workHours: 9,
+            },
+          ],
+        },
+      ]);
+
+      await attendanceController.getTeamAttendance(req, res);
+
+      expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: 10,
+          role: { not: 'ADMIN' },
+        }),
+      }));
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        members: expect.arrayContaining([
+          expect.objectContaining({
+            name: 'Balaji',
+            team: expect.objectContaining({ name: 'Platform Team' }),
+          }),
+        ]),
+      }));
     });
   });
 });

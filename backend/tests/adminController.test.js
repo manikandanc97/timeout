@@ -22,6 +22,7 @@ describe('adminController', () => {
     mockPrisma.user.count.mockResolvedValue(10);
     mockPrisma.leave.count.mockResolvedValue(3);
     mockPrisma.leave.findMany.mockResolvedValue([]);
+    mockPrisma.attendanceLog.findMany.mockResolvedValue([]);
     mockPrisma.user.findMany.mockResolvedValue([]);
     mockPrisma.team.findMany.mockResolvedValue([]);
     mockPrisma.$queryRaw = vi.fn().mockResolvedValue([]);
@@ -39,6 +40,8 @@ describe('adminController', () => {
         pendingRequests: 3,
         presentToday: expect.any(Number),
         onLeaveToday: 0,
+        employeeAttendanceHoursToday: expect.any(Array),
+        teamAttendanceHoursToday: expect.any(Array),
       }));
     });
 
@@ -52,6 +55,38 @@ describe('adminController', () => {
       const result = res.json.mock.calls[0][0];
       expect(result.onLeaveToday).toBe(1);
       expect(result.employeesOnLeaveToday[0].userName).toBe('Bob');
+    });
+
+    it('should include employee and team attendance hours for today', async () => {
+      mockPrisma.attendanceLog.findMany.mockResolvedValue([
+        {
+          workHours: 8.5,
+          checkIn: new Date('2026-04-22T09:00:00.000Z'),
+          checkOut: new Date('2026-04-22T17:30:00.000Z'),
+          user: { id: 2, name: 'Balaji', team: { name: 'Payroll Team' } },
+        },
+        {
+          workHours: 6.25,
+          checkIn: new Date('2026-04-22T09:30:00.000Z'),
+          checkOut: new Date('2026-04-22T15:45:00.000Z'),
+          user: { id: 3, name: 'Karthik', team: { name: 'Payroll Team' } },
+        },
+      ]);
+
+      await adminController.getAdminDashboardData(req, res);
+
+      const result = res.json.mock.calls[0][0];
+      expect(result.employeeAttendanceHoursToday).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ userName: 'Balaji', hours: 8.5 }),
+          expect.objectContaining({ userName: 'Karthik', hours: 6.25 }),
+        ]),
+      );
+      expect(result.teamAttendanceHoursToday).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ teamName: 'Payroll Team', hours: 14.75 }),
+        ]),
+      );
     });
   });
 

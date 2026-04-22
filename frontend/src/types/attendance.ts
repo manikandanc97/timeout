@@ -10,6 +10,27 @@ export interface AttendanceLog {
   workHours: number | null;
 }
 
+export interface TeamAttendanceMember {
+  id: number;
+  name: string;
+  designation: string | null;
+  team?: {
+    id: number;
+    name: string;
+  } | null;
+  attendanceLogs: Array<{
+    checkIn: string | null;
+    checkOut: string | null;
+    status: AttendanceStatus;
+    workHours: number | null;
+  }>;
+}
+
+export interface TeamAttendanceResponse {
+  date: string;
+  members: TeamAttendanceMember[];
+}
+
 export interface RegularizationRequest {
   id: number;
   date: string;

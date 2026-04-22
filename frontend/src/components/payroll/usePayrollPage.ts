@@ -9,6 +9,14 @@ import { formatCurrencyINR } from '@/utils/formatters';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+type PayrollSummary = {
+  totalEmployees?: number;
+  payrollProcessed?: number;
+  pendingPayroll?: number;
+  totalSalaryPaid?: number;
+  currentMonth?: string;
+};
+
 export function usePayrollPage(canView: boolean) {
   const [rows, setRows] = useState<PayrollRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +28,7 @@ export function usePayrollPage(canView: boolean) {
     totalEmployees: '0',
     payrollProcessed: '0',
     pendingPayroll: '0',
-    totalSalaryPaid: '₹0.00',
+    totalSalaryPaid: formatCurrencyINR(0),
     currentMonth: '',
   });
   const [bulkMarkingPaid, setBulkMarkingPaid] = useState(false);
@@ -33,22 +41,23 @@ export function usePayrollPage(canView: boolean) {
     if (!canView) return Promise.resolve();
     setLoading(true);
     return api
-      .get<{ 
-        payroll: PayrollRow[]; 
-        summary: any; 
-        pagination: { total: number; page: number; limit: number; totalPages: number } 
+      .get<{
+        payroll: PayrollRow[];
+        summary?: PayrollSummary;
+        pagination: { total: number; page: number; limit: number; totalPages: number };
       }>(`/payroll?month=${selectedMonth}&year=${selectedYear}&page=${pagination.page}`)
       .then((res) => {
         setRows(Array.isArray(res.data?.payroll) ? res.data.payroll : []);
-        if (res.data?.summary) {
-          setSummaryData({
-            totalEmployees: String(res.data.summary.totalEmployees),
-            payrollProcessed: String(res.data.summary.payrollProcessed),
-            pendingPayroll: String(res.data.summary.pendingPayroll),
-            totalSalaryPaid: formatCurrencyINR(res.data.summary.totalSalaryPaid),
-            currentMonth: res.data.summary.currentMonth,
-          });
-        }
+
+        const summary = res.data?.summary ?? {};
+        setSummaryData({
+          totalEmployees: String(summary.totalEmployees ?? 0),
+          payrollProcessed: String(summary.payrollProcessed ?? 0),
+          pendingPayroll: String(summary.pendingPayroll ?? 0),
+          totalSalaryPaid: formatCurrencyINR(Number(summary.totalSalaryPaid ?? 0)),
+          currentMonth: String(summary.currentMonth ?? ''),
+        });
+
         if (res.data?.pagination) {
           setPagination(res.data.pagination);
         }
@@ -86,24 +95,22 @@ export function usePayrollPage(canView: boolean) {
   const visibleRows = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     const filtered = rows.filter((row) => {
-      const matchesSearch =
-        query.length === 0 ||
-        (formatPersonName(row.employeeName) || row.employeeName).toLowerCase().includes(query);
+      const displayName = formatPersonName(row.employeeName) || row.employeeName || '';
+      const matchesSearch = query.length === 0 || displayName.toLowerCase().includes(query);
       const matchesStatus =
         statusFilter === 'ALL' ? true : statusFilter === 'PAID' ? row.status === 'PAID' : row.status !== 'PAID';
       return matchesSearch && matchesStatus;
     });
 
     return [...filtered].sort((a, b) => {
+      const aName = formatPersonName(a.employeeName) || a.employeeName || '';
+      const bName = formatPersonName(b.employeeName) || b.employeeName || '';
+
       if (sortBy === 'NAME_ASC') {
-        return (formatPersonName(a.employeeName) || a.employeeName).localeCompare(
-          formatPersonName(b.employeeName) || b.employeeName,
-        );
+        return aName.localeCompare(bName);
       }
       if (sortBy === 'NAME_DESC') {
-        return (formatPersonName(b.employeeName) || b.employeeName).localeCompare(
-          formatPersonName(a.employeeName) || a.employeeName,
-        );
+        return bName.localeCompare(aName);
       }
       if (sortBy === 'STATUS') return a.status.localeCompare(b.status);
       const aMonthKey = a.year * 100 + a.month;
@@ -117,7 +124,11 @@ export function usePayrollPage(canView: boolean) {
   const bulkMarkPaidEligibleCount = useMemo(
     () =>
       rows.filter(
-        (row) => row.payrollAdded !== false && row.employeeActive !== false && row.status !== 'PAID' && row.status !== 'NOT_ADDED',
+        (row) =>
+          row.payrollAdded !== false &&
+          row.employeeActive !== false &&
+          row.status !== 'PAID' &&
+          row.status !== 'NOT_ADDED',
       ).length,
     [rows],
   );
@@ -148,6 +159,6 @@ export function usePayrollPage(canView: boolean) {
     hasActiveFilters,
     bulkMarkPaidEligibleCount,
     pagination,
-    setPage: (page: number) => setPagination(prev => ({ ...prev, page })),
+    setPage: (page: number) => setPagination((prev) => ({ ...prev, page })),
   };
 }

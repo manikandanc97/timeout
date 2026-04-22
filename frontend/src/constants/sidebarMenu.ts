@@ -32,7 +32,6 @@ const employeeMenuList: MenuItem[] = [
   { name: "Attendance", href: "/attendance", icon: Clock },
   { name: "My Leaves", href: "/leaves", icon: CalendarDays },
   { name: "Team Leaves", href: "/leaves/team", icon: CalendarRange },
-  { name: "Employees", href: "/employees", icon: Users },
   { name: "Apply", href: "/apply", icon: FilePlus2 },
   { name: "Payslip", href: "/payslip", icon: ReceiptText },
   { name: "Leave Policy", href: "/policy", icon: BookOpen },

@@ -256,4 +256,12 @@ select:disabled {
   .hrm-shell-page {
     overflow: hidden;
   }
+
+  .dashboard-main {
+    transition: padding-right 180ms ease;
+  }
+
+  body.right-panel-open .dashboard-main {
+    padding-right: calc(1.5rem + 26rem);
+  }
 }

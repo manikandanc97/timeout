@@ -33,7 +33,6 @@ export default function PayrollPageClient() {
 
   const {
     rows,
-    setRows,
     loading,
     selectedMonth,
     setSelectedMonth,
@@ -53,15 +52,16 @@ export default function PayrollPageClient() {
     bulkMarkPaidEligibleCount,
     generating,
     generateMonthlyPayroll,
+    loadPayroll,
     pagination,
     setPage,
   } = usePayrollPage(canView);
   const payrollActions = usePayrollActions({
     rows,
-    setRows,
     selectedMonth,
     selectedYear,
     isAdmin: Boolean(isAdmin),
+    onReload: loadPayroll,
   });
   const {
     activePayslip,
@@ -71,7 +71,7 @@ export default function PayrollPageClient() {
     editSaving,
     editLoading,
     editForm,
-    setEditForm,
+    updateEditFormField,
     bulkMarkingPaid,
     markAsPaid,
     markAllAsPaid,
@@ -189,10 +189,11 @@ export default function PayrollPageClient() {
 
       <PayrollEditModal
         open={editRow != null}
+        title={editRow?.status === 'NOT_ADDED' || editRow?.payrollAdded === false ? 'Add payroll details' : 'Edit payroll details'}
         editLoading={editLoading}
         editSaving={editSaving}
         form={editForm}
-        onChange={(key: string, value: number) => setEditForm((prev) => ({ ...prev, [key]: value }))}
+        onChange={updateEditFormField}
         onClose={() => {
           if (!editSaving) setEditRow(null);
         }}

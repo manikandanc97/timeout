@@ -8,6 +8,8 @@ type Props = {
   onDayMouseLeave: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
   tooltip: { text: string; x: number; y: number } | null;
+  onDaySelect?: (date: Date) => void;
+  isDayDisabled?: (date: Date) => boolean;
 };
 
 export default function LeaveCalendarGrid({
@@ -17,6 +19,8 @@ export default function LeaveCalendarGrid({
   onDayMouseLeave,
   containerRef,
   tooltip,
+  onDaySelect,
+  isDayDisabled,
 }: Props) {
   return (
     <div ref={containerRef} className='relative flex-1'>
@@ -37,12 +41,16 @@ export default function LeaveCalendarGrid({
         {days.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} />;
           const { cell } = getDayStyle(date);
+          const isDisabled = isDayDisabled?.(date) ?? false;
           return (
             <div
               key={date.toISOString()}
-              className={`relative flex items-center justify-center mx-auto w-9 h-9 rounded-xl text-sm cursor-default select-none transition-all duration-100 ${cell}`}
+              className={`relative flex items-center justify-center mx-auto w-9 h-9 rounded-xl text-sm select-none transition-all duration-100 ${onDaySelect && !isDisabled ? 'cursor-pointer' : 'cursor-default'} ${isDisabled ? 'opacity-35' : ''} ${cell}`}
               onMouseEnter={(e) => onDayMouseEnter(date, e)}
               onMouseLeave={onDayMouseLeave}
+              onClick={() => {
+                if (!isDisabled) onDaySelect?.(date);
+              }}
             >
               {date.getDate()}
             </div>

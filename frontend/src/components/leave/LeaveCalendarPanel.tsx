@@ -22,6 +22,9 @@ type Props = {
   showLeaveDays?: boolean;
   /** Extra classes on the outer shell (e.g. `h-full min-h-0` in admin column). */
   rootClassName?: string;
+  selectedDate?: Date | null;
+  onSelectDate?: (date: Date) => void;
+  isDateDisabled?: (date: Date) => boolean;
 };
 
 const LeaveCalendarPanel = ({
@@ -31,6 +34,9 @@ const LeaveCalendarPanel = ({
   bannerTitle = 'Plan around the team',
   showLeaveDays = true,
   rootClassName = '',
+  selectedDate = null,
+  onSelectDate,
+  isDateDisabled,
 }: Props) => {
   const today = useMemo(() => {
     const d = new Date();
@@ -151,10 +157,17 @@ const LeaveCalendarPanel = ({
     const isRejected = rejectedDates.some((d) => isSameDay(d, date));
     const isWeekend = dow === 0 || dow === 6;
     const isHovered = hoveredDay && isSameDay(date, hoveredDay);
+    const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
+
+    if (isSelected)
+      return {
+        cell: 'scale-105 bg-primary font-bold text-primary-foreground shadow-md shadow-primary/30',
+        dot: '',
+      };
 
     if (isToday)
       return {
-        cell: 'scale-105 bg-primary font-bold text-primary-foreground shadow-md shadow-primary/30',
+        cell: 'border border-primary/30 bg-primary/10 font-bold text-primary',
         dot: '',
       };
     if (isHoliday)
@@ -242,6 +255,8 @@ const LeaveCalendarPanel = ({
           onDayMouseLeave={handleDayMouseLeave}
           containerRef={containerRef}
           tooltip={tooltip}
+          onDaySelect={onSelectDate}
+          isDayDisabled={isDateDisabled}
         />
 
         <LeaveCalendarLegend showLeaveDays={showLeaveDays} />

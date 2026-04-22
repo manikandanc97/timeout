@@ -15,6 +15,7 @@ type EditForm = {
 
 type Props = {
   open: boolean;
+  title?: string;
   editLoading: boolean;
   editSaving: boolean;
   form: EditForm;
@@ -36,8 +37,22 @@ const FIELDS: Array<keyof EditForm> = [
   'lopAmount',
 ];
 
+const FIELD_LABELS: Record<keyof EditForm, string> = {
+  yearlyGrossSalary: 'Yearly Gross Salary',
+  basicSalary: 'Basic Salary',
+  hra: 'HRA',
+  allowance: 'Allowance',
+  bonus: 'Bonus',
+  pf: 'PF',
+  tax: 'Tax',
+  professionalTax: 'Professional Tax',
+  lopDays: 'LOP Days',
+  lopAmount: 'LOP Amount',
+};
+
 export default function PayrollEditModal({
   open,
+  title = 'Edit payroll details',
   editLoading,
   editSaving,
   form,
@@ -56,12 +71,12 @@ export default function PayrollEditModal({
         onClick={onClose}
       />
       <div className='relative z-10 w-full max-w-2xl rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-xl'>
-        <h3 className='text-lg font-bold'>Edit payroll details</h3>
+        <h3 className='text-lg font-bold'>{title}</h3>
         <div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2'>
           {FIELDS.map((field) => (
             <label key={field} className='text-sm'>
               <span className='mb-1 block text-xs uppercase text-muted-foreground'>
-                {field}
+                {FIELD_LABELS[field]}
               </span>
               <input
                 type='number'

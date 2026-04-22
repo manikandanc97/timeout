@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '../ui/Button';
 import { Bell, Menu, Settings } from 'lucide-react';
 import { useNotifications } from '@/context/NotificationProvider';
@@ -56,6 +56,16 @@ const Topbar = ({ onMenuClick }: TopbarProps) => {
   const displayName = formatPersonName(user?.name) || 'User';
   const designationLabel = user?.designation?.trim() || formatLabel(user?.role);
   const initials = initialsFromPersonName(displayName);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    document.body.classList.toggle('right-panel-open', activePanel != null);
+
+    return () => {
+      document.body.classList.remove('right-panel-open');
+    };
+  }, [activePanel]);
 
   return (
     <div className='flex items-center justify-between border-b border-border bg-card p-4 shadow-sm dark:shadow-none'>

@@ -85,6 +85,36 @@ export function TeamBar({
   );
 }
 
+export function TeamHoursBar({
+  teamName,
+  hours,
+  max,
+}: {
+  teamName: string;
+  hours: number;
+  max: number;
+}) {
+  const pct = max > 0 ? Math.round((hours / max) * 100) : 0;
+  return (
+    <div className='flex items-center gap-3'>
+      <span className='w-32 truncate text-xs font-medium text-card-foreground' title={teamName}>
+        {teamName}
+      </span>
+      <div className='flex flex-1 items-center gap-2'>
+        <div className='flex-1 overflow-hidden rounded-full bg-muted' style={{ height: 6 }}>
+          <div
+            className='h-full rounded-full bg-emerald-500 transition-all duration-700 dark:bg-emerald-400'
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className='w-12 text-right text-xs font-semibold tabular-nums text-muted-foreground'>
+          {hours.toFixed(1)}h
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function SectionSkeleton() {
   return <div className='h-44 animate-pulse rounded-2xl border border-border bg-card shadow-sm' />;
 }

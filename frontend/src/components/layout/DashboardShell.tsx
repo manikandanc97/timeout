@@ -74,11 +74,11 @@ const DashboardShell = ({ children, initialUser }: Props) => {
           <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
             <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
             <main
-              className={
+              className={`dashboard-main ${
                 fillMainHeight
                   ? 'flex flex-1 flex-col overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:min-h-0'
                   : 'flex-1 overflow-y-auto p-4 sm:p-6'
-              }
+              }`}
             >
               {fillMainHeight ? (
                 <div className='flex flex-col lg:min-h-0 lg:flex-1'>{children}</div>

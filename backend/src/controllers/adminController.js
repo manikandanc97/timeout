@@ -28,6 +28,24 @@ function endOfWeekSunday(d = new Date()) {
   return end;
 }
 
+function toRoundedHours(value) {
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  return Math.round(value * 100) / 100;
+}
+
+function resolveAttendanceHours(row, now = new Date()) {
+  if (Number.isFinite(row?.workHours) && Number(row.workHours) > 0) {
+    return toRoundedHours(Number(row.workHours));
+  }
+  if (row?.checkIn && !row?.checkOut) {
+    const ms = now.getTime() - new Date(row.checkIn).getTime();
+    if (ms > 0) {
+      return toRoundedHours(ms / 3_600_000);
+    }
+  }
+  return 0;
+}
+
 /** Next calendar occurrence of month/day on/after `from` (local), or null */
 function nextBirthdayOccurrence(birthDate, from) {
   if (!birthDate) return null;
@@ -136,6 +154,49 @@ export const getAdminDashboardData = async (req, res) => {
 
     const presentToday = Math.max(0, totalEmployees - onLeaveToday);
 
+    const attendanceRows = await prisma.attendanceLog.findMany({
+      where: {
+        organizationId,
+        date: { gte: startOfDay, lte: endOfDay },
+        user: employeeWhere,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            team: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: [{ checkIn: 'asc' }],
+    });
+
+    const employeeAttendanceHoursToday = attendanceRows
+      .map((row) => ({
+        userName: row.user?.name ?? 'Unknown',
+        teamName: row.user?.team?.name ?? 'Unassigned',
+        hours: resolveAttendanceHours(row, today),
+      }))
+      .filter((row) => row.hours > 0)
+      .sort((a, b) => b.hours - a.hours || a.userName.localeCompare(b.userName))
+      .slice(0, 8);
+
+    const teamAttendanceHoursMap = new Map();
+    for (const row of attendanceRows) {
+      const hours = resolveAttendanceHours(row, today);
+      if (hours <= 0) continue;
+      const teamName = row.user?.team?.name ?? 'Unassigned';
+      teamAttendanceHoursMap.set(
+        teamName,
+        toRoundedHours((teamAttendanceHoursMap.get(teamName) ?? 0) + hours),
+      );
+    }
+
+    const teamAttendanceHoursToday = Array.from(teamAttendanceHoursMap.entries())
+      .map(([teamName, hours]) => ({ teamName, hours }))
+      .sort((a, b) => b.hours - a.hours || a.teamName.localeCompare(b.teamName));
+
     const usersWithDob = await fetchUsersWithBirthDateRaw(organizationId);
 
     const fromDay = new Date(startOfDay);
@@ -219,6 +280,8 @@ export const getAdminDashboardData = async (req, res) => {
       upcomingBirthdays,
       newJoinersThisWeek,
       teamEmployeeCounts,
+      employeeAttendanceHoursToday,
+      teamAttendanceHoursToday,
     });
   } catch (error) {
     console.error(error);

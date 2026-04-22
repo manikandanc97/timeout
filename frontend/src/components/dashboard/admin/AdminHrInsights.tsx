@@ -1,7 +1,7 @@
 'use client';
 
 import { formatPersonName } from '@/lib/personName';
-import { Cake, PartyPopper, Umbrella, UserRound, UsersRound } from 'lucide-react';
+import { Cake, Clock3, PartyPopper, Umbrella, UserRound, UsersRound } from 'lucide-react';
 import type { AdminHrDashboardPayload } from '@/types/dashboard';
 import { AdminDashboardEmpty, AdminDashboardPanel } from './AdminDashboardPanel';
 import {
@@ -10,6 +10,7 @@ import {
   LeaveTypeBadge,
   SectionSkeleton,
   TeamBar,
+  TeamHoursBar,
 } from './hrInsightsUtils';
 
 export default function AdminHrInsights({
@@ -39,6 +40,10 @@ export default function AdminHrInsights({
 
   const maxTeamCount = Math.max(
     ...(data.teamEmployeeCounts.map((team) => team.count) ?? [1]),
+    1,
+  );
+  const maxTeamHours = Math.max(
+    ...(data.teamAttendanceHoursToday.map((team) => team.hours) ?? [1]),
     1,
   );
 
@@ -77,6 +82,48 @@ export default function AdminHrInsights({
       </AdminDashboardPanel>
 
       <AdminDashboardPanel
+        title='Login hours today'
+        subtitle='Employee worked hours'
+        icon={Clock3}
+        iconTileClass='bg-muted'
+        iconClass='text-emerald-600'
+      >
+        {data.employeeAttendanceHoursToday.length === 0 ? (
+          <AdminDashboardEmpty
+            icon={Clock3}
+            message='No attendance hours recorded yet for today.'
+          />
+        ) : (
+          <ul className='space-y-2.5'>
+            {data.employeeAttendanceHoursToday.map((row, index) => (
+              <li
+                key={`hours-${index}`}
+                className='flex items-center justify-between gap-3'
+              >
+                <div className='flex min-w-0 items-center gap-2.5'>
+                  <InitialsAvatar
+                    name={formatPersonName(row.userName) || 'Unknown'}
+                    colorClass={getAvatarColor(formatPersonName(row.userName) || 'Unknown')}
+                  />
+                  <div className='min-w-0'>
+                    <p className='truncate text-sm font-medium'>
+                      {formatPersonName(row.userName) || 'Unknown'}
+                    </p>
+                    <p className='truncate text-[11px] text-muted-foreground'>
+                      {row.teamName}
+                    </p>
+                  </div>
+                </div>
+                <span className='shrink-0 rounded-lg bg-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground ring-1 ring-border'>
+                  {row.hours.toFixed(2)}h
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </AdminDashboardPanel>
+
+      <AdminDashboardPanel
         title='Team headcount'
         subtitle='Employees by team'
         icon={UsersRound}
@@ -93,6 +140,29 @@ export default function AdminHrInsights({
             {data.teamEmployeeCounts.map((row, index) => (
               <li key={`team-${index}`}>
                 <TeamBar teamName={row.teamName} count={row.count} max={maxTeamCount} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </AdminDashboardPanel>
+
+      <AdminDashboardPanel
+        title='Team login hours'
+        subtitle='Today by team'
+        icon={UsersRound}
+        iconTileClass='bg-muted'
+        iconClass='text-emerald-600'
+      >
+        {data.teamAttendanceHoursToday.length === 0 ? (
+          <AdminDashboardEmpty
+            icon={UsersRound}
+            message='No team attendance hours recorded yet for today.'
+          />
+        ) : (
+          <ul className='space-y-3'>
+            {data.teamAttendanceHoursToday.map((row, index) => (
+              <li key={`team-hours-${index}`}>
+                <TeamHoursBar teamName={row.teamName} hours={row.hours} max={maxTeamHours} />
               </li>
             ))}
           </ul>

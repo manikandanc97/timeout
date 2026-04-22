@@ -29,9 +29,10 @@ export default function PayslipPreviewModal({ row, monthLabel, onClose, onDownlo
   const totalDeductions = pf + tax + professionalTax + lopAmount;
   const computedNetSalary = Math.max(grossEarnings - totalDeductions, 0);
 
-  const initials = row.employeeName
+  const initials = (row.employeeName ?? '')
     .split(' ')
     .map((n) => n[0])
+    .filter(Boolean)
     .join('')
     .slice(0, 2)
     .toUpperCase();

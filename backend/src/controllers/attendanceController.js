@@ -141,15 +141,26 @@ export const getMyAttendance = async (req, res) => {
     const page = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 31);
     const skip = (page - 1) * limit;
+    const dateParam = req.query.date;
+    const targetDate = dateParam ? localDayStart(dateParam) : null;
+
+    if (dateParam && !targetDate) {
+      return res.status(400).json({ message: 'Invalid date' });
+    }
+
+    const where = {
+      userId,
+      ...(targetDate ? { date: targetDate } : {}),
+    };
 
     const [logs, total] = await Promise.all([
       prisma.attendanceLog.findMany({
-        where: { userId },
+        where,
         orderBy: { date: 'desc' },
         skip,
         take: limit,
       }),
-      prisma.attendanceLog.count({ where: { userId } }),
+      prisma.attendanceLog.count({ where }),
     ]);
 
     return res.json({
@@ -439,9 +450,17 @@ export const getTeamAttendance = async (req, res) => {
 
     let userWhere;
     if (actor.role === 'ADMIN') {
-      userWhere = { organizationId: actor.organizationId, isActive: true };
+      userWhere = {
+        organizationId: actor.organizationId,
+        isActive: true,
+        role: { not: 'ADMIN' },
+      };
     } else {
-      userWhere = { reportingManagerId: actor.id, isActive: true };
+      userWhere = {
+        reportingManagerId: actor.id,
+        isActive: true,
+        role: { not: 'ADMIN' },
+      };
     }
 
     const members = await prisma.user.findMany({
@@ -450,12 +469,19 @@ export const getTeamAttendance = async (req, res) => {
         id: true,
         name: true,
         designation: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         attendanceLogs: {
           where: { date: { gte: targetDate, lte: targetEnd } },
           select: { checkIn: true, checkOut: true, status: true, workHours: true },
           take: 1,
         },
       },
+      orderBy: [{ team: { name: 'asc' } }, { name: 'asc' }],
     });
 
     return res.json({ date: targetDate, members });

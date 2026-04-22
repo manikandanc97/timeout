@@ -141,4 +141,60 @@ describe('payrollController', () => {
       }));
     });
   });
+
+  describe('markPayrollPaid', () => {
+    it('should mark a pending payroll as paid', async () => {
+      req.params = { payrollId: '5' };
+      mockPrisma.payroll.findUnique.mockResolvedValue({
+        id: 5,
+        userId: 2,
+        organizationId: 10,
+        status: 'DRAFT',
+        user: { name: 'Balaji' },
+      });
+      mockPrisma.$transaction.mockImplementation(async (cb) => cb(mockPrisma));
+      mockPrisma.payroll.update.mockResolvedValue({ id: 5, status: 'PAID' });
+      mockPrisma.payrollApprovalLog.create.mockResolvedValue({ id: 1 });
+
+      await payrollController.markPayrollPaid(req, res);
+
+      expect(mockPrisma.payroll.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: 5 },
+        data: expect.objectContaining({
+          status: 'PAID',
+          paidDate: expect.any(Date),
+        }),
+      }));
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: 'Payroll marked as paid',
+      }));
+    });
+  });
+
+  describe('bulkMarkPayrollPaid', () => {
+    it('should mark all pending payroll records as paid for the selected month', async () => {
+      req.body = { month: 4, year: 2024 };
+      mockPrisma.payroll.findMany.mockResolvedValue([
+        { id: 11, status: 'DRAFT' },
+        { id: 12, status: 'APPROVED' },
+      ]);
+      mockPrisma.$transaction.mockImplementation(async (cb) => cb(mockPrisma));
+      mockPrisma.payroll.update.mockResolvedValue({});
+      mockPrisma.payrollApprovalLog.create.mockResolvedValue({});
+
+      await payrollController.bulkMarkPayrollPaid(req, res);
+
+      expect(mockPrisma.payroll.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          month: 4,
+          year: 2024,
+          status: { not: 'PAID' },
+        }),
+      }));
+      expect(mockPrisma.payroll.update).toHaveBeenCalledTimes(2);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        updatedCount: 2,
+      }));
+    });
+  });
 });

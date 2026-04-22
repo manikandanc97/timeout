@@ -105,6 +105,7 @@ export default function PayrollTableSection(props: Props) {
               ) : (
                 props.visibleRows.map((row) => {
                   const isDeactivated = row.employeeActive === false;
+                  const isNotAdded = row.status === 'NOT_ADDED' || row.payrollAdded === false;
                   return (
                     <tr key={row.id} className='border-b border-border/60 transition-colors hover:bg-muted/50'>
                       <td className='px-4 py-2 text-left align-top font-medium text-card-foreground'>{formatPersonName(row.employeeName) || 'Employee'}</td>
@@ -113,7 +114,19 @@ export default function PayrollTableSection(props: Props) {
                       <td className='px-4 py-2 text-left align-top text-danger-muted-foreground'><span>{row.lopDays ?? 0} day(s)</span></td>
                       <td className='px-4 py-2 text-left align-top text-muted-foreground'><span>{props.formatTableAmount(row.deductions)}</span></td>
                       <td className='px-4 py-2 text-left align-top font-semibold text-card-foreground'>{props.formatTableAmount(row.netSalary)}</td>
-                      <td className='px-4 py-2 text-left align-top'>{row.status}</td>
+                      <td className='px-4 py-2 text-left align-top'>
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            row.status === 'PAID'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : isNotAdded
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {isNotAdded ? 'NOT ADDED' : row.status}
+                        </span>
+                      </td>
                       <td className='px-4 py-2 text-right align-top'>
                         <div className='flex flex-wrap justify-end gap-1.5 min-w-[120px]'>
                           <Button
@@ -132,10 +145,10 @@ export default function PayrollTableSection(props: Props) {
                             type='button'
                             variant='outline'
                             className='rounded-md! px-2! py-1.5! text-[10px] sm:text-xs!'
-                            disabled={row.payrollAdded === false || isDeactivated || !props.isAdmin}
+                            disabled={isDeactivated || !props.isAdmin}
                             onClick={() => props.onOpenEditPayroll(row)}
                           >
-                            Edit
+                            {isNotAdded ? 'Add Payroll' : 'Edit'}
                           </Button>
                           <Button
                             type='button'

@@ -10,16 +10,24 @@ type Props = {
   history: AttendanceLog[];
   loading: boolean;
   onRefresh: () => void;
+  title?: string;
+  emptyMessage?: string;
 };
 
-export default function AttendanceHistory({ history, loading, onRefresh }: Props) {
+export default function AttendanceHistory({
+  history,
+  loading,
+  onRefresh,
+  title = 'Recent Attendance',
+  emptyMessage = 'No attendance logs found for recent days.',
+}: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   if (loading) {
     return (
       <div className='rounded-2xl border border-border bg-card shadow-sm overflow-hidden'>
         <div className='px-6 py-5 border-b border-border flex justify-between items-center'>
-          <Skeleton className='h-6 w-40' />
+          <Skeleton className='h-6 w-48' />
         </div>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm text-left'>
@@ -62,12 +70,12 @@ export default function AttendanceHistory({ history, loading, onRefresh }: Props
   return (
     <div className='rounded-2xl border border-border bg-card shadow-sm overflow-hidden'>
       <div className='px-6 py-5 border-b border-border flex justify-between items-center'>
-        <h3 className='font-semibold text-lg'>Recent Attendance</h3>
+        <h3 className='font-semibold text-lg'>{title}</h3>
       </div>
       
       {history.length === 0 ? (
         <div className='px-6 py-12 text-center text-muted-foreground'>
-          No attendance logs found for recent days.
+          {emptyMessage}
         </div>
       ) : (
         <div className='overflow-x-auto'>
