@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Inter, Poppins, Roboto } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 import { ToastHost } from '@/components/ToastHost';
 
@@ -54,6 +55,7 @@ export default function RootLayout({
       <body className='font-sans antialiased'>
         {children}
         <ToastHost />
+        <SpeedInsights />
       </body>
     </html>
   );
