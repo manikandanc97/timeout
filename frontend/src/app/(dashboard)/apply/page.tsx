@@ -5,6 +5,9 @@ import { getDashboardData } from '@/services/dashboardService';
 import type { User } from '@/types/user';
 import type { Holiday } from '@/types/holiday';
 import type { Leave } from '@/types/leave';
+import { redirect } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 
 const page = async () => {
   const [profile, dashboard, holidays, history] = await Promise.all([
