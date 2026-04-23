@@ -1609,14 +1609,16 @@ const serializeAdminSettingsResponse = (org) => {
     payrollSettings: normalizedSettings.payrollSettings,
     rolePermissions: normalizedSettings.rolePermissions,
     themePreferences: normalizedSettings.themePreferences,
+    smtpSettings: normalizedSettings.smtpSettings,
+    alertPreferences: normalizedSettings.alertPreferences,
   };
 };
 
 export const getAdminSettings = async (req, res) => {
   try {
-    const organizationId = req.user.organizationId;
-    if (organizationId == null) {
-      return res.status(400).json({ message: 'Missing organization' });
+    const organizationId = Number(req.user.organizationId);
+    if (Number.isNaN(organizationId)) {
+      return res.status(400).json({ message: 'Missing or invalid organization' });
     }
 
     const org = await prisma.organization.findUnique({
@@ -1638,7 +1640,7 @@ export const getAdminSettings = async (req, res) => {
 
     return res.json(serializeAdminSettingsResponse(org));
   } catch (error) {
-    console.error(error);
+    console.error('[getAdminSettings Error]:', error);
     return res.status(500).json({ message: 'Failed to load admin settings' });
   }
 };
@@ -1665,6 +1667,8 @@ export const updateAdminSettings = async (req, res) => {
       payrollSettings: payload.payrollSettings,
       rolePermissions: payload.rolePermissions,
       themePreferences: payload.themePreferences,
+      smtpSettings: payload.smtpSettings,
+      alertPreferences: payload.alertPreferences,
     });
 
     const updated = await prisma.organization.update({
@@ -1706,7 +1710,7 @@ export const updateAdminSettings = async (req, res) => {
     }
     return res.json(serializeAdminSettingsResponse(updated));
   } catch (error) {
-    console.error(error);
+    console.error('[updateAdminSettings Error]:', error);
     if (error?.code === 'P2002') {
       return res
         .status(400)
@@ -1755,7 +1759,7 @@ export const resetAdminSettings = async (req, res) => {
     }
     return res.json(serializeAdminSettingsResponse(updated));
   } catch (error) {
-    console.error(error);
+    console.error('[resetAdminSettings Error]:', error);
     return res.status(500).json({ message: 'Failed to reset admin settings' });
   }
 };

@@ -782,22 +782,22 @@ const settingsStyles = `
   .settings-page {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 0 10px 60px;
+    padding: 0 16px 60px;
     position: relative;
   }
-  .settings-header { margin-bottom: 32px; }
+  .settings-header { margin-bottom: 32px; padding: 0 4px; }
   .settings-title { font-size: 28px; font-weight: 800; color: var(--foreground); margin-bottom: 6px; }
-  .settings-subtitle { font-size: 15px; color: var(--muted-foreground); }
+  .settings-subtitle { font-size: 15px; color: var(--muted-foreground); max-width: 600px; }
   
   .settings-layout { display: flex; flex-direction: column; gap: 24px; }
 
   .settings-nav {
-    display: flex; flex-direction: row; gap: 8px; width: calc(100% + 20px);
-    margin: 0 -10px; padding: 10px 10px 4px;
+    display: flex; flex-direction: row; gap: 8px; width: 100%;
+    margin: 0; padding: 12px 0 8px;
     overflow-x: auto; border-bottom: 1px solid var(--border);
     position: sticky; top: -1px; 
     background: var(--background); 
-    z-index: 100;
+    z-index: 10;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     transition: all 0.3s ease;
